@@ -1,7 +1,6 @@
 import argon2 from "argon2";
 import cookieParser from "cookie-parser";
 import cors from "cors";
-import "dotenv/config";
 import express from "express";
 import type { CookieOptions, NextFunction, Request, Response } from "express";
 import rateLimit from "express-rate-limit";
