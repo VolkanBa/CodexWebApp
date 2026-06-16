@@ -1,0 +1,15 @@
+{
+  "name": "personal-webapp",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "dev:frontend": "npm --workspace frontend run dev",
+    "dev:backend": "npm --workspace backend run dev",
+    "build": "npm --workspace frontend run build && npm --workspace backend run build",
+    "lint": "npm --workspace frontend run lint && npm --workspace backend run lint"
+  }
+}
