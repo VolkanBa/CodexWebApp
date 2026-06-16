@@ -21,7 +21,7 @@ Linear ist das primäre Ticketsystem für dieses Projekt.
 - `COD-14` bis `COD-16` sind offene Folgeaufgaben.
 - `COD-17` und `COD-18` sind abgeschlossen.
 - `COD-19` ist abgeschlossen und dokumentiert die lokale Entwicklung für Windows/VSCode und Linux/Ubuntu.
-- `COD-20` ist der nächste geplante technische Schritt für sichere Authentifizierung.
+- `COD-20` ist in Arbeit und wird auf `codex/secure-auth` umgesetzt.
 
 ## GitHub
 

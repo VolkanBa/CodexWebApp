@@ -201,7 +201,20 @@ Backend:
 ```env
 PORT=4000
 FRONTEND_ORIGIN=http://localhost:3000
+PRIVATE_ACCESS_PASSWORD_HASH=$argon2id$v=19$...
+SESSION_COOKIE_NAME=private_session
+SESSION_TTL_MINUTES=1440
+AUTH_RATE_LIMIT_WINDOW_MINUTES=15
+AUTH_RATE_LIMIT_MAX=5
 ```
+
+Passwort-Hash für lokale Entwicklung erzeugen:
+
+```bash
+node -e "import('argon2').then(async (argon2) => console.log(await argon2.hash(process.argv[1])))" "DEIN_LOKALES_PASSWORT"
+```
+
+Mehr Details stehen in `docs/AUTHENTICATION.md`.
 
 ## Troubleshooting
 
@@ -267,3 +280,4 @@ Aktuell ist ein moderater Audit-Hinweis in Nexts interner PostCSS-Abhängigkeit 
 - Vor jedem Push `npm run build` ausführen.
 - Private Inhalte und Passwörter nie im Frontend hardcoden.
 - `.env`-Dateien lokal halten und nicht committen.
+- Nicht direkt auf `main` arbeiten; Feature-Branches verwenden.

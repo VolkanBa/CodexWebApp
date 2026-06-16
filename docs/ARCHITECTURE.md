@@ -17,16 +17,16 @@ Aufgaben:
 - Landing Page rendern
 - öffentlichen geschäftlichen Bereich anzeigen
 - Login-Oberfläche für den privaten Bereich bereitstellen
-- später API-Aufrufe an das Backend senden
+- API-Aufrufe an das Backend senden
 
 Aktuelle Routen:
 
 - `/`: Landing Page
 - `/business`: Platzhalter für den geschäftlichen Bereich
-- `/private/login`: Login-Platzhalter
-- `/private`: reservierte Route für den später geschützten Bereich
+- `/private/login`: serverseitig angebundenes Loginformular
+- `/private`: geschützte private Ansicht
 
-Das Frontend prüft aktuell keine Passwörter. Das ist absichtlich so, weil Passwortlogik niemals nur im Browser umgesetzt werden soll.
+Das Frontend prüft keine Passwörter. Passwortprüfung und Session-Erstellung liegen im Backend.
 
 ## Backend
 
@@ -39,20 +39,23 @@ Technik:
 - Express
 - Helmet
 - CORS
+- Argon2
+- Zod
+- express-rate-limit
 
 Aufgaben:
 
 - API-Endpunkte bereitstellen
-- später Authentifizierung prüfen
-- später Sessions oder sichere Cookies verwalten
-- später private Inhalte serverseitig schützen
+- Authentifizierung prüfen
+- Sessions über sichere Cookies verwalten
+- private Inhalte serverseitig schützen
 - später Datenbankzugriff kapseln
 
 Aktuelle Route:
 
 - `GET /health`: prüft, ob das Backend läuft
 
-Geplante spätere Routen:
+Auth-Routen:
 
 - `POST /auth/login`
 - `POST /auth/logout`
@@ -61,17 +64,18 @@ Geplante spätere Routen:
 
 ## Sicherheit
 
-Der private Bereich wird erst dann wirklich aktiviert, wenn das Backend Authentifizierung und Zugriffsschutz implementiert.
+Der private Bereich ist serverseitig geschützt. Details stehen in `docs/AUTHENTICATION.md`.
 
 Geplante Mindestanforderungen:
 
-- Passwort-Hashing mit `argon2` oder `bcrypt`
+- Passwort-Hashing mit `argon2`
 - keine Klartext-Passwörter
 - parametrisierte Datenbankabfragen oder ORM gegen SQL Injection
 - sichere Cookies mit `httpOnly`, `secure` und `sameSite`
 - Rate Limiting gegen Bruteforce
 - serverseitige Session-Prüfung vor jedem privaten Inhalt
 - Validierung aller API-Eingaben
+- Rate Limiting für Loginversuche
 
 Bekannter Stand der Abhängigkeiten:
 
@@ -97,3 +101,7 @@ Empfohlene Arbeitsweise:
 2. Empfohlene Extensions installieren.
 3. Frontend und Backend in getrennten Terminals starten.
 4. Änderungen in `docs/` mitdokumentieren.
+
+## Git-Workflow
+
+Für parallele Arbeit wird nicht direkt auf `main` entwickelt. Details stehen in `docs/GIT_WORKFLOW.md`.

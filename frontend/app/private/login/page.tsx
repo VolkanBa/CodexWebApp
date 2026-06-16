@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LoginForm } from "./LoginForm";
 
 export default function PrivateLoginPage() {
   return (
@@ -19,34 +20,16 @@ export default function PrivateLoginPage() {
               Privater Bereich
             </p>
             <h1 className="text-5xl font-black leading-tight text-white">
-              Login wird serverseitig vorbereitet.
+              Login wird serverseitig geschützt.
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-white/70">
-              Dieser Bereich ist absichtlich noch kein echter Login. Die spätere
-              Version prüft Passwörter nur im Backend, speichert Hashes und
-              schützt private Inhalte serverseitig.
+              Das Passwort wird nur im Backend geprüft. Die Sitzung wird über ein
+              sicheres httpOnly Cookie verwaltet, damit private Inhalte nicht im
+              Frontend freigegeben werden.
             </p>
           </div>
 
-          <form className="border border-white/12 bg-white/[0.045] p-6" aria-label="Login Platzhalter">
-            <label className="block text-sm font-semibold text-white/80" htmlFor="password">
-              Passwort
-            </label>
-            <input
-              id="password"
-              type="password"
-              disabled
-              placeholder="Noch nicht aktiv"
-              className="mt-3 w-full border border-white/12 bg-black/35 px-4 py-3 text-white placeholder:text-white/35 outline-none"
-            />
-            <button
-              type="button"
-              disabled
-              className="mt-5 w-full bg-suit-purple px-5 py-3 text-sm font-bold text-white opacity-60"
-            >
-              Login später aktivieren
-            </button>
-          </form>
+          <LoginForm />
         </section>
       </div>
     </main>

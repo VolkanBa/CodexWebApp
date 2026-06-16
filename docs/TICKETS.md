@@ -38,3 +38,4 @@ Linear-Team: `CodexWebApp`
 - [x] COD-18 / WEB-014: Projekt auf GitHub als CodexWebApp veröffentlichen
 - [x] COD-19 / WEB-015: Lokale Entwicklungsdokumentation ergänzen
 - [ ] COD-20 / WEB-016: Sichere Authentifizierung für privaten Bereich implementieren
+  - Branch: `codex/secure-auth`

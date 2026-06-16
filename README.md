@@ -55,12 +55,14 @@ Alternativ kannst du in VSCode `Terminal > Run Task...` nutzen:
 - Hero-Bild: `frontend/public/images/hero-suit.png`
 - Architektur-Doku: `docs/ARCHITECTURE.md`
 - Lokale Entwicklungsdoku: `docs/LOCAL_DEVELOPMENT.md`
+- Auth-Doku: `docs/AUTHENTICATION.md`
+- Git-Workflow: `docs/GIT_WORKFLOW.md`
 - Ticketprotokoll: `docs/TICKETS.md`
 - Linear-Doku: `docs/LINEAR.md`
 
 ## Sicherheit
 
-Der private Bereich ist aktuell bewusst nur ein Platzhalter. Echte Passwortprüfung wird später im Backend umgesetzt, nicht im Frontend.
+Der private Bereich wird serverseitig geschützt. Passwortprüfung und Session-Verwaltung liegen im Backend, nicht im Frontend.
 
 ## Dokumentationsregel
 
