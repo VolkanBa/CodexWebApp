@@ -35,4 +35,4 @@ Linear-Team: `CodexWebApp`
 - [ ] COD-16 / WEB-012: Next/PostCSS Audit-Treffer durch Framework-Upgrade beheben
   - Hinweis: `npm audit --omit=dev` meldet einen moderaten Treffer in Nexts interner `postcss@8.4.31`. `npm audit fix --force` wurde nicht ausgeführt, weil npm dafür einen brechenden Versionswechsel vorschlägt.
 - [x] COD-17 / WEB-013: Deutsche Texte auf echte Umlaute umstellen
-- [ ] COD-18 / WEB-014: Projekt auf GitHub als CodexWebApp veröffentlichen
+- [x] COD-18 / WEB-014: Projekt auf GitHub als CodexWebApp veröffentlichen

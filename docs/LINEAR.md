@@ -19,5 +19,9 @@ Linear ist das primäre Ticketsystem für dieses Projekt.
 
 - `COD-5` bis `COD-13` sind abgeschlossen.
 - `COD-14` bis `COD-16` sind offene Folgeaufgaben.
-- `COD-17` ist abgeschlossen.
-- `COD-18` gehört zur aktuellen Runde: GitHub-Veröffentlichung.
+- `COD-17` und `COD-18` sind abgeschlossen.
+
+## GitHub
+
+- Repository: `https://github.com/VolkanBa/CodexWebApp`
+- Branch: `main`
