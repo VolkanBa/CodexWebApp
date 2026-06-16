@@ -2,6 +2,8 @@
 
 Dieses Ticketprotokoll dokumentiert die bisherige Umsetzung lokal und spiegelt den Stand in Linear.
 
+Link zur Linear-Seite: `https://linear.app/codexwebapp/team/COD/all`
+
 Linear-Projekt: `CodexWebApp`
 Linear-Team: `CodexWebApp`
 
