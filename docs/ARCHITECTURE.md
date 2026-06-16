@@ -81,23 +81,7 @@ Bekannter Stand der Abhängigkeiten:
 
 ## Lokale Entwicklung
 
-Frontend starten:
-
-```bash
-npm run dev:frontend
-```
-
-Backend starten:
-
-```bash
-npm run dev:backend
-```
-
-Build prüfen:
-
-```bash
-npm run build
-```
+Die vollständige Anleitung für Windows/VSCode und Linux/Ubuntu steht in `docs/LOCAL_DEVELOPMENT.md`.
 
 ## VSCode
 

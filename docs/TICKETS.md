@@ -36,3 +36,5 @@ Linear-Team: `CodexWebApp`
   - Hinweis: `npm audit --omit=dev` meldet einen moderaten Treffer in Nexts interner `postcss@8.4.31`. `npm audit fix --force` wurde nicht ausgeführt, weil npm dafür einen brechenden Versionswechsel vorschlägt.
 - [x] COD-17 / WEB-013: Deutsche Texte auf echte Umlaute umstellen
 - [x] COD-18 / WEB-014: Projekt auf GitHub als CodexWebApp veröffentlichen
+- [x] COD-19 / WEB-015: Lokale Entwicklungsdokumentation ergänzen
+- [ ] COD-20 / WEB-016: Sichere Authentifizierung für privaten Bereich implementieren
