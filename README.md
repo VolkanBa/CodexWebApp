@@ -52,14 +52,17 @@ Alternativ kannst du in VSCode `Terminal > Run Task...` nutzen:
 - Geschäftlicher Bereich: `frontend/app/business/page.tsx`
 - Inhalte für den geschäftlichen Bereich: `frontend/app/business/businessContent.ts`
 - Projektseite: `frontend/app/business/projects/page.tsx`
+- Hochschul-Fächerbereich: `frontend/app/business/hochschule-gelsenkirchen/`
 - Login-Platzhalter: `frontend/app/private/login/page.tsx`
 - Backend-Server: `backend/src/server.ts`
+- Fächer-API und Speicherung: `backend/src/subjectStore.ts`
 - Professionelles Profilbild: `frontend/public/images/profile-professional.jpg`
 - Private-Daten-Check: `scripts/check_sensitive_files.py`
 - Architektur-Doku: `docs/ARCHITECTURE.md`
 - Lokale Entwicklungsdoku: `docs/LOCAL_DEVELOPMENT.md`
 - Auth-Doku: `docs/AUTHENTICATION.md`
 - Öffentlicher Bereich: `docs/PUBLIC_PROFILE.md`
+- Hochschul-Fächerbereich: `docs/SUBJECT_ADMIN.md`
 - Private-Daten-Richtlinie: `docs/PRIVATE_DATA_POLICY.md`
 - Git-Workflow: `docs/GIT_WORKFLOW.md`
 - Ticketprotokoll: `docs/TICKETS.md`

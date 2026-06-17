@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 import { config as loadEnv } from "dotenv";
 
 const configDir = dirname(fileURLToPath(import.meta.url));
+const projectRoot = resolve(configDir, "../..");
 loadEnv({ path: resolve(configDir, "../.env") });
 
 const minutesToMs = (minutes: number) => minutes * 60 * 1000;
@@ -24,5 +25,7 @@ export const config = {
   sessionCookieName: process.env.SESSION_COOKIE_NAME ?? "private_session",
   sessionTtlMs: minutesToMs(parsePositiveInt(process.env.SESSION_TTL_MINUTES, 60 * 24)),
   loginRateLimitWindowMs: minutesToMs(parsePositiveInt(process.env.AUTH_RATE_LIMIT_WINDOW_MINUTES, 15)),
-  loginRateLimitMax: parsePositiveInt(process.env.AUTH_RATE_LIMIT_MAX, 5)
+  loginRateLimitMax: parsePositiveInt(process.env.AUTH_RATE_LIMIT_MAX, 5),
+  subjectDataFilePath: process.env.SUBJECT_DATA_FILE_PATH ?? resolve(projectRoot, "backend/data/subjects.json"),
+  uploadRoot: process.env.UPLOAD_ROOT ?? resolve(projectRoot, "uploads")
 };

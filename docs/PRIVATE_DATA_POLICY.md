@@ -23,9 +23,10 @@ Diese Pfade sind für private oder sensible Daten reserviert und stehen in `.git
 
 - `Daten/`
 - `private-data/`
+- `backend/data/`
 - `backend/private-data/`
 - `backend/content/private/`
-- `uploads/private/`
+- `uploads/`
 - `frontend/public/documents/`
 - `frontend/public/private/`
 
@@ -34,6 +35,8 @@ Diese Pfade sind für private oder sensible Daten reserviert und stehen in `.git
 Alles unter `frontend/public/` ist öffentlich erreichbar.
 
 Private Dokumente dürfen dort nicht abgelegt werden. Wenn private Inhalte später angezeigt werden sollen, müssen sie über das Backend nach erfolgreicher Session-Prüfung ausgeliefert werden.
+
+Öffentliche Admin-Inhalte wie Fächertexte und hochgeladene Bilder werden lokal in `backend/data/` und `uploads/` gespeichert. Diese Inhalte sind absichtlich nicht Teil von GitHub.
 
 ## Automatischer Check
 

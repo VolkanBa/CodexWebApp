@@ -30,6 +30,14 @@ export const profileLinks: BusinessLink[] = [
   }
 ];
 
+export const educationLinks: BusinessLink[] = [
+  {
+    label: "Hochschule Gelsenkirchen",
+    href: "/business/hochschule-gelsenkirchen",
+    description: "Öffentliche Zusammenfassungen von Fächern, Projekten und Lerninhalten."
+  }
+];
+
 export const projectLinks: BusinessLink[] = [
   {
     label: "Projektübersicht",

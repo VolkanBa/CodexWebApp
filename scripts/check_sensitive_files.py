@@ -14,10 +14,11 @@ PUBLIC_BLOCKED_PATHS = [
 
 TRACKED_BLOCKED_PREFIXES = (
     "Daten/",
+    "backend/data/",
     "private-data/",
     "backend/private-data/",
     "backend/content/private/",
-    "uploads/private/",
+    "uploads/",
     "frontend/public/documents/",
     "frontend/public/private/",
 )

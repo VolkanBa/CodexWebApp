@@ -7,8 +7,10 @@ npm-debug.log*
 *.log
 Daten/
 private-data/
+backend/data/
 backend/private-data/
 backend/content/private/
+uploads/
 uploads/private/
 frontend/public/documents/
 frontend/public/private/

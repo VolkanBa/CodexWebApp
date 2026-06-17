@@ -8,11 +8,34 @@ import helmet from "helmet";
 import { z } from "zod";
 import { config } from "./config.js";
 import { createSession, destroySession, isValidSession } from "./sessionStore.js";
+import {
+  createSubject,
+  deleteSubject,
+  getPublicSubjectBySlug,
+  listAdminSubjects,
+  listPublicSubjects,
+  updateSubject
+} from "./subjectStore.js";
 
 const app = express();
 
 const loginSchema = z.object({
   password: z.string().min(1).max(256)
+});
+
+const subjectSchema = z.object({
+  title: z.string().trim().min(1).max(120),
+  summary: z.string().trim().max(500),
+  content: z.string().trim().max(12000),
+  isPublished: z.boolean(),
+  imageAlt: z.string().trim().max(160).optional(),
+  removeImage: z.boolean().optional(),
+  imageUpload: z
+    .object({
+      fileName: z.string().trim().min(1).max(180),
+      dataUrl: z.string().max(4_500_000)
+    })
+    .optional()
 });
 
 const sessionCookieOptions: CookieOptions = {
@@ -33,6 +56,14 @@ const clearSessionCookieOptions: CookieOptions = {
 const getSessionToken = (req: Request) => {
   const value = req.cookies?.[config.sessionCookieName];
   return typeof value === "string" ? value : undefined;
+};
+
+const getRouteParam = (value: string | string[] | undefined) => {
+  if (Array.isArray(value)) {
+    return value[0];
+  }
+
+  return value;
 };
 
 const requireAuth = (req: Request, res: Response, next: NextFunction) => {
@@ -57,15 +88,22 @@ const loginRateLimiter = rateLimit({
   }
 });
 
-app.use(helmet());
+app.use(
+  helmet({
+    crossOriginResourcePolicy: {
+      policy: "cross-origin"
+    }
+  })
+);
 app.use(
   cors({
     origin: config.frontendOrigin,
     credentials: true
   })
 );
-app.use(express.json({ limit: "100kb" }));
+app.use(express.json({ limit: "5mb" }));
 app.use(cookieParser());
+app.use("/uploads", express.static(config.uploadRoot));
 
 app.get("/health", (_req, res) => {
   res.status(200).json({
@@ -139,6 +177,140 @@ app.get("/auth/me", requireAuth, (_req, res) => {
   });
 });
 
+app.get("/subjects", async (_req, res, next) => {
+  try {
+    const subjects = await listPublicSubjects(config.subjectDataFilePath);
+    res.status(200).json({
+      school: "Hochschule Gelsenkirchen",
+      subjects
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.get("/subjects/:slug", async (req, res, next) => {
+  try {
+    const subject = await getPublicSubjectBySlug(config.subjectDataFilePath, req.params.slug);
+
+    if (!subject) {
+      res.status(404).json({
+        error: "Subject not found"
+      });
+      return;
+    }
+
+    res.status(200).json({
+      subject
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.get("/admin/subjects", requireAuth, async (_req, res, next) => {
+  try {
+    const subjects = await listAdminSubjects(config.subjectDataFilePath);
+    res.status(200).json({
+      subjects
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.post("/admin/subjects", requireAuth, async (req, res, next) => {
+  const parsedBody = subjectSchema.safeParse(req.body);
+
+  if (!parsedBody.success) {
+    res.status(400).json({
+      error: "Invalid subject payload."
+    });
+    return;
+  }
+
+  try {
+    const subject = await createSubject(config.subjectDataFilePath, config.uploadRoot, parsedBody.data);
+    res.status(201).json({
+      subject
+    });
+  } catch {
+    res.status(400).json({
+      error: "Subject could not be created."
+    });
+  }
+});
+
+app.put("/admin/subjects/:id", requireAuth, async (req, res, next) => {
+  const subjectId = getRouteParam(req.params.id);
+
+  if (!subjectId) {
+    res.status(400).json({
+      error: "Subject id is required."
+    });
+    return;
+  }
+
+  const parsedBody = subjectSchema.safeParse(req.body);
+
+  if (!parsedBody.success) {
+    res.status(400).json({
+      error: "Invalid subject payload."
+    });
+    return;
+  }
+
+  try {
+    const subject = await updateSubject(
+      config.subjectDataFilePath,
+      config.uploadRoot,
+      subjectId,
+      parsedBody.data
+    );
+
+    if (!subject) {
+      res.status(404).json({
+        error: "Subject not found."
+      });
+      return;
+    }
+
+    res.status(200).json({
+      subject
+    });
+  } catch {
+    res.status(400).json({
+      error: "Subject could not be updated."
+    });
+  }
+});
+
+app.delete("/admin/subjects/:id", requireAuth, async (req, res, next) => {
+  const subjectId = getRouteParam(req.params.id);
+
+  if (!subjectId) {
+    res.status(400).json({
+      error: "Subject id is required."
+    });
+    return;
+  }
+
+  try {
+    const wasDeleted = await deleteSubject(config.subjectDataFilePath, subjectId);
+
+    if (!wasDeleted) {
+      res.status(404).json({
+        error: "Subject not found."
+      });
+      return;
+    }
+
+    res.status(204).send();
+  } catch (error) {
+    next(error);
+  }
+});
+
 app.get("/private/content", requireAuth, (_req, res) => {
   res.status(200).json({
     title: "Privater Bereich",
@@ -148,6 +320,13 @@ app.get("/private/content", requireAuth, (_req, res) => {
       "Das Passwort wird nur als Argon2-Hash im Backend geprüft.",
       "Private Inhalte werden nicht im Frontend hardcodiert."
     ]
+  });
+});
+
+app.use((error: unknown, _req: Request, res: Response, _next: NextFunction) => {
+  console.error(error);
+  res.status(500).json({
+    error: "Internal server error"
   });
 });
 

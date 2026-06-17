@@ -1,13 +1,13 @@
 import Link from "next/link";
 
-import { profileHighlights, profileLinks, projectLinks } from "./businessContent";
+import { educationLinks, profileHighlights, profileLinks, projectLinks } from "./businessContent";
 
 function isExternalLink(href: string) {
   return href.startsWith("http");
 }
 
 export default function BusinessPage() {
-  const links = [...projectLinks, ...profileLinks];
+  const links = [...educationLinks, ...projectLinks, ...profileLinks];
 
   return (
     <main className="min-h-screen px-6 py-8">

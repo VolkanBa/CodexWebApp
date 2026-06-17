@@ -13,6 +13,7 @@ Alles, was in `frontend/public/` liegt, ist später öffentlich per URL erreichb
 - Seite: `frontend/app/business/page.tsx`
 - Pflegebare öffentliche Links: `frontend/app/business/businessContent.ts`
 - Projektseite: `frontend/app/business/projects/page.tsx`
+- Hochschul-Fächerbereich: `frontend/app/business/hochschule-gelsenkirchen/`
 - Öffentliches Profilbild: `frontend/public/images/profile-professional.jpg`
 
 ## Inhalte pflegen
@@ -24,6 +25,7 @@ Aktuell vorgesehen:
 - `profileHighlights`: kurze öffentliche Profilpunkte
 - `profileLinks`: externe öffentliche Profile, zum Beispiel GitHub
 - `projectLinks`: interne Verweise auf Projektseiten
+- Hochschul-Fächer werden über den geschützten Adminbereich unter `/business/hochschule-gelsenkirchen/admin` gepflegt.
 
 ## Was nicht hierher gehört
 

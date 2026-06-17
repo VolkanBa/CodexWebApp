@@ -24,6 +24,9 @@ Aktuelle Routen:
 - `/`: Landing Page
 - `/business`: öffentlicher geschäftlicher Bereich ohne private Nachweise
 - `/business/projects`: öffentliche Projektübersicht
+- `/business/hochschule-gelsenkirchen`: öffentliche Fächerübersicht
+- `/business/hochschule-gelsenkirchen/[slug]`: öffentliche Fachdetailseite
+- `/business/hochschule-gelsenkirchen/admin`: geschützter Adminbereich für Fächer
 - `/private/login`: serverseitig angebundenes Loginformular
 - `/private`: geschützte private Ansicht
 
@@ -36,6 +39,7 @@ Der öffentliche Bereich ist bewusst auf nicht-sensitive Inhalte begrenzt:
 - `frontend/app/business/page.tsx`: öffentliche Profilseite
 - `frontend/app/business/businessContent.ts`: pflegbare öffentliche Profilpunkte und Links
 - `frontend/app/business/projects/page.tsx`: eigene Projektseite
+- `frontend/app/business/hochschule-gelsenkirchen/`: öffentliche Hochschul-Fächerseiten und Admin-Editor
 - `frontend/public/images/profile-professional.jpg`: professionelles Profilbild für die Landing Page
 - `scripts/check_sensitive_files.py`: blockiert sensible öffentliche Dokumentpfade im Build
 
@@ -74,6 +78,17 @@ Auth-Routen:
 - `POST /auth/logout`
 - `GET /auth/me`
 - `GET /private/content`
+
+Fächer-Routen:
+
+- `GET /subjects`: veröffentlichte Fächer lesen
+- `GET /subjects/:slug`: veröffentlichtes Fach lesen
+- `GET /admin/subjects`: alle Fächer im Adminbereich lesen
+- `POST /admin/subjects`: Fach erstellen
+- `PUT /admin/subjects/:id`: Fach bearbeiten
+- `DELETE /admin/subjects/:id`: Fach löschen
+
+Die Admin-Routen verwenden dieselbe serverseitige Session-Prüfung wie der private Bereich. Fächertexte liegen lokal in `backend/data/subjects.json`, Bilder in `uploads/subjects/`. Beide Pfade werden nicht nach GitHub gepusht.
 
 ## Sicherheit
 

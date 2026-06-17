@@ -61,3 +61,10 @@ Linear-Team: `CodexWebApp`
     - [x] COD-28 / WEB-020-FE: Zeugnisse und Dropdown-Menüs aus öffentlichem Profil entfernen
     - [x] COD-29 / WEB-020-SEC: Private Daten gegen versehentliches Committen absichern
     - [x] COD-30 / WEB-020-DOCS: Private-Daten-Richtlinie und Ticketprotokoll ergänzen
+- [x] COD-31 / WEB-021: Hochschul-Fächerbereich mit Admin-Bearbeitung umsetzen
+  - Branch: `codex/subject-admin-area`
+  - Linear: `https://linear.app/codexwebapp/issue/COD-31/web-021-hochschul-facherbereich-mit-admin-bearbeitung-umsetzen`
+  - Untertickets:
+    - [x] COD-32 / WEB-021-BE: Geschützte Fächer-API mit Bildspeicherung implementieren
+    - [x] COD-33 / WEB-021-FE: Öffentliche Hochschul-Fächerseiten und Admin-Editor bauen
+    - [x] COD-34 / WEB-021-DOCS: Hochschul-Fächerbereich dokumentieren
