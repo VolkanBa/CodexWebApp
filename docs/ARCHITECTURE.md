@@ -23,6 +23,7 @@ Aktuelle Routen:
 
 - `/`: Landing Page
 - `/business`: öffentlicher geschäftlicher Bereich mit Dropdown-Struktur
+- `/business/projects`: öffentliche Projektübersicht
 - `/private/login`: serverseitig angebundenes Loginformular
 - `/private`: geschützte private Ansicht
 
@@ -35,6 +36,9 @@ Der öffentliche Bereich wird datengetrieben aufgebaut:
 - `frontend/app/business/page.tsx`: Seite und Abschnittsdefinitionen
 - `frontend/app/business/BusinessProfileMenu.tsx`: Dropdown und Bereichsanzeige
 - `frontend/app/business/businessContent.ts`: pflegbare Inhalte für Schule, Beruf, Freitext und Links
+- `frontend/app/business/projects/page.tsx`: eigene Projektseite
+- `frontend/public/documents/`: öffentlich ausgelieferte Zeugnisse und Nachweise
+- `frontend/public/images/profile-professional.jpg`: professionelles Profilbild für die Landing Page
 
 Der Freitextbereich wird nur angezeigt, wenn `freeTextContent` nicht leer ist. Dokumente sind für spätere Bildvorschauen und PDF-Downloads vorbereitet. Details stehen in `docs/PUBLIC_PROFILE.md`.
 

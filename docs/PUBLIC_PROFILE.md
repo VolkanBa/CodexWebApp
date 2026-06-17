@@ -7,6 +7,8 @@ Der öffentliche Bereich liegt unter `/business` und ist für Arbeitgeber, Kunde
 - Seite: `frontend/app/business/page.tsx`
 - Interaktives Dropdown: `frontend/app/business/BusinessProfileMenu.tsx`
 - Pflegebare Inhalte: `frontend/app/business/businessContent.ts`
+- Projektseite: `frontend/app/business/projects/page.tsx`
+- Öffentliche Assets: `frontend/public/documents/` und `frontend/public/images/`
 
 ## Inhalte pflegen
 
@@ -73,3 +75,22 @@ Beispiel:
 ```
 
 Keine privaten oder sensiblen Dokumente im öffentlichen Bereich ablegen. Inhalte, die nur mit Passwort sichtbar sein sollen, gehören später in den geschützten privaten Bereich und werden serverseitig ausgeliefert.
+
+## Aktuelle Asset-Struktur
+
+Die Dateien aus `Daten/` wurden mit URL-tauglichen Namen nach `frontend/public/` kopiert.
+
+- Professionelles Profilbild: `frontend/public/images/profile-professional.jpg`
+- Schulzeugnisse: `frontend/public/documents/education/school/`
+- Unizeugnisse: `frontend/public/documents/education/university/`
+- Arbeitszeugnisse: `frontend/public/documents/work/`
+
+Die Originaldateien in `Daten/` bleiben unverändert. Next.js liefert nur Dateien aus `frontend/public/` öffentlich aus.
+
+Der lokale Ordner `Daten/` steht in `.gitignore`, damit die Originalstruktur nicht versehentlich zusätzlich committed wird.
+
+## Projekte
+
+Der Projekteinstieg wird in `projectLinks` gepflegt und verweist auf `/business/projects`.
+
+Die Projektseite kann später um echte Projektkarten, Screenshots, Tech Stack, GitHub-Repositories und Detailseiten erweitert werden.

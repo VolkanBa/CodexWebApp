@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { BusinessProfileMenu } from "./BusinessProfileMenu";
-import { freeTextContent, profileLinks, schoolCareer, workExperience } from "./businessContent";
+import { freeTextContent, profileLinks, projectLinks, schoolCareer, workExperience } from "./businessContent";
 
 const sections = [
   {
@@ -47,6 +47,19 @@ const sections = [
           links: profileLinks
         }
       ]
+    : []),
+  ...(projectLinks.length
+    ? [
+        {
+          id: "projects" as const,
+          label: "Projekte",
+          eyebrow: "Projektbereich",
+          title: "Projekte und Referenzen",
+          description: "Eine eigene Projektseite bündelt spätere Arbeiten, Repositories und Detailansichten.",
+          type: "links" as const,
+          links: projectLinks
+        }
+      ]
     : [])
 ];
 
@@ -78,7 +91,7 @@ export default function BusinessPage() {
           </div>
 
           <div className="grid gap-3 border border-suit-purple/45 bg-white/[0.045] p-5">
-            {["Schule", "Beruf", "Profil", "Links"].map((item) => (
+            {["Schule", "Beruf", "Projekte", "Links"].map((item) => (
               <div key={item} className="flex items-center justify-between border-b border-white/10 py-3 last:border-b-0">
                 <span className="font-bold text-white">{item}</span>
                 <span className="h-2.5 w-2.5 bg-suit-green" aria-hidden="true" />

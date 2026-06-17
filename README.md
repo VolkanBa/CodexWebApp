@@ -51,9 +51,11 @@ Alternativ kannst du in VSCode `Terminal > Run Task...` nutzen:
 - Landing Page: `frontend/app/page.tsx`
 - Geschäftlicher Bereich: `frontend/app/business/page.tsx`
 - Inhalte für den geschäftlichen Bereich: `frontend/app/business/businessContent.ts`
+- Projektseite: `frontend/app/business/projects/page.tsx`
 - Login-Platzhalter: `frontend/app/private/login/page.tsx`
 - Backend-Server: `backend/src/server.ts`
-- Hero-Bild: `frontend/public/images/hero-suit.png`
+- Professionelles Profilbild: `frontend/public/images/profile-professional.jpg`
+- Öffentliche Dokumente: `frontend/public/documents/`
 - Architektur-Doku: `docs/ARCHITECTURE.md`
 - Lokale Entwicklungsdoku: `docs/LOCAL_DEVELOPMENT.md`
 - Auth-Doku: `docs/AUTHENTICATION.md`

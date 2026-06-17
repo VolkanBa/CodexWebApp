@@ -44,3 +44,6 @@ Linear-Team: `CodexWebApp`
 - [x] COD-21 / WEB-017: Öffentlichen Bereich mit Dropdown-Struktur ausbauen
   - Branch: `codex/public-business-page`
   - Linear: `https://linear.app/codexwebapp/issue/COD-21/web-017-offentlichen-bereich-mit-dropdown-struktur-ausbauen`
+- [x] COD-22 / WEB-018: Öffentliche Dokumente, Profilbild und Projektbereich einbinden
+  - Branch: `codex/embed-public-data-projects`
+  - Linear: `https://linear.app/codexwebapp/issue/COD-22/web-018-offentliche-dokumente-profilbild-und-projektbereich-einbinden`

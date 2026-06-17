@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
 
 import type { BusinessLink, BusinessTimelineEntry } from "./businessContent";
@@ -25,7 +27,7 @@ type TextSection = {
 };
 
 type LinkSection = {
-  id: "links";
+  id: "links" | "projects";
   label: string;
   eyebrow: string;
   title: string;
@@ -198,18 +200,40 @@ function ProfileLinks({ links }: { links: BusinessLink[] }) {
   return (
     <div className="grid gap-4 md:grid-cols-2">
       {links.map((link) => (
-        <a
+        <LinkOrAnchor
           key={link.href}
           href={link.href}
-          target="_blank"
-          rel="noreferrer"
           className="border border-white/12 bg-suit-black/45 p-5 transition hover:-translate-y-1 hover:border-suit-green/70 hover:bg-suit-green/10"
         >
           <h3 className="text-xl font-bold text-white">{link.label}</h3>
           <p className="mt-3 leading-7 text-white/66">{link.description}</p>
           <p className="mt-4 text-sm font-semibold text-suit-green">{link.href}</p>
-        </a>
+        </LinkOrAnchor>
       ))}
     </div>
+  );
+}
+
+function LinkOrAnchor({
+  href,
+  className,
+  children
+}: {
+  href: string;
+  className: string;
+  children: ReactNode;
+}) {
+  if (href.startsWith("http")) {
+    return (
+      <a href={href} target="_blank" rel="noreferrer" className={className}>
+        {children}
+      </a>
+    );
+  }
+
+  return (
+    <Link href={href} className={className}>
+      {children}
+    </Link>
   );
 }

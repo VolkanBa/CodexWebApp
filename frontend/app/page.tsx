@@ -66,8 +66,8 @@ export default function Home() {
           <div className="absolute -inset-4 bg-suit-purple/25 blur-3xl" aria-hidden="true" />
           <div className="relative overflow-hidden border border-white/12 bg-black shadow-glow">
             <img
-              src="/images/hero-suit.png"
-              alt="Porträt im lila, orange, schwarzen und grünen Anzug"
+              src="/images/profile-professional.jpg"
+              alt="Professionelles Profilbild"
               className="aspect-[4/5] h-full w-full object-cover object-center"
             />
           </div>
