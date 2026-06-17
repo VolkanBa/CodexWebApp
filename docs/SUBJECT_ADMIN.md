@@ -13,14 +13,14 @@ Hier kannst du öffentliche Zusammenfassungen deiner Fächer pflegen. Jedes Fach
 - Fachname
 - Kurzbeschreibung
 - ausführlicher Zusammenfassung
-- optionalem Bild
+- mehreren optionalen Bildern
 - Veröffentlichungsstatus
 
 ## Adminrechte
 
 Der Adminbereich nutzt die bestehende Authentifizierung des privaten Bereichs.
 
-1. Unter `/private/login` anmelden.
+1. Unter `/login` anmelden.
 2. Danach `/business/hochschule-gelsenkirchen/admin` öffnen.
 3. Fächer erstellen, bearbeiten, veröffentlichen oder löschen.
 
@@ -44,7 +44,7 @@ Beide Pfade stehen in `.gitignore`.
 
 Unveröffentlichte Fächer sind nur im Adminbereich sichtbar.
 
-## Bildregeln
+## Bilder
 
 Erlaubt sind:
 
@@ -53,6 +53,15 @@ Erlaubt sind:
 - WebP
 
 Maximale Dateigröße pro Bild: 3 MB.
+
+Im Adminbereich können mehrere Bilder pro Fach hochgeladen werden. Bereits gespeicherte Bilder können:
+
+- nach oben verschoben werden
+- nach unten verschoben werden
+- entfernt werden
+- mit einer Bildbeschreibung versehen werden
+
+Die Reihenfolge im Adminbereich ist die Reihenfolge auf der öffentlichen Fachseite.
 
 ## Datenschutz
 

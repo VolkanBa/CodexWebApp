@@ -68,3 +68,12 @@ Linear-Team: `CodexWebApp`
     - [x] COD-32 / WEB-021-BE: Geschützte Fächer-API mit Bildspeicherung implementieren
     - [x] COD-33 / WEB-021-FE: Öffentliche Hochschul-Fächerseiten und Admin-Editor bauen
     - [x] COD-34 / WEB-021-DOCS: Hochschul-Fächerbereich dokumentieren
+- [x] WEB-022: Login-Flow, Fächer-Galerie und Dockerisierung umsetzen
+  - Branch: `codex/admin-gallery-docker`
+  - Linear: ausstehend, weil Linear-Toolaufrufe aktuell mit einem internen Tool-Routingfehler abbrechen
+  - Untertickets:
+    - [x] WEB-022-FE-LOGIN: Eigenen Login-Reiter und Redirect zur Landing Page umsetzen
+    - [x] WEB-022-FE-GALLERY: Mehrere Bilder pro Fach anzeigen und im Adminbereich sortierbar machen
+    - [x] WEB-022-BE: Mehrfachbilder serverseitig speichern und Uploadpfade schützen
+    - [x] WEB-022-DEVOPS: Dockerfiles, Compose und Docker-Doku ergänzen
+    - [x] WEB-022-DOCS: Dokumentation und Datenschutzgrenzen aktualisieren

@@ -22,6 +22,7 @@ Aufgaben:
 Aktuelle Routen:
 
 - `/`: Landing Page
+- `/login`: eigener Login-Reiter für Admin- und Privatbereich
 - `/business`: öffentlicher geschäftlicher Bereich ohne private Nachweise
 - `/business/projects`: öffentliche Projektübersicht
 - `/business/hochschule-gelsenkirchen`: öffentliche Fächerübersicht
@@ -88,7 +89,16 @@ Fächer-Routen:
 - `PUT /admin/subjects/:id`: Fach bearbeiten
 - `DELETE /admin/subjects/:id`: Fach löschen
 
-Die Admin-Routen verwenden dieselbe serverseitige Session-Prüfung wie der private Bereich. Fächertexte liegen lokal in `backend/data/subjects.json`, Bilder in `uploads/subjects/`. Beide Pfade werden nicht nach GitHub gepusht.
+Die Admin-Routen verwenden dieselbe serverseitige Session-Prüfung wie der private Bereich. Fächertexte liegen lokal in `backend/data/subjects.json`, Bilder in `uploads/subjects/`. Pro Fach sind mehrere Bilder möglich; ihre Reihenfolge wird im JSON gespeichert. Beide Pfade werden nicht nach GitHub gepusht.
+
+## Docker
+
+Docker Compose startet Frontend und Backend getrennt. Details stehen in `docs/DOCKER.md`.
+
+- Frontend-Image: `frontend/Dockerfile`
+- Backend-Image: `backend/Dockerfile`
+- Compose: `docker-compose.yml`
+- Persistente Daten: Docker-Volumes für `backend/data` und `uploads`
 
 ## Sicherheit
 

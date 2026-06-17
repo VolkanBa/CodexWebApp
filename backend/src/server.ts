@@ -28,13 +28,25 @@ const subjectSchema = z.object({
   summary: z.string().trim().max(500),
   content: z.string().trim().max(12000),
   isPublished: z.boolean(),
-  imageAlt: z.string().trim().max(160).optional(),
-  removeImage: z.boolean().optional(),
-  imageUpload: z
-    .object({
-      fileName: z.string().trim().min(1).max(180),
-      dataUrl: z.string().max(4_500_000)
-    })
+  images: z
+    .array(
+      z.object({
+        id: z.string().trim().min(1).max(120),
+        url: z.string().trim().min(1).max(300),
+        alt: z.string().trim().max(160).optional()
+      })
+    )
+    .max(12)
+    .optional(),
+  imageUploads: z
+    .array(
+      z.object({
+        fileName: z.string().trim().min(1).max(180),
+        dataUrl: z.string().max(4_500_000),
+        alt: z.string().trim().max(160).optional()
+      })
+    )
+    .max(8)
     .optional()
 });
 
@@ -101,7 +113,7 @@ app.use(
     credentials: true
   })
 );
-app.use(express.json({ limit: "5mb" }));
+app.use(express.json({ limit: "30mb" }));
 app.use(cookieParser());
 app.use("/uploads", express.static(config.uploadRoot));
 
@@ -296,7 +308,7 @@ app.delete("/admin/subjects/:id", requireAuth, async (req, res, next) => {
   }
 
   try {
-    const wasDeleted = await deleteSubject(config.subjectDataFilePath, subjectId);
+    const wasDeleted = await deleteSubject(config.subjectDataFilePath, config.uploadRoot, subjectId);
 
     if (!wasDeleted) {
       res.status(404).json({

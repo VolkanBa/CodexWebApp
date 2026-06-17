@@ -3,30 +3,29 @@
 import Link from "next/link";
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 
-import { apiBaseUrl, resolveAssetUrl, type Subject } from "../subjectTypes";
+import { apiBaseUrl, resolveAssetUrl, type Subject, type SubjectImage } from "../subjectTypes";
 
 type FormState = {
   id?: string;
   title: string;
   summary: string;
   content: string;
-  imageAlt: string;
   isPublished: boolean;
-  removeImage: boolean;
+  images: SubjectImage[];
 };
 
 type ImageUpload = {
   fileName: string;
   dataUrl: string;
+  alt?: string;
 };
 
 const emptyForm: FormState = {
   title: "",
   summary: "",
   content: "",
-  imageAlt: "",
   isPublished: true,
-  removeImage: false
+  images: []
 };
 
 function subjectToForm(subject: Subject): FormState {
@@ -35,9 +34,8 @@ function subjectToForm(subject: Subject): FormState {
     title: subject.title,
     summary: subject.summary,
     content: subject.content,
-    imageAlt: subject.imageAlt ?? "",
     isPublished: subject.isPublished,
-    removeImage: false
+    images: subject.images
   };
 }
 
@@ -50,15 +48,20 @@ function readFileAsDataUrl(file: File) {
   });
 }
 
+function moveItem<T>(items: T[], fromIndex: number, toIndex: number) {
+  const nextItems = [...items];
+  const [item] = nextItems.splice(fromIndex, 1);
+  nextItems.splice(toIndex, 0, item);
+  return nextItems;
+}
+
 export function SubjectAdminEditor() {
   const [authStatus, setAuthStatus] = useState<"loading" | "authenticated" | "unauthorized">("loading");
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [form, setForm] = useState<FormState>(emptyForm);
-  const [imageUpload, setImageUpload] = useState<ImageUpload | undefined>();
+  const [imageUploads, setImageUploads] = useState<ImageUpload[]>([]);
   const [message, setMessage] = useState("");
   const [isSaving, setIsSaving] = useState(false);
-
-  const selectedSubject = subjects.find((subject) => subject.id === form.id);
 
   const loadSubjects = async () => {
     const response = await fetch(`${apiBaseUrl}/admin/subjects`, {
@@ -102,7 +105,7 @@ export function SubjectAdminEditor() {
     void bootstrap();
   }, []);
 
-  const updateField = (field: keyof FormState, value: string | boolean) => {
+  const updateField = (field: keyof FormState, value: string | boolean | SubjectImage[]) => {
     setForm((current) => ({
       ...current,
       [field]: value
@@ -110,32 +113,39 @@ export function SubjectAdminEditor() {
   };
 
   const handleImageChange = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+    const files = Array.from(event.target.files ?? []);
 
-    if (!file) {
-      setImageUpload(undefined);
+    if (files.length === 0) {
+      setImageUploads([]);
       return;
     }
 
-    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
-      setMessage("Bitte nur JPG, PNG oder WebP hochladen.");
-      return;
+    const uploads: ImageUpload[] = [];
+
+    for (const file of files) {
+      if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+        setMessage("Bitte nur JPG, PNG oder WebP hochladen.");
+        return;
+      }
+
+      if (file.size > 3 * 1024 * 1024) {
+        setMessage("Ein Bild darf maximal 3 MB groß sein.");
+        return;
+      }
+
+      uploads.push({
+        fileName: file.name,
+        dataUrl: await readFileAsDataUrl(file)
+      });
     }
 
-    if (file.size > 3 * 1024 * 1024) {
-      setMessage("Das Bild darf maximal 3 MB groß sein.");
-      return;
-    }
-
-    setImageUpload({
-      fileName: file.name,
-      dataUrl: await readFileAsDataUrl(file)
-    });
+    setImageUploads(uploads);
+    setMessage(`${uploads.length} Bild(er) zum Speichern vorgemerkt.`);
   };
 
   const resetForm = () => {
     setForm(emptyForm);
-    setImageUpload(undefined);
+    setImageUploads([]);
     setMessage("");
   };
 
@@ -148,10 +158,9 @@ export function SubjectAdminEditor() {
       title: form.title,
       summary: form.summary,
       content: form.content,
-      imageAlt: form.imageAlt || undefined,
       isPublished: form.isPublished,
-      removeImage: form.removeImage,
-      imageUpload
+      images: form.images,
+      imageUploads
     };
 
     try {
@@ -176,7 +185,7 @@ export function SubjectAdminEditor() {
       const data = (await response.json()) as { subject: Subject };
       await loadSubjects();
       setForm(subjectToForm(data.subject));
-      setImageUpload(undefined);
+      setImageUploads([]);
       setMessage("Fach wurde gespeichert.");
     } catch {
       setMessage("Das Fach konnte nicht gespeichert werden.");
@@ -222,10 +231,10 @@ export function SubjectAdminEditor() {
       <div className="border border-suit-orange/45 bg-suit-orange/10 p-6">
         <h2 className="text-2xl font-bold text-white">Adminbereich geschützt</h2>
         <p className="mt-3 leading-7 text-white/70">
-          Melde dich zuerst mit deinem bestehenden Passwort an. Danach kannst du Fächer bearbeiten.
+          Melde dich zuerst an. Danach kannst du Fächer bearbeiten.
         </p>
         <Link
-          href="/private/login"
+          href="/login"
           className="mt-5 inline-flex bg-suit-orange px-4 py-2 text-sm font-bold text-suit-black transition hover:bg-orange-400"
         >
           Zum Login
@@ -257,7 +266,7 @@ export function SubjectAdminEditor() {
               }`}
               onClick={() => {
                 setForm(subjectToForm(subject));
-                setImageUpload(undefined);
+                setImageUploads([]);
                 setMessage("");
               }}
             >
@@ -302,43 +311,79 @@ export function SubjectAdminEditor() {
             />
           </label>
 
-          <div className="grid gap-5 md:grid-cols-2">
-            <label className="block">
-              <span className="text-sm font-semibold text-white/78">Bild</span>
-              <input
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                onChange={handleImageChange}
-                className="mt-2 w-full border border-white/12 bg-black/35 px-4 py-3 text-sm text-white"
-              />
-            </label>
+          <label className="block">
+            <span className="text-sm font-semibold text-white/78">Weitere Bilder</span>
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              multiple
+              onChange={handleImageChange}
+              className="mt-2 w-full border border-white/12 bg-black/35 px-4 py-3 text-sm text-white"
+            />
+          </label>
 
-            <label className="block">
-              <span className="text-sm font-semibold text-white/78">Bildbeschreibung</span>
-              <input
-                value={form.imageAlt}
-                onChange={(event) => updateField("imageAlt", event.target.value)}
-                maxLength={160}
-                className="mt-2 w-full border border-white/12 bg-black/35 px-4 py-3 text-white outline-none transition focus:border-suit-green/70"
-              />
-            </label>
-          </div>
-
-          {selectedSubject?.imageUrl ? (
-            <div className="border border-white/12 bg-suit-black/35 p-4">
-              <img
-                src={resolveAssetUrl(selectedSubject.imageUrl)}
-                alt={selectedSubject.imageAlt || selectedSubject.title}
-                className="max-h-72 w-full object-cover"
-              />
-              <label className="mt-4 flex items-center gap-3 text-sm font-semibold text-white/78">
-                <input
-                  type="checkbox"
-                  checked={form.removeImage}
-                  onChange={(event) => updateField("removeImage", event.target.checked)}
-                />
-                Bild beim Speichern entfernen
-              </label>
+          {form.images.length > 0 ? (
+            <div className="grid gap-4">
+              <h3 className="text-sm font-semibold text-white/78">Bilder sortieren</h3>
+              <div className="grid gap-4 md:grid-cols-2">
+                {form.images.map((image, index) => (
+                  <div key={image.id} className="border border-white/12 bg-suit-black/35 p-4">
+                    <img
+                      src={resolveAssetUrl(image.url)}
+                      alt={image.alt || form.title || "Fachbild"}
+                      className="aspect-[16/10] w-full object-cover"
+                    />
+                    <input
+                      value={image.alt ?? ""}
+                      onChange={(event) =>
+                        updateField(
+                          "images",
+                          form.images.map((item) =>
+                            item.id === image.id
+                              ? {
+                                  ...item,
+                                  alt: event.target.value
+                                }
+                              : item
+                          )
+                        )
+                      }
+                      placeholder="Bildbeschreibung"
+                      className="mt-3 w-full border border-white/12 bg-black/35 px-3 py-2 text-sm text-white outline-none transition focus:border-suit-green/70"
+                    />
+                    <div className="mt-3 grid grid-cols-3 gap-2">
+                      <button
+                        type="button"
+                        disabled={index === 0}
+                        className="border border-white/12 px-3 py-2 text-sm font-bold text-white/72 transition hover:border-suit-green/70 disabled:opacity-35"
+                        onClick={() => updateField("images", moveItem(form.images, index, index - 1))}
+                      >
+                        Hoch
+                      </button>
+                      <button
+                        type="button"
+                        disabled={index === form.images.length - 1}
+                        className="border border-white/12 px-3 py-2 text-sm font-bold text-white/72 transition hover:border-suit-green/70 disabled:opacity-35"
+                        onClick={() => updateField("images", moveItem(form.images, index, index + 1))}
+                      >
+                        Runter
+                      </button>
+                      <button
+                        type="button"
+                        className="border border-suit-orange/60 px-3 py-2 text-sm font-bold text-suit-orange transition hover:bg-suit-orange/10"
+                        onClick={() =>
+                          updateField(
+                            "images",
+                            form.images.filter((item) => item.id !== image.id)
+                          )
+                        }
+                      >
+                        Entfernen
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           ) : null}
 

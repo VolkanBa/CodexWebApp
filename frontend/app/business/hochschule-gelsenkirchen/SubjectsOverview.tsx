@@ -62,10 +62,10 @@ export function SubjectsOverview() {
           href={`/business/hochschule-gelsenkirchen/${subject.slug}`}
           className="border border-white/12 bg-white/[0.045] p-5 transition hover:-translate-y-1 hover:border-suit-green/70 hover:bg-suit-green/10"
         >
-          {subject.imageUrl ? (
+          {subject.images[0] ? (
             <img
-              src={resolveAssetUrl(subject.imageUrl)}
-              alt={subject.imageAlt || subject.title}
+              src={resolveAssetUrl(subject.images[0].url)}
+              alt={subject.images[0].alt || subject.title}
               className="mb-5 aspect-[16/9] w-full border border-white/10 object-cover"
             />
           ) : null}

@@ -61,12 +61,26 @@ export function SubjectDetail({ slug }: { slug: string }) {
 
   return (
     <article>
-      {subject.imageUrl ? (
-        <img
-          src={resolveAssetUrl(subject.imageUrl)}
-          alt={subject.imageAlt || subject.title}
-          className="mb-8 max-h-[32rem] w-full border border-white/12 object-cover"
-        />
+      {subject.images.length > 0 ? (
+        <div className="mb-8 grid gap-4">
+          <img
+            src={resolveAssetUrl(subject.images[0].url)}
+            alt={subject.images[0].alt || subject.title}
+            className="max-h-[32rem] w-full border border-white/12 object-cover"
+          />
+          {subject.images.length > 1 ? (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {subject.images.slice(1).map((image) => (
+                <img
+                  key={image.id}
+                  src={resolveAssetUrl(image.url)}
+                  alt={image.alt || subject.title}
+                  className="aspect-[16/10] w-full border border-white/12 object-cover"
+                />
+              ))}
+            </div>
+          ) : null}
+        </div>
       ) : null}
       <p className="mb-5 inline-flex border border-suit-orange/50 bg-suit-orange/10 px-3 py-1 text-sm font-medium text-suit-orange">
         Hochschule Gelsenkirchen

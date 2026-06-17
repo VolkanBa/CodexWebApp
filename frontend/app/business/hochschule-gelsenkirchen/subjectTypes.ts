@@ -1,3 +1,9 @@
+export type SubjectImage = {
+  id: string;
+  url: string;
+  alt?: string;
+};
+
 export type Subject = {
   id: string;
   slug: string;
@@ -5,8 +11,7 @@ export type Subject = {
   summary: string;
   content: string;
   isPublished: boolean;
-  imageUrl?: string;
-  imageAlt?: string;
+  images: SubjectImage[];
   createdAt: string;
   updatedAt: string;
 };

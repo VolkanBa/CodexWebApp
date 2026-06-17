@@ -1,10 +1,17 @@
 import { randomUUID } from "node:crypto";
-import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
-import { dirname, extname, join } from "node:path";
+import { mkdir, readFile, rename, unlink, writeFile } from "node:fs/promises";
+import { basename, dirname, extname, join, resolve } from "node:path";
 
 export type SubjectImageUpload = {
   fileName: string;
   dataUrl: string;
+  alt?: string;
+};
+
+export type SubjectImage = {
+  id: string;
+  url: string;
+  alt?: string;
 };
 
 export type SubjectInput = {
@@ -12,9 +19,8 @@ export type SubjectInput = {
   summary: string;
   content: string;
   isPublished: boolean;
-  imageAlt?: string;
-  imageUpload?: SubjectImageUpload;
-  removeImage?: boolean;
+  images?: SubjectImage[];
+  imageUploads?: SubjectImageUpload[];
 };
 
 export type Subject = {
@@ -24,10 +30,14 @@ export type Subject = {
   summary: string;
   content: string;
   isPublished: boolean;
-  imageUrl?: string;
-  imageAlt?: string;
+  images: SubjectImage[];
   createdAt: string;
   updatedAt: string;
+};
+
+type StoredSubject = Subject & {
+  imageUrl?: string;
+  imageAlt?: string;
 };
 
 const fileExtensionsByMimeType: Record<string, string> = {
@@ -53,6 +63,29 @@ const createSlug = (title: string) => {
   return slug || "fach";
 };
 
+const normalizeSubject = (subject: StoredSubject): Subject => ({
+  id: subject.id,
+  slug: subject.slug,
+  title: subject.title,
+  summary: subject.summary,
+  content: subject.content,
+  isPublished: subject.isPublished,
+  images:
+    subject.images?.length > 0
+      ? subject.images
+      : subject.imageUrl
+        ? [
+            {
+              id: randomUUID(),
+              url: subject.imageUrl,
+              alt: subject.imageAlt
+            }
+          ]
+        : [],
+  createdAt: subject.createdAt,
+  updatedAt: subject.updatedAt
+});
+
 const createUniqueSlug = (title: string, subjects: Subject[], currentId?: string) => {
   const baseSlug = createSlug(title);
   let slug = baseSlug;
@@ -70,7 +103,7 @@ const readSubjects = async (dataFilePath: string): Promise<Subject[]> => {
   try {
     const file = await readFile(dataFilePath, "utf8");
     const parsed = JSON.parse(file);
-    return Array.isArray(parsed) ? parsed : [];
+    return Array.isArray(parsed) ? parsed.map((subject) => normalizeSubject(subject)) : [];
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ENOENT") {
       return [];
@@ -107,15 +140,41 @@ const parseImageUpload = (upload: SubjectImageUpload) => {
   };
 };
 
-const saveImage = async (uploadRoot: string, subjectId: string, upload: SubjectImageUpload) => {
+const saveImage = async (uploadRoot: string, subjectId: string, upload: SubjectImageUpload): Promise<SubjectImage> => {
   const parsedUpload = parseImageUpload(upload);
   const directory = join(uploadRoot, "subjects");
   await mkdir(directory, { recursive: true });
 
-  const fileName = `${subjectId}-${Date.now()}${parsedUpload.extension || extname(upload.fileName) || ".jpg"}`;
+  const fileName = `${subjectId}-${Date.now()}-${randomUUID()}${parsedUpload.extension || extname(upload.fileName) || ".jpg"}`;
   await writeFile(join(directory, fileName), parsedUpload.buffer);
 
-  return `/uploads/subjects/${fileName}`;
+  return {
+    id: randomUUID(),
+    url: `/uploads/subjects/${fileName}`,
+    alt: upload.alt?.trim() || undefined
+  };
+};
+
+const deleteUploadImage = async (uploadRoot: string, imageUrl: string) => {
+  if (!imageUrl.startsWith("/uploads/subjects/")) {
+    return;
+  }
+
+  const targetPath = resolve(uploadRoot, "subjects", basename(imageUrl));
+  const uploadSubjectsPath = resolve(uploadRoot, "subjects");
+
+  if (!targetPath.startsWith(uploadSubjectsPath)) {
+    return;
+  }
+
+  await unlink(targetPath).catch(() => undefined);
+};
+
+const removeDeletedImages = async (uploadRoot: string, previousImages: SubjectImage[], nextImages: SubjectImage[]) => {
+  const nextImageIds = new Set(nextImages.map((image) => image.id));
+  const deletedImages = previousImages.filter((image) => !nextImageIds.has(image.id));
+
+  await Promise.all(deletedImages.map((image) => deleteUploadImage(uploadRoot, image.url)));
 };
 
 export const listPublicSubjects = async (dataFilePath: string) => {
@@ -139,6 +198,7 @@ export const createSubject = async (dataFilePath: string, uploadRoot: string, in
   const subjects = await readSubjects(dataFilePath);
   const now = new Date().toISOString();
   const id = randomUUID();
+  const uploadedImages = await Promise.all((input.imageUploads ?? []).map((upload) => saveImage(uploadRoot, id, upload)));
   const subject: Subject = {
     id,
     slug: createUniqueSlug(input.title, subjects),
@@ -146,14 +206,10 @@ export const createSubject = async (dataFilePath: string, uploadRoot: string, in
     summary: input.summary.trim(),
     content: input.content.trim(),
     isPublished: input.isPublished,
-    imageAlt: input.imageAlt?.trim() || undefined,
+    images: [...(input.images ?? []), ...uploadedImages],
     createdAt: now,
     updatedAt: now
   };
-
-  if (input.imageUpload) {
-    subject.imageUrl = await saveImage(uploadRoot, id, input.imageUpload);
-  }
 
   subjects.push(subject);
   await writeSubjects(dataFilePath, subjects);
@@ -173,34 +229,35 @@ export const updateSubject = async (
     return undefined;
   }
 
+  const previousImages = subject.images;
+  const retainedImages = (input.images ?? []).filter((image) => previousImages.some((current) => current.id === image.id));
+  const uploadedImages = await Promise.all((input.imageUploads ?? []).map((upload) => saveImage(uploadRoot, subjectId, upload)));
+
   subject.title = normalizeText(input.title);
   subject.slug = createUniqueSlug(input.title, subjects, subjectId);
   subject.summary = input.summary.trim();
   subject.content = input.content.trim();
   subject.isPublished = input.isPublished;
-  subject.imageAlt = input.imageAlt?.trim() || undefined;
+  subject.images = [...retainedImages, ...uploadedImages];
   subject.updatedAt = new Date().toISOString();
 
-  if (input.removeImage) {
-    subject.imageUrl = undefined;
-  }
-
-  if (input.imageUpload) {
-    subject.imageUrl = await saveImage(uploadRoot, subjectId, input.imageUpload);
-  }
-
+  await removeDeletedImages(uploadRoot, previousImages, subject.images);
   await writeSubjects(dataFilePath, subjects);
   return subject;
 };
 
-export const deleteSubject = async (dataFilePath: string, subjectId: string) => {
+export const deleteSubject = async (dataFilePath: string, uploadRoot: string, subjectId: string) => {
   const subjects = await readSubjects(dataFilePath);
-  const filteredSubjects = subjects.filter((subject) => subject.id !== subjectId);
+  const subject = subjects.find((item) => item.id === subjectId);
 
-  if (filteredSubjects.length === subjects.length) {
+  if (!subject) {
     return false;
   }
 
-  await writeSubjects(dataFilePath, filteredSubjects);
+  await Promise.all(subject.images.map((image) => deleteUploadImage(uploadRoot, image.url)));
+  await writeSubjects(
+    dataFilePath,
+    subjects.filter((item) => item.id !== subjectId)
+  );
   return true;
 };

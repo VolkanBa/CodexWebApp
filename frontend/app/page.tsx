@@ -10,7 +10,7 @@ const sections = [
   {
     title: "Privat",
     text: "Ein später geschützter Bereich für persönliche Inhalte.",
-    href: "/private/login",
+    href: "/login",
     accent: "border-suit-green/60"
   }
 ];
@@ -26,8 +26,8 @@ export default function Home() {
           <Link className="transition hover:text-white" href="/business">
             Geschäftlich
           </Link>
-          <Link className="transition hover:text-white" href="/private/login">
-            Privat
+          <Link className="transition hover:text-white" href="/login">
+            Anmeldung
           </Link>
         </nav>
       </header>
@@ -54,10 +54,10 @@ export default function Home() {
               Geschäftlich ansehen
             </Link>
             <Link
-              href="/private/login"
+              href="/login"
               className="inline-flex items-center justify-center border border-white/20 bg-white/8 px-5 py-3 text-sm font-bold text-white transition hover:border-suit-green/70 hover:bg-suit-green/10"
             >
-              Privater Bereich
+              Anmeldung
             </Link>
           </div>
         </div>

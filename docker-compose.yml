@@ -1,0 +1,35 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    env_file:
+      - backend/.env
+    environment:
+      FRONTEND_ORIGIN: http://localhost:3000
+      SUBJECT_DATA_FILE_PATH: /app/backend/data/subjects.json
+      UPLOAD_ROOT: /app/uploads
+    ports:
+      - "4000:4000"
+    volumes:
+      - subject-data:/app/backend/data
+      - subject-uploads:/app/uploads
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE_URL: http://localhost:4000
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:4000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  subject-data:
+  subject-uploads:

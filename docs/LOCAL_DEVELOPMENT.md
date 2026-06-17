@@ -181,6 +181,16 @@ npm --workspace frontend run start
 
 Hinweis: Für echte Produktion braucht das Frontend später eine Deployment-Umgebung und das Backend passende Umgebungsvariablen.
 
+## Docker
+
+Alternativ kann das Projekt mit Docker Compose gestartet werden:
+
+```bash
+docker compose up --build
+```
+
+Details stehen in `docs/DOCKER.md`.
+
 ## Umgebungsvariablen
 
 Beispieldateien:

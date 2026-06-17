@@ -5,7 +5,7 @@ import { FormEvent, useState } from "react";
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000";
 
-export function LoginForm() {
+export function LoginForm({ redirectTo = "/" }: { redirectTo?: string }) {
   const router = useRouter();
   const [password, setPassword] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
@@ -28,7 +28,7 @@ export function LoginForm() {
 
       if (response.ok) {
         setPassword("");
-        router.push("/private");
+        router.push(redirectTo);
         router.refresh();
         return;
       }

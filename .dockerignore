@@ -1,0 +1,17 @@
+.git
+.next
+node_modules
+backend/dist
+backend/data
+frontend/.next
+frontend/node_modules
+uploads
+Daten
+private-data
+backend/private-data
+backend/content/private
+frontend/public/documents
+frontend/public/private
+*.log
+.env
+.env.local
