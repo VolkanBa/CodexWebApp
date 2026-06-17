@@ -1,114 +1,55 @@
 # Öffentlicher Bereich
 
-Der öffentliche Bereich liegt unter `/business` und ist für Arbeitgeber, Kunden und andere berufliche Kontakte gedacht.
+Der öffentliche Bereich liegt unter `/business` und ist für Arbeitgeber, Kunden und berufliche Kontakte gedacht.
+
+## Grundsatz
+
+Der öffentliche Bereich enthält keine Zeugnisse, Arbeitszeugnisse, privaten Nachweise oder anderen sensiblen Dateien.
+
+Alles, was in `frontend/public/` liegt, ist später öffentlich per URL erreichbar. Deshalb gehören private Dokumente niemals in diesen Ordner.
 
 ## Dateien
 
 - Seite: `frontend/app/business/page.tsx`
-- Interaktives Dropdown: `frontend/app/business/BusinessProfileMenu.tsx`
-- Pflegebare Inhalte: `frontend/app/business/businessContent.ts`
+- Pflegebare öffentliche Links: `frontend/app/business/businessContent.ts`
 - Projektseite: `frontend/app/business/projects/page.tsx`
-- Öffentliche Assets: `frontend/public/documents/` und `frontend/public/images/`
+- Öffentliches Profilbild: `frontend/public/images/profile-professional.jpg`
 
 ## Inhalte pflegen
 
-Die Inhalte werden in `frontend/app/business/businessContent.ts` gepflegt.
+Öffentliche Inhalte werden in `frontend/app/business/businessContent.ts` gepflegt.
 
-### Schulische Laufbahn
+Aktuell vorgesehen:
 
-Schulische Stationen stehen in `schoolCareer`.
+- `profileHighlights`: kurze öffentliche Profilpunkte
+- `profileLinks`: externe öffentliche Profile, zum Beispiel GitHub
+- `projectLinks`: interne Verweise auf Projektseiten
 
-Pro Eintrag können folgende Angaben gepflegt werden:
+## Was nicht hierher gehört
 
-- `title`: Name der Station oder des Abschlusses
-- `organization`: Schule oder Bildungseinrichtung
-- `period`: Zeitraum
-- `summary`: kurze Beschreibung
-- `documents`: Zeugnisse als spätere Bild- und PDF-Nachweise
+Diese Inhalte dürfen nicht im öffentlichen Bereich abgelegt werden:
 
-### Arbeitserfahrung
+- Schulzeugnisse
+- Unizeugnisse
+- Arbeitszeugnisse
+- Zertifikate mit privaten Daten
+- Ausweisdokumente
+- private Bilder
+- private Texte oder Notizen
+- Passwörter, Tokens oder API-Schlüssel
 
-Berufliche Stationen stehen in `workExperience`.
+Solche Inhalte gehören später in den geschützten privaten Bereich und dürfen nur serverseitig nach erfolgreicher Authentifizierung ausgeliefert werden.
 
-Hier können Zertifikate und Arbeitszeugnisse je Station gesammelt werden. Die Struktur entspricht der schulischen Laufbahn.
+## Schutzmaßnahmen
 
-### Freitext
+- `frontend/public/documents/` ist in `.gitignore` eingetragen.
+- `frontend/public/private/` ist in `.gitignore` eingetragen.
+- Der Build führt `npm run check:sensitive-files` aus.
+- Der Check blockiert Dateien in öffentlichen Dokument- oder Privatordnern.
+- Der lokale Ordner `Daten/` ist ignoriert und bleibt außerhalb des Repositories.
 
-Der Freitext steht in `freeTextContent`.
+## Bestehende Git-Historie
 
-Wenn `freeTextContent` leer ist, wird der Bereich nicht im Dropdown angezeigt. Sobald dort Text eingetragen wird, erscheint der Bereich automatisch.
+Normales Löschen entfernt sensible Dateien nur aus dem aktuellen Stand von `main`.
 
-### Links
-
-Externe Profile stehen in `profileLinks`.
-
-Beispiele:
-
-- GitHub
-- LinkedIn
-- Portfolio
-- Projektseiten
-
-## Bilder und PDFs
-
-Dokumente können später über diese Felder erweitert werden:
-
-- `imageSrc`: Pfad zu einer Bildvorschau
-- `pdfHref`: Pfad zur herunterladbaren PDF-Datei
-
-Empfohlene Ablage:
-
-- Bilder: `frontend/public/documents/images/`
-- PDFs: `frontend/public/documents/pdfs/`
-
-Beispiel:
-
-```ts
-{
-  title: "Abschlusszeugnis",
-  kind: "Zeugnis",
-  description: "Abschlusszeugnis der Schule.",
-  issuedAt: "2024",
-  imageSrc: "/documents/images/abschlusszeugnis.jpg",
-  pdfHref: "/documents/pdfs/abschlusszeugnis.pdf"
-}
-```
-
-Keine privaten oder sensiblen Dokumente im öffentlichen Bereich ablegen. Inhalte, die nur mit Passwort sichtbar sein sollen, gehören später in den geschützten privaten Bereich und werden serverseitig ausgeliefert.
-
-Für jedes JPEG-Dokument kann automatisch eine gleichnamige PDF-Datei erzeugt werden:
-
-```bash
-npm run generate:document-pdfs
-```
-
-Der Befehl liest Dateien aus `frontend/public/documents/` und erstellt pro `.jpg` oder `.jpeg` eine gleichnamige `.pdf`.
-
-## Aktuelle Asset-Struktur
-
-Die Dateien aus `Daten/` wurden mit URL-tauglichen Namen nach `frontend/public/` kopiert.
-
-- Professionelles Profilbild: `frontend/public/images/profile-professional.jpg`
-- Schulzeugnisse: `frontend/public/documents/education/school/`
-- Unizeugnisse: `frontend/public/documents/education/university/`
-- Arbeitszeugnisse: `frontend/public/documents/work/`
-
-Die Originaldateien in `Daten/` bleiben unverändert. Next.js liefert nur Dateien aus `frontend/public/` öffentlich aus.
-
-Der lokale Ordner `Daten/` steht in `.gitignore`, damit die Originalstruktur nicht versehentlich zusätzlich committed wird.
-
-## Dokument-Viewer
-
-Dokumentbilder im öffentlichen Bereich sind interaktiv:
-
-- Hover zeigt das komplette Bild größer an.
-- Der Hintergrund wird dabei weich unscharf dargestellt.
-- Klick auf ein Dokumentbild öffnet eine Vollbildansicht.
-- Die Vollbildansicht kann über `Schließen`, `Escape` oder Klick auf den Hintergrund beendet werden.
-- Der PDF-Link in der Vollbildansicht lädt die passende PDF herunter.
-
-## Projekte
-
-Der Projekteinstieg wird in `projectLinks` gepflegt und verweist auf `/business/projects`.
-
-Die Projektseite kann später um echte Projektkarten, Screenshots, Tech Stack, GitHub-Repositories und Detailseiten erweitert werden.
+Wenn sensible Dateien bereits nach GitHub gepusht wurden, können sie in der Git-Historie weiter auffindbar sein. Für eine vollständige Entfernung aus der Historie ist ein separater History-Cleanup mit Force-Push nötig. Dieser Schritt muss bewusst geplant werden, weil er alle anderen Entwickler betrifft.

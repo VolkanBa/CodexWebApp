@@ -9,8 +9,8 @@
   "scripts": {
     "dev:frontend": "npm --workspace frontend run dev",
     "dev:backend": "npm --workspace backend run dev",
-    "generate:document-pdfs": "python scripts/generate_document_pdfs.py",
-    "build": "npm --workspace frontend run build && npm --workspace backend run build",
+    "check:sensitive-files": "python scripts/check_sensitive_files.py",
+    "build": "npm run check:sensitive-files && npm --workspace frontend run build && npm --workspace backend run build",
     "lint": "npm --workspace frontend run lint && npm --workspace backend run lint"
   }
 }

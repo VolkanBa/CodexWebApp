@@ -22,7 +22,7 @@ Aufgaben:
 Aktuelle Routen:
 
 - `/`: Landing Page
-- `/business`: öffentlicher geschäftlicher Bereich mit Dropdown-Struktur
+- `/business`: öffentlicher geschäftlicher Bereich ohne private Nachweise
 - `/business/projects`: öffentliche Projektübersicht
 - `/private/login`: serverseitig angebundenes Loginformular
 - `/private`: geschützte private Ansicht
@@ -31,17 +31,15 @@ Das Frontend prüft keine Passwörter. Passwortprüfung und Session-Erstellung l
 
 ### Öffentlicher Bereich
 
-Der öffentliche Bereich wird datengetrieben aufgebaut:
+Der öffentliche Bereich ist bewusst auf nicht-sensitive Inhalte begrenzt:
 
-- `frontend/app/business/page.tsx`: Seite und Abschnittsdefinitionen
-- `frontend/app/business/BusinessProfileMenu.tsx`: Dropdown und Bereichsanzeige
-- `frontend/app/business/businessContent.ts`: pflegbare Inhalte für Schule, Beruf, Freitext und Links
+- `frontend/app/business/page.tsx`: öffentliche Profilseite
+- `frontend/app/business/businessContent.ts`: pflegbare öffentliche Profilpunkte und Links
 - `frontend/app/business/projects/page.tsx`: eigene Projektseite
-- `frontend/public/documents/`: öffentlich ausgelieferte Zeugnisse und Nachweise
 - `frontend/public/images/profile-professional.jpg`: professionelles Profilbild für die Landing Page
-- `scripts/generate_document_pdfs.py`: erzeugt aus öffentlichen JPEG-Dokumenten passende PDF-Dateien
+- `scripts/check_sensitive_files.py`: blockiert sensible öffentliche Dokumentpfade im Build
 
-Der Freitextbereich wird nur angezeigt, wenn `freeTextContent` nicht leer ist. Dokumente unterstützen Bildvorschauen, PDF-Downloads, Hover-Preview und Vollbildansicht. Details stehen in `docs/PUBLIC_PROFILE.md`.
+Zeugnisse, Arbeitszeugnisse und private Nachweise gehören nicht in `frontend/public/` und nicht ins Repository. Details stehen in `docs/PUBLIC_PROFILE.md` und `docs/PRIVATE_DATA_POLICY.md`.
 
 ## Backend
 
@@ -80,6 +78,8 @@ Auth-Routen:
 ## Sicherheit
 
 Der private Bereich ist serverseitig geschützt. Details stehen in `docs/AUTHENTICATION.md`.
+
+Private Inhalte dürfen nicht in Git oder in `frontend/public/` gespeichert werden. Für lokale private Daten sind ignorierte Pfade wie `Daten/`, `private-data/` oder `backend/private-data/` vorgesehen. Der Build führt `npm run check:sensitive-files` aus und blockiert bekannte öffentliche sensible Pfade.
 
 Geplante Mindestanforderungen:
 

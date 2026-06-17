@@ -6,3 +6,9 @@ dist
 npm-debug.log*
 *.log
 Daten/
+private-data/
+backend/private-data/
+backend/content/private/
+uploads/private/
+frontend/public/documents/
+frontend/public/private/

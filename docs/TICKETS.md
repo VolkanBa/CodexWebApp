@@ -54,3 +54,10 @@ Linear-Team: `CodexWebApp`
     - [x] COD-24 / WEB-019-FE: Dokument-Viewer und Vollbildansicht implementieren
     - [x] COD-25 / WEB-019-BE: Öffentliche Asset-Auslieferung und Sicherheitsabgrenzung prüfen
     - [x] COD-26 / WEB-019-DOCS: Pflegehinweise für PDFs und Dokument-Viewer ergänzen
+- [x] COD-27 / WEB-020: Öffentliche Zeugnisse entfernen und private Daten schützen
+  - Branch: `codex/remove-public-documents`
+  - Linear: `https://linear.app/codexwebapp/issue/COD-27/web-020-offentliche-zeugnisse-entfernen-und-private-daten-schutzen`
+  - Untertickets:
+    - [x] COD-28 / WEB-020-FE: Zeugnisse und Dropdown-Menüs aus öffentlichem Profil entfernen
+    - [x] COD-29 / WEB-020-SEC: Private Daten gegen versehentliches Committen absichern
+    - [x] COD-30 / WEB-020-DOCS: Private-Daten-Richtlinie und Ticketprotokoll ergänzen

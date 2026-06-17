@@ -1,69 +1,14 @@
 import Link from "next/link";
 
-import { BusinessProfileMenu } from "./BusinessProfileMenu";
-import { freeTextContent, profileLinks, projectLinks, schoolCareer, workExperience } from "./businessContent";
+import { profileHighlights, profileLinks, projectLinks } from "./businessContent";
 
-const sections = [
-  {
-    id: "school" as const,
-    label: "Schulische Laufbahn",
-    eyebrow: "Zeugnisse",
-    title: "Schulische Laufbahn und Abschlüsse",
-    description: "Ein klarer Überblick über Bildungsstationen, Abschlüsse und hinterlegte Zeugnisse.",
-    type: "timeline" as const,
-    entries: schoolCareer
-  },
-  {
-    id: "work" as const,
-    label: "Arbeitserfahrung",
-    eyebrow: "Zertifikate und Arbeitszeugnisse",
-    title: "Berufliche Erfahrung und Nachweise",
-    description: "Stationen, Verantwortlichkeiten, Zertifikate und Arbeitszeugnisse an einem übersichtlichen Ort.",
-    type: "timeline" as const,
-    entries: workExperience
-  },
-  ...(freeTextContent.trim()
-    ? [
-        {
-          id: "freeText" as const,
-          label: "Persönliches Profil",
-          eyebrow: "Freitext",
-          title: "Ergänzende Informationen",
-          description: "Ein frei pflegbarer Bereich für zusätzliche berufliche Informationen.",
-          type: "text" as const,
-          content: freeTextContent
-        }
-      ]
-    : []),
-  ...(profileLinks.length
-    ? [
-        {
-          id: "links" as const,
-          label: "Links",
-          eyebrow: "Profile",
-          title: "Externe Profile und Projekte",
-          description: "Direkte Verweise auf öffentliche Profile, Code und relevante Projektseiten.",
-          type: "links" as const,
-          links: profileLinks
-        }
-      ]
-    : []),
-  ...(projectLinks.length
-    ? [
-        {
-          id: "projects" as const,
-          label: "Projekte",
-          eyebrow: "Projektbereich",
-          title: "Projekte und Referenzen",
-          description: "Eine eigene Projektseite bündelt spätere Arbeiten, Repositories und Detailansichten.",
-          type: "links" as const,
-          links: projectLinks
-        }
-      ]
-    : [])
-];
+function isExternalLink(href: string) {
+  return href.startsWith("http");
+}
 
 export default function BusinessPage() {
+  const links = [...projectLinks, ...profileLinks];
+
   return (
     <main className="min-h-screen px-6 py-8">
       <div className="mx-auto max-w-6xl">
@@ -76,31 +21,57 @@ export default function BusinessPage() {
           </Link>
         </header>
 
-        <section className="grid min-h-[42vh] items-end gap-8 py-16 lg:grid-cols-[0.95fr_1.05fr]">
+        <section className="grid min-h-[52vh] items-center gap-8 py-16 lg:grid-cols-[0.95fr_1.05fr]">
           <div className="max-w-3xl">
             <p className="mb-5 inline-flex border border-suit-orange/50 bg-suit-orange/10 px-3 py-1 text-sm font-medium text-suit-orange">
               Öffentlicher Bereich
             </p>
             <h1 className="text-5xl font-black leading-tight text-white sm:text-6xl">
-              Berufliches Profil, Nachweise und Projekte.
+              Berufliches Profil ohne private Nachweise.
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-white/70">
-              Ein strukturierter Überblick für Arbeitgeber, Kunden und Partner. Inhalte können später mit
-              Bildvorschauen und PDF-Downloads erweitert werden.
+              Diese Seite zeigt nur bewusst öffentliche Inhalte. Zeugnisse, Arbeitsnachweise und private Dateien
+              gehören nicht in das öffentliche Profil und werden nicht über GitHub veröffentlicht.
             </p>
           </div>
 
-          <div className="grid gap-3 border border-suit-purple/45 bg-white/[0.045] p-5">
-            {["Schule", "Beruf", "Projekte", "Links"].map((item) => (
-              <div key={item} className="flex items-center justify-between border-b border-white/10 py-3 last:border-b-0">
-                <span className="font-bold text-white">{item}</span>
-                <span className="h-2.5 w-2.5 bg-suit-green" aria-hidden="true" />
-              </div>
+          <div className="grid gap-4">
+            {profileHighlights.map((item) => (
+              <article key={item.title} className="border border-white/12 bg-white/[0.045] p-5">
+                <h2 className="text-xl font-bold text-white">{item.title}</h2>
+                <p className="mt-3 leading-7 text-white/66">{item.description}</p>
+              </article>
             ))}
           </div>
         </section>
 
-        <BusinessProfileMenu sections={sections} />
+        <section className="grid gap-5 pb-16 md:grid-cols-2">
+          {links.map((link) =>
+            isExternalLink(link.href) ? (
+              <a
+                key={link.href}
+                href={link.href}
+                target="_blank"
+                rel="noreferrer"
+                className="border border-white/12 bg-suit-black/45 p-6 transition hover:-translate-y-1 hover:border-suit-green/70 hover:bg-suit-green/10"
+              >
+                <h2 className="text-2xl font-bold text-white">{link.label}</h2>
+                <p className="mt-3 leading-7 text-white/66">{link.description}</p>
+                <p className="mt-5 text-sm font-semibold text-suit-green">{link.href}</p>
+              </a>
+            ) : (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="border border-white/12 bg-suit-black/45 p-6 transition hover:-translate-y-1 hover:border-suit-orange/70 hover:bg-suit-orange/10"
+              >
+                <h2 className="text-2xl font-bold text-white">{link.label}</h2>
+                <p className="mt-3 leading-7 text-white/66">{link.description}</p>
+                <p className="mt-5 text-sm font-semibold text-suit-orange">{link.href}</p>
+              </Link>
+            )
+          )}
+        </section>
       </div>
     </main>
   );

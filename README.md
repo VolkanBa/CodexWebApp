@@ -55,12 +55,12 @@ Alternativ kannst du in VSCode `Terminal > Run Task...` nutzen:
 - Login-Platzhalter: `frontend/app/private/login/page.tsx`
 - Backend-Server: `backend/src/server.ts`
 - Professionelles Profilbild: `frontend/public/images/profile-professional.jpg`
-- Öffentliche Dokumente: `frontend/public/documents/`
-- PDF-Generator für Dokumentbilder: `scripts/generate_document_pdfs.py`
+- Private-Daten-Check: `scripts/check_sensitive_files.py`
 - Architektur-Doku: `docs/ARCHITECTURE.md`
 - Lokale Entwicklungsdoku: `docs/LOCAL_DEVELOPMENT.md`
 - Auth-Doku: `docs/AUTHENTICATION.md`
 - Öffentlicher Bereich: `docs/PUBLIC_PROFILE.md`
+- Private-Daten-Richtlinie: `docs/PRIVATE_DATA_POLICY.md`
 - Git-Workflow: `docs/GIT_WORKFLOW.md`
 - Ticketprotokoll: `docs/TICKETS.md`
 - Linear-Doku: `docs/LINEAR.md`
@@ -68,6 +68,8 @@ Alternativ kannst du in VSCode `Terminal > Run Task...` nutzen:
 ## Sicherheit
 
 Der private Bereich wird serverseitig geschützt. Passwortprüfung und Session-Verwaltung liegen im Backend, nicht im Frontend.
+
+Private Dokumente, Zeugnisse und Arbeitsnachweise dürfen nicht in `frontend/public/` oder Git abgelegt werden. Details stehen in [docs/PRIVATE_DATA_POLICY.md](docs/PRIVATE_DATA_POLICY.md).
 
 ## Dokumentationsregel
 
