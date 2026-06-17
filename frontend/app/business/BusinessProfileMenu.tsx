@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-import type { BusinessLink, BusinessTimelineEntry } from "./businessContent";
+import type { BusinessDocument, BusinessLink, BusinessTimelineEntry } from "./businessContent";
 
 type TimelineSection = {
   id: "school" | "work";
@@ -43,6 +43,8 @@ type BusinessProfileMenuProps = {
 };
 
 export function BusinessProfileMenu({ sections }: BusinessProfileMenuProps) {
+  const [hoveredDocument, setHoveredDocument] = useState<BusinessDocument | null>(null);
+  const [activeDocument, setActiveDocument] = useState<BusinessDocument | null>(null);
   const visibleSections = useMemo(
     () =>
       sections.filter((section) => {
@@ -61,6 +63,21 @@ export function BusinessProfileMenu({ sections }: BusinessProfileMenuProps) {
   const [selectedId, setSelectedId] = useState(visibleSections[0]?.id ?? "");
   const [isOpen, setIsOpen] = useState(false);
   const activeSection = visibleSections.find((section) => section.id === selectedId) ?? visibleSections[0];
+
+  useEffect(() => {
+    if (!activeDocument) {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setActiveDocument(null);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [activeDocument]);
 
   if (!activeSection) {
     return null;
@@ -119,17 +136,81 @@ export function BusinessProfileMenu({ sections }: BusinessProfileMenuProps) {
           <p className="mt-4 max-w-3xl text-base leading-7 text-white/70">{activeSection.description}</p>
 
           <div className="mt-8">
-            {activeSection.type === "timeline" ? <Timeline entries={activeSection.entries} /> : null}
+            {activeSection.type === "timeline" ? (
+              <Timeline
+                entries={activeSection.entries}
+                onDocumentClick={setActiveDocument}
+                onDocumentHover={setHoveredDocument}
+              />
+            ) : null}
             {activeSection.type === "text" ? <FreeText content={activeSection.content} /> : null}
             {activeSection.type === "links" ? <ProfileLinks links={activeSection.links} /> : null}
           </div>
         </article>
       </div>
+
+      {hoveredDocument?.imageSrc ? (
+        <div className="pointer-events-none fixed inset-0 z-30 flex items-center justify-center bg-suit-black/62 p-4 backdrop-blur-md">
+          <img
+            src={hoveredDocument.imageSrc}
+            alt={hoveredDocument.title}
+            className="max-h-[88vh] max-w-[92vw] border border-white/14 bg-suit-black object-contain shadow-glow"
+          />
+        </div>
+      ) : null}
+
+      {activeDocument?.imageSrc ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-suit-black/86 p-4 backdrop-blur-md"
+          role="dialog"
+          aria-modal="true"
+          aria-label={activeDocument.title}
+          onClick={() => setActiveDocument(null)}
+        >
+          <div className="flex max-h-[94vh] w-full max-w-6xl flex-col gap-4" onClick={(event) => event.stopPropagation()}>
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-semibold text-suit-green">{activeDocument.kind}</p>
+                <h3 className="text-xl font-bold text-white">{activeDocument.title}</h3>
+              </div>
+              <button
+                type="button"
+                className="border border-white/18 bg-white/8 px-4 py-2 text-sm font-bold text-white transition hover:border-suit-orange/70 hover:text-suit-orange"
+                onClick={() => setActiveDocument(null)}
+              >
+                Schließen
+              </button>
+            </div>
+            <img
+              src={activeDocument.imageSrc}
+              alt={activeDocument.title}
+              className="max-h-[78vh] w-full border border-white/14 bg-suit-black object-contain"
+            />
+            {activeDocument.pdfHref ? (
+              <a
+                href={activeDocument.pdfHref}
+                download
+                className="self-start bg-suit-orange px-4 py-2 text-sm font-bold text-suit-black transition hover:bg-orange-400"
+              >
+                PDF herunterladen
+              </a>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }
 
-function Timeline({ entries }: { entries: BusinessTimelineEntry[] }) {
+function Timeline({
+  entries,
+  onDocumentClick,
+  onDocumentHover
+}: {
+  entries: BusinessTimelineEntry[];
+  onDocumentClick: (document: BusinessDocument) => void;
+  onDocumentHover: (document: BusinessDocument | null) => void;
+}) {
   return (
     <div className="grid gap-5">
       {entries.map((entry) => (
@@ -150,11 +231,24 @@ function Timeline({ entries }: { entries: BusinessTimelineEntry[] }) {
               {entry.documents.map((document) => (
                 <div key={`${entry.title}-${document.title}`} className="border border-white/10 bg-white/[0.035] p-4">
                   {document.imageSrc ? (
-                    <img
-                      src={document.imageSrc}
-                      alt={document.title}
-                      className="mb-4 aspect-[16/10] w-full border border-white/10 object-cover"
-                    />
+                    <button
+                      type="button"
+                      className="group mb-4 block w-full border border-white/10 bg-suit-black/65 p-0 text-left transition hover:border-suit-orange/70 focus:outline-none focus:ring-2 focus:ring-suit-orange"
+                      onClick={() => {
+                        onDocumentHover(null);
+                        onDocumentClick(document);
+                      }}
+                      onMouseEnter={() => onDocumentHover(document)}
+                      onMouseLeave={() => onDocumentHover(null)}
+                      onFocus={() => onDocumentHover(document)}
+                      onBlur={() => onDocumentHover(null)}
+                    >
+                      <img
+                        src={document.imageSrc}
+                        alt={document.title}
+                        className="aspect-[16/10] w-full object-contain transition duration-200 group-hover:scale-[1.01]"
+                      />
+                    </button>
                   ) : (
                     <div className="mb-4 grid aspect-[16/10] place-items-center border border-dashed border-suit-purple/55 bg-suit-purple/10 text-sm font-bold text-suit-purple">
                       {document.kind}

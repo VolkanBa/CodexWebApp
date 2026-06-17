@@ -47,3 +47,10 @@ Linear-Team: `CodexWebApp`
 - [x] COD-22 / WEB-018: Öffentliche Dokumente, Profilbild und Projektbereich einbinden
   - Branch: `codex/embed-public-data-projects`
   - Linear: `https://linear.app/codexwebapp/issue/COD-22/web-018-offentliche-dokumente-profilbild-und-projektbereich-einbinden`
+- [x] COD-23 / WEB-019: Dokument-PDFs und Vollbild-Viewer umsetzen
+  - Branch: `codex/document-pdf-viewer`
+  - Linear: `https://linear.app/codexwebapp/issue/COD-23/web-019-dokument-pdfs-und-vollbild-viewer-umsetzen`
+  - Untertickets:
+    - [x] COD-24 / WEB-019-FE: Dokument-Viewer und Vollbildansicht implementieren
+    - [x] COD-25 / WEB-019-BE: Öffentliche Asset-Auslieferung und Sicherheitsabgrenzung prüfen
+    - [x] COD-26 / WEB-019-DOCS: Pflegehinweise für PDFs und Dokument-Viewer ergänzen

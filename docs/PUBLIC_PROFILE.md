@@ -76,6 +76,14 @@ Beispiel:
 
 Keine privaten oder sensiblen Dokumente im öffentlichen Bereich ablegen. Inhalte, die nur mit Passwort sichtbar sein sollen, gehören später in den geschützten privaten Bereich und werden serverseitig ausgeliefert.
 
+Für jedes JPEG-Dokument kann automatisch eine gleichnamige PDF-Datei erzeugt werden:
+
+```bash
+npm run generate:document-pdfs
+```
+
+Der Befehl liest Dateien aus `frontend/public/documents/` und erstellt pro `.jpg` oder `.jpeg` eine gleichnamige `.pdf`.
+
 ## Aktuelle Asset-Struktur
 
 Die Dateien aus `Daten/` wurden mit URL-tauglichen Namen nach `frontend/public/` kopiert.
@@ -88,6 +96,16 @@ Die Dateien aus `Daten/` wurden mit URL-tauglichen Namen nach `frontend/public/`
 Die Originaldateien in `Daten/` bleiben unverändert. Next.js liefert nur Dateien aus `frontend/public/` öffentlich aus.
 
 Der lokale Ordner `Daten/` steht in `.gitignore`, damit die Originalstruktur nicht versehentlich zusätzlich committed wird.
+
+## Dokument-Viewer
+
+Dokumentbilder im öffentlichen Bereich sind interaktiv:
+
+- Hover zeigt das komplette Bild größer an.
+- Der Hintergrund wird dabei weich unscharf dargestellt.
+- Klick auf ein Dokumentbild öffnet eine Vollbildansicht.
+- Die Vollbildansicht kann über `Schließen`, `Escape` oder Klick auf den Hintergrund beendet werden.
+- Der PDF-Link in der Vollbildansicht lädt die passende PDF herunter.
 
 ## Projekte
 

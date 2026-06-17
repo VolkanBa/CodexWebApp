@@ -32,25 +32,29 @@ export const schoolCareer: BusinessTimelineEntry[] = [
         title: "Schulzeugnis 1",
         kind: "Zeugnis",
         description: "Schulischer Nachweis als Bildvorschau.",
-        imageSrc: "/documents/education/school/school-certificate-1.jpeg"
+        imageSrc: "/documents/education/school/school-certificate-1.jpeg",
+        pdfHref: "/documents/education/school/school-certificate-1.pdf"
       },
       {
         title: "Schulzeugnis 2",
         kind: "Zeugnis",
         description: "Schulischer Nachweis als Bildvorschau.",
-        imageSrc: "/documents/education/school/school-certificate-2.jpeg"
+        imageSrc: "/documents/education/school/school-certificate-2.jpeg",
+        pdfHref: "/documents/education/school/school-certificate-2.pdf"
       },
       {
         title: "Schulzeugnis 3",
         kind: "Zeugnis",
         description: "Schulischer Nachweis als Bildvorschau.",
-        imageSrc: "/documents/education/school/school-certificate-3.jpeg"
+        imageSrc: "/documents/education/school/school-certificate-3.jpeg",
+        pdfHref: "/documents/education/school/school-certificate-3.pdf"
       },
       {
         title: "Schulzeugnis 4",
         kind: "Zeugnis",
         description: "Schulischer Nachweis als Bildvorschau.",
-        imageSrc: "/documents/education/school/school-certificate-4.jpeg"
+        imageSrc: "/documents/education/school/school-certificate-4.jpeg",
+        pdfHref: "/documents/education/school/school-certificate-4.pdf"
       }
     ]
   },
@@ -65,25 +69,28 @@ export const schoolCareer: BusinessTimelineEntry[] = [
         kind: "Zeugnis",
         description: "Bachelor-Urkunde als Bildvorschau.",
         imageSrc: "/documents/education/university/bachelor-certificate.jpeg",
-        pdfHref: "/documents/education/university/bachelor-degree-english.pdf"
+        pdfHref: "/documents/education/university/bachelor-certificate.pdf"
       },
       {
         title: "Universitätszeugnis 1",
         kind: "Zeugnis",
         description: "Universitärer Nachweis als Bildvorschau.",
-        imageSrc: "/documents/education/university/university-certificate-1.jpeg"
+        imageSrc: "/documents/education/university/university-certificate-1.jpeg",
+        pdfHref: "/documents/education/university/university-certificate-1.pdf"
       },
       {
         title: "Universitätszeugnis 2",
         kind: "Zeugnis",
         description: "Universitärer Nachweis als Bildvorschau.",
-        imageSrc: "/documents/education/university/university-certificate-2.jpeg"
+        imageSrc: "/documents/education/university/university-certificate-2.jpeg",
+        pdfHref: "/documents/education/university/university-certificate-2.pdf"
       },
       {
         title: "Universitätszeugnis 3",
         kind: "Zeugnis",
         description: "Universitärer Nachweis als Bildvorschau.",
-        imageSrc: "/documents/education/university/university-certificate-3.jpeg"
+        imageSrc: "/documents/education/university/university-certificate-3.jpeg",
+        pdfHref: "/documents/education/university/university-certificate-3.pdf"
       }
     ]
   }
@@ -100,25 +107,29 @@ export const workExperience: BusinessTimelineEntry[] = [
         title: "Arbeitszeugnis 1",
         kind: "Arbeitszeugnis",
         description: "Arbeitszeugnis als Bildvorschau.",
-        imageSrc: "/documents/work/work-reference-0.jpeg"
+        imageSrc: "/documents/work/work-reference-0.jpeg",
+        pdfHref: "/documents/work/work-reference-0.pdf"
       },
       {
         title: "Arbeitszeugnis 2",
         kind: "Arbeitszeugnis",
         description: "Arbeitszeugnis als Bildvorschau.",
-        imageSrc: "/documents/work/work-reference-1.jpeg"
+        imageSrc: "/documents/work/work-reference-1.jpeg",
+        pdfHref: "/documents/work/work-reference-1.pdf"
       },
       {
         title: "Arbeitszeugnis 3",
         kind: "Arbeitszeugnis",
         description: "Arbeitszeugnis als Bildvorschau.",
-        imageSrc: "/documents/work/work-reference-2.jpeg"
+        imageSrc: "/documents/work/work-reference-2.jpeg",
+        pdfHref: "/documents/work/work-reference-2.pdf"
       },
       {
         title: "Arbeitszeugnis 4",
         kind: "Arbeitszeugnis",
         description: "Arbeitszeugnis als Bildvorschau.",
-        imageSrc: "/documents/work/work-reference-3.jpeg"
+        imageSrc: "/documents/work/work-reference-3.jpeg",
+        pdfHref: "/documents/work/work-reference-3.pdf"
       }
     ]
   }

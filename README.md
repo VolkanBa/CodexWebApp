@@ -56,6 +56,7 @@ Alternativ kannst du in VSCode `Terminal > Run Task...` nutzen:
 - Backend-Server: `backend/src/server.ts`
 - Professionelles Profilbild: `frontend/public/images/profile-professional.jpg`
 - Öffentliche Dokumente: `frontend/public/documents/`
+- PDF-Generator für Dokumentbilder: `scripts/generate_document_pdfs.py`
 - Architektur-Doku: `docs/ARCHITECTURE.md`
 - Lokale Entwicklungsdoku: `docs/LOCAL_DEVELOPMENT.md`
 - Auth-Doku: `docs/AUTHENTICATION.md`

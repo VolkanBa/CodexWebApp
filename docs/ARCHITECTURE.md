@@ -39,8 +39,9 @@ Der öffentliche Bereich wird datengetrieben aufgebaut:
 - `frontend/app/business/projects/page.tsx`: eigene Projektseite
 - `frontend/public/documents/`: öffentlich ausgelieferte Zeugnisse und Nachweise
 - `frontend/public/images/profile-professional.jpg`: professionelles Profilbild für die Landing Page
+- `scripts/generate_document_pdfs.py`: erzeugt aus öffentlichen JPEG-Dokumenten passende PDF-Dateien
 
-Der Freitextbereich wird nur angezeigt, wenn `freeTextContent` nicht leer ist. Dokumente sind für spätere Bildvorschauen und PDF-Downloads vorbereitet. Details stehen in `docs/PUBLIC_PROFILE.md`.
+Der Freitextbereich wird nur angezeigt, wenn `freeTextContent` nicht leer ist. Dokumente unterstützen Bildvorschauen, PDF-Downloads, Hover-Preview und Vollbildansicht. Details stehen in `docs/PUBLIC_PROFILE.md`.
 
 ## Backend
 
