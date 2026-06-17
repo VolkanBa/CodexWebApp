@@ -39,5 +39,8 @@ Linear-Team: `CodexWebApp`
 - [x] COD-17 / WEB-013: Deutsche Texte auf echte Umlaute umstellen
 - [x] COD-18 / WEB-014: Projekt auf GitHub als CodexWebApp veröffentlichen
 - [x] COD-19 / WEB-015: Lokale Entwicklungsdokumentation ergänzen
-- [ ] COD-20 / WEB-016: Sichere Authentifizierung für privaten Bereich implementieren
+- [x] COD-20 / WEB-016: Sichere Authentifizierung für privaten Bereich implementieren
   - Branch: `codex/secure-auth`
+- [x] COD-21 / WEB-017: Öffentlichen Bereich mit Dropdown-Struktur ausbauen
+  - Branch: `codex/public-business-page`
+  - Linear: `https://linear.app/codexwebapp/issue/COD-21/web-017-offentlichen-bereich-mit-dropdown-struktur-ausbauen`

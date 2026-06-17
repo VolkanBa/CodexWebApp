@@ -50,12 +50,14 @@ Alternativ kannst du in VSCode `Terminal > Run Task...` nutzen:
 
 - Landing Page: `frontend/app/page.tsx`
 - Geschäftlicher Bereich: `frontend/app/business/page.tsx`
+- Inhalte für den geschäftlichen Bereich: `frontend/app/business/businessContent.ts`
 - Login-Platzhalter: `frontend/app/private/login/page.tsx`
 - Backend-Server: `backend/src/server.ts`
 - Hero-Bild: `frontend/public/images/hero-suit.png`
 - Architektur-Doku: `docs/ARCHITECTURE.md`
 - Lokale Entwicklungsdoku: `docs/LOCAL_DEVELOPMENT.md`
 - Auth-Doku: `docs/AUTHENTICATION.md`
+- Öffentlicher Bereich: `docs/PUBLIC_PROFILE.md`
 - Git-Workflow: `docs/GIT_WORKFLOW.md`
 - Ticketprotokoll: `docs/TICKETS.md`
 - Linear-Doku: `docs/LINEAR.md`

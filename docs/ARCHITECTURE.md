@@ -22,11 +22,21 @@ Aufgaben:
 Aktuelle Routen:
 
 - `/`: Landing Page
-- `/business`: Platzhalter für den geschäftlichen Bereich
+- `/business`: öffentlicher geschäftlicher Bereich mit Dropdown-Struktur
 - `/private/login`: serverseitig angebundenes Loginformular
 - `/private`: geschützte private Ansicht
 
 Das Frontend prüft keine Passwörter. Passwortprüfung und Session-Erstellung liegen im Backend.
+
+### Öffentlicher Bereich
+
+Der öffentliche Bereich wird datengetrieben aufgebaut:
+
+- `frontend/app/business/page.tsx`: Seite und Abschnittsdefinitionen
+- `frontend/app/business/BusinessProfileMenu.tsx`: Dropdown und Bereichsanzeige
+- `frontend/app/business/businessContent.ts`: pflegbare Inhalte für Schule, Beruf, Freitext und Links
+
+Der Freitextbereich wird nur angezeigt, wenn `freeTextContent` nicht leer ist. Dokumente sind für spätere Bildvorschauen und PDF-Downloads vorbereitet. Details stehen in `docs/PUBLIC_PROFILE.md`.
 
 ## Backend
 
