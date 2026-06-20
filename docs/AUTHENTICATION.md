@@ -42,6 +42,7 @@ PORT=4000
 FRONTEND_ORIGIN=http://localhost:3000
 PRIVATE_ACCESS_PASSWORD_HASH=$argon2id$v=19$...
 SESSION_COOKIE_NAME=private_session
+SESSION_COOKIE_SECURE=false
 SESSION_TTL_MINUTES=1440
 AUTH_RATE_LIMIT_WINDOW_MINUTES=15
 AUTH_RATE_LIMIT_MAX=5
@@ -52,7 +53,8 @@ AUTH_RATE_LIMIT_MAX=5
 - Nach erfolgreichem Login erstellt das Backend eine zufällige Session-ID.
 - Die Session-ID wird als `httpOnly` Cookie gesetzt.
 - Das Cookie ist für JavaScript im Browser nicht lesbar.
-- In Produktion wird das Cookie nur über HTTPS gesendet.
+- Lokal und in Docker wird `SESSION_COOKIE_SECURE=false` verwendet, weil die App über `http://localhost` läuft.
+- In echter HTTPS-Produktion muss `SESSION_COOKIE_SECURE=true` gesetzt werden, damit das Cookie nur über HTTPS gesendet wird.
 - Sessions werden aktuell im Speicher des Backend-Prozesses gehalten.
 
 Wichtige Grenze: Der In-Memory-Session-Store ist für die erste Version geeignet, aber nicht für mehrere Backend-Instanzen oder Neustarts. Für Produktion sollte später Redis, eine Datenbank oder ein anderer zentraler Session-Store genutzt werden.

@@ -89,3 +89,7 @@ Linear-Team: `CodexWebApp`
   - Branch: `codex/docker-runtime-config-fix`
   - Linear: `https://linear.app/codexwebapp/issue/COD-39/web-024-docker-runtime-fur-next-konfiguration-reparieren`
   - Ergebnis: `next.config.ts` wird durch `next.config.mjs` ersetzt, damit der Produktionscontainer kein TypeScript zur Laufzeit nachinstalliert.
+- [x] COD-40 / WEB-025: Lokale Docker-Anmeldung mit sicherer Cookie-Konfiguration reparieren
+  - Branch: `codex/fix-local-docker-auth-cookie`
+  - Linear: `https://linear.app/codexwebapp/issue/COD-40/web-025-lokale-docker-anmeldung-mit-sicherer-cookie-konfiguration`
+  - Ergebnis: Session-Cookie `secure` wird über `SESSION_COOKIE_SECURE` konfigurierbar, damit lokale HTTP-Docker-Logins funktionieren und HTTPS-Produktion später explizit abgesichert bleibt.

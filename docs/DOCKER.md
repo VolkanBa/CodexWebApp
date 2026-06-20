@@ -215,6 +215,7 @@ Prüfe `backend/.env`:
 
 - `PRIVATE_ACCESS_PASSWORD_HASH` muss ein echter Argon2-Hash sein.
 - `FRONTEND_ORIGIN` muss `http://localhost:3000` sein.
+- `SESSION_COOKIE_SECURE` muss lokal und in Docker `false` sein, weil `http://localhost` kein HTTPS ist.
 - Nach Änderungen Container neu starten:
 
 ```bash

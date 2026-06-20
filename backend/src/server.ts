@@ -53,7 +53,7 @@ const subjectSchema = z.object({
 const sessionCookieOptions: CookieOptions = {
   httpOnly: true,
   sameSite: "lax",
-  secure: config.isProduction,
+  secure: config.sessionCookieSecure,
   path: "/",
   maxAge: config.sessionTtlMs
 };
@@ -61,7 +61,7 @@ const sessionCookieOptions: CookieOptions = {
 const clearSessionCookieOptions: CookieOptions = {
   httpOnly: true,
   sameSite: "lax",
-  secure: config.isProduction,
+  secure: config.sessionCookieSecure,
   path: "/"
 };
 
