@@ -10,7 +10,7 @@ const sections = [
   {
     title: "Privat",
     text: "Ein später geschützter Bereich für persönliche Inhalte.",
-    href: "/login",
+    href: "/private",
     accent: "border-suit-green/60"
   }
 ];
@@ -25,6 +25,9 @@ export default function Home() {
         <nav className="flex items-center gap-4 text-sm text-white/72">
           <Link className="transition hover:text-white" href="/business">
             Geschäftlich
+          </Link>
+          <Link className="transition hover:text-white" href="/private">
+            Privat
           </Link>
           <Link className="transition hover:text-white" href="/login">
             Anmeldung

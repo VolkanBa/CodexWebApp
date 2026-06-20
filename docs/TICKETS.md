@@ -93,3 +93,7 @@ Linear-Team: `CodexWebApp`
   - Branch: `codex/fix-local-docker-auth-cookie`
   - Linear: `https://linear.app/codexwebapp/issue/COD-40/web-025-lokale-docker-anmeldung-mit-sicherer-cookie-konfiguration`
   - Ergebnis: Session-Cookie `secure` wird über `SESSION_COOKIE_SECURE` konfigurierbar, damit lokale HTTP-Docker-Logins funktionieren und HTTPS-Produktion später explizit abgesichert bleibt.
+- [x] COD-41 / WEB-026: Privat-Einstieg nach Login korrekt auf geschützten Bereich führen
+  - Branch: `codex/fix-private-entry-link`
+  - Linear: `https://linear.app/codexwebapp/issue/COD-41/web-026-privat-einstieg-nach-login-korrekt-auf-geschutzten-bereich`
+  - Ergebnis: Landing-Page-Privatlink führt auf `/private` statt erneut auf `/login`.
