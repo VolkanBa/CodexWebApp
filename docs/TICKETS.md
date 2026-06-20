@@ -97,3 +97,7 @@ Linear-Team: `CodexWebApp`
   - Branch: `codex/fix-private-entry-link`
   - Linear: `https://linear.app/codexwebapp/issue/COD-41/web-026-privat-einstieg-nach-login-korrekt-auf-geschutzten-bereich`
   - Ergebnis: Landing-Page-Privatlink führt auf `/private` statt erneut auf `/login`.
+- [x] COD-42 / WEB-027: Landing Page Login-Status anzeigen und Logout ermöglichen
+  - Branch: `codex/landing-auth-state`
+  - Linear: `https://linear.app/codexwebapp/issue/COD-42/web-027-landing-page-login-status-anzeigen-und-logout-ermoglichen`
+  - Ergebnis: Landing Page zeigt bei aktiver Session `Log out` und blendet den großen Anmeldebutton aus.

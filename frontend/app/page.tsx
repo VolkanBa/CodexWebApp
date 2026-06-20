@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { LandingAuthControls } from "./LandingAuthControls";
+
 const sections = [
   {
     title: "Geschäftlich",
@@ -29,9 +31,7 @@ export default function Home() {
           <Link className="transition hover:text-white" href="/private">
             Privat
           </Link>
-          <Link className="transition hover:text-white" href="/login">
-            Anmeldung
-          </Link>
+          <LandingAuthControls variant="nav" />
         </nav>
       </header>
 
@@ -56,12 +56,7 @@ export default function Home() {
             >
               Geschäftlich ansehen
             </Link>
-            <Link
-              href="/login"
-              className="inline-flex items-center justify-center border border-white/20 bg-white/8 px-5 py-3 text-sm font-bold text-white transition hover:border-suit-green/70 hover:bg-suit-green/10"
-            >
-              Anmeldung
-            </Link>
+            <LandingAuthControls variant="hero" />
           </div>
         </div>
 
