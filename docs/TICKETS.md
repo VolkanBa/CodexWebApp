@@ -85,3 +85,7 @@ Linear-Team: `CodexWebApp`
     - [x] COD-36 / WEB-023-DEVOPS: Docker Compose und Images härten
     - [x] COD-37 / WEB-023-VERIFY: Docker Desktop Installation und Verifikation prüfen
     - [x] COD-38 / WEB-023-DOCS: Docker-Dokumentation ergänzen
+- [x] COD-39 / WEB-024: Docker Runtime für Next-Konfiguration reparieren
+  - Branch: `codex/docker-runtime-config-fix`
+  - Linear: `https://linear.app/codexwebapp/issue/COD-39/web-024-docker-runtime-fur-next-konfiguration-reparieren`
+  - Ergebnis: `next.config.ts` wird durch `next.config.mjs` ersetzt, damit der Produktionscontainer kein TypeScript zur Laufzeit nachinstalliert.
