@@ -77,3 +77,11 @@ Linear-Team: `CodexWebApp`
     - [x] WEB-022-BE: Mehrfachbilder serverseitig speichern und Uploadpfade schützen
     - [x] WEB-022-DEVOPS: Dockerfiles, Compose und Docker-Doku ergänzen
     - [x] WEB-022-DOCS: Dokumentation und Datenschutzgrenzen aktualisieren
+- [x] COD-35 / WEB-023: Docker-Setup finalisieren und lokal verifizieren
+  - Branch: `codex/docker-finalization`
+  - Linear: `https://linear.app/codexwebapp/issue/COD-35/web-023-docker-setup-finalisieren-und-lokal-verifizieren`
+  - Hinweis: Docker Desktop wurde installiert, CLI und Compose-Konfiguration wurden geprüft. Der erste Container-Start benötigt noch eine laufende Docker Engine nach dem manuellen Erststart von Docker Desktop.
+  - Untertickets:
+    - [x] COD-36 / WEB-023-DEVOPS: Docker Compose und Images härten
+    - [x] COD-37 / WEB-023-VERIFY: Docker Desktop Installation und Verifikation prüfen
+    - [x] COD-38 / WEB-023-DOCS: Docker-Dokumentation ergänzen

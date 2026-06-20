@@ -186,10 +186,22 @@ Hinweis: Für echte Produktion braucht das Frontend später eine Deployment-Umge
 Alternativ kann das Projekt mit Docker Compose gestartet werden:
 
 ```bash
-docker compose up --build
+npm run docker:up
 ```
 
-Details stehen in `docs/DOCKER.md`.
+Stoppen:
+
+```bash
+npm run docker:down
+```
+
+Logs anzeigen:
+
+```bash
+npm run docker:logs
+```
+
+Details zur Installation, zu Docker Desktop, Ubuntu und Volumes stehen in `docs/DOCKER.md`.
 
 ## Umgebungsvariablen
 

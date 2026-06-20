@@ -15,6 +15,11 @@ ENV NEXT_TELEMETRY_DISABLED=1
 COPY frontend frontend
 RUN npm --workspace frontend run build
 
+FROM dependencies AS production-dependencies
+
+WORKDIR /app
+RUN npm prune --omit=dev
+
 FROM node:22-bookworm-slim AS runner
 
 WORKDIR /app
@@ -23,7 +28,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN useradd --create-home --shell /usr/sbin/nologin appuser
 COPY package.json package-lock.json ./
 COPY frontend/package.json frontend/package.json
-COPY --from=dependencies /app/node_modules node_modules
+COPY --from=production-dependencies /app/node_modules node_modules
 COPY --from=builder /app/frontend frontend
 USER appuser
 EXPOSE 3000

@@ -12,6 +12,11 @@ WORKDIR /app
 COPY backend backend
 RUN npm --workspace backend run build
 
+FROM dependencies AS production-dependencies
+
+WORKDIR /app
+RUN npm prune --omit=dev
+
 FROM node:22-bookworm-slim AS runner
 
 WORKDIR /app
@@ -19,7 +24,7 @@ ENV NODE_ENV=production
 RUN useradd --create-home --shell /usr/sbin/nologin appuser
 COPY package.json package-lock.json ./
 COPY backend/package.json backend/package.json
-COPY --from=dependencies /app/node_modules node_modules
+COPY --from=production-dependencies /app/node_modules node_modules
 COPY --from=builder /app/backend/dist backend/dist
 RUN mkdir -p backend/data uploads && chown -R appuser:appuser backend/data uploads
 USER appuser
