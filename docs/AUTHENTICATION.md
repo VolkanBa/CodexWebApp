@@ -15,9 +15,17 @@ Implementiert:
 - Rate Limiting für Loginversuche
 - Eingabevalidierung mit `zod`
 
-## Passwort-Hash
+## Benutzername und Passwort
 
-Das Backend erwartet keinen Klartext. Es wird ein Argon2-Hash über `PRIVATE_ACCESS_PASSWORD_HASH` gesetzt.
+Das Backend erwartet keinen Klartext. Passwörter werden als Argon2-Hash konfiguriert.
+
+Der bestehende Admin-Nutzer heißt:
+
+```env
+PRIVATE_ACCESS_ADMIN_USERNAME=Volle
+```
+
+Die 9 weiteren Nutzer sind in `docs/AUTH_USERS.md` dokumentiert und werden über `PRIVATE_ACCESS_USERS_JSON` mit Rolle `user` konfiguriert.
 
 Beispiel für lokale Entwicklung:
 
@@ -40,7 +48,9 @@ Hinweis: Das Passwort selbst nicht committen, nicht in Dokumentation eintragen u
 ```env
 PORT=4000
 FRONTEND_ORIGIN=http://localhost:3000
+PRIVATE_ACCESS_ADMIN_USERNAME=Volle
 PRIVATE_ACCESS_PASSWORD_HASH=$argon2id$v=19$...
+PRIVATE_ACCESS_USERS_JSON=[{"username":"Neo","passwordHash":"","role":"user"}]
 SESSION_COOKIE_NAME=private_session
 SESSION_COOKIE_SECURE=false
 SESSION_TTL_MINUTES=1440
@@ -61,10 +71,10 @@ Wichtige Grenze: Der In-Memory-Session-Store ist für die erste Version geeignet
 
 ## Login-Flow
 
-1. Frontend sendet `POST /auth/login` mit `{ "password": "..." }`.
+1. Frontend sendet `POST /auth/login` mit `{ "username": "...", "password": "..." }`.
 2. Backend validiert die Eingabe.
-3. Backend prüft das Passwort gegen `PRIVATE_ACCESS_PASSWORD_HASH`.
-4. Backend setzt bei Erfolg ein `httpOnly` Session-Cookie.
+3. Backend sucht den Nutzer und prüft das Passwort gegen den konfigurierten Argon2-Hash.
+4. Backend setzt bei Erfolg ein `httpOnly` Session-Cookie mit Benutzername und Rolle in der serverseitigen Session.
 5. Frontend navigiert zu `/private`.
 6. `/private` lädt Inhalte über `GET /private/content`.
 7. Backend gibt private Inhalte nur bei gültiger Session zurück.
@@ -84,6 +94,7 @@ Wichtige Grenze: Der In-Memory-Session-Store ist für die erste Version geeignet
 - Login-Endpunkt ist rate-limited.
 - API-Eingaben werden validiert.
 - Private Endpunkte prüfen die Session serverseitig.
+- Admin-Endpunkte verlangen Rolle `admin`.
 
 ## Nächste Ausbaustufe
 

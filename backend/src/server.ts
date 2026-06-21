@@ -7,7 +7,7 @@ import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import { z } from "zod";
 import { config } from "./config.js";
-import { createSession, destroySession, isValidSession } from "./sessionStore.js";
+import { createSession, destroySession, getSessionUser, type SessionUser } from "./sessionStore.js";
 import {
   createSubject,
   deleteSubject,
@@ -20,6 +20,7 @@ import {
 const app = express();
 
 const loginSchema = z.object({
+  username: z.string().trim().min(1).max(60),
   password: z.string().min(1).max(256)
 });
 
@@ -70,6 +71,8 @@ const getSessionToken = (req: Request) => {
   return typeof value === "string" ? value : undefined;
 };
 
+const getAuthenticatedUser = (req: Request) => getSessionUser(getSessionToken(req));
+
 const getRouteParam = (value: string | string[] | undefined) => {
   if (Array.isArray(value)) {
     return value[0];
@@ -79,7 +82,9 @@ const getRouteParam = (value: string | string[] | undefined) => {
 };
 
 const requireAuth = (req: Request, res: Response, next: NextFunction) => {
-  if (!isValidSession(getSessionToken(req))) {
+  const user = getAuthenticatedUser(req);
+
+  if (!user) {
     res.status(401).json({
       authenticated: false,
       error: "Unauthorized"
@@ -87,6 +92,32 @@ const requireAuth = (req: Request, res: Response, next: NextFunction) => {
     return;
   }
 
+  res.locals.user = user;
+  next();
+};
+
+const getResponseUser = (res: Response) => res.locals.user as SessionUser | undefined;
+
+const requireAdmin = (req: Request, res: Response, next: NextFunction) => {
+  const user = getAuthenticatedUser(req);
+
+  if (!user) {
+    res.status(401).json({
+      authenticated: false,
+      error: "Unauthorized"
+    });
+    return;
+  }
+
+  if (user.role !== "admin") {
+    res.status(403).json({
+      authenticated: true,
+      error: "Admin role required."
+    });
+    return;
+  }
+
+  res.locals.user = user;
   next();
 };
 
@@ -125,7 +156,7 @@ app.get("/health", (_req, res) => {
 });
 
 app.post("/auth/login", loginRateLimiter, async (req, res) => {
-  if (!config.privateAccessPasswordHash) {
+  if (config.privateAccessUsers.length === 0) {
     res.status(503).json({
       authenticated: false,
       error: "Private access is not configured."
@@ -144,12 +175,20 @@ app.post("/auth/login", loginRateLimiter, async (req, res) => {
   }
 
   let isPasswordValid = false;
+  const authUser = config.privateAccessUsers.find(
+    (user) => user.normalizedUsername === parsedBody.data.username.toLowerCase()
+  );
+
+  if (!authUser) {
+    res.status(401).json({
+      authenticated: false,
+      error: "Invalid username or password."
+    });
+    return;
+  }
 
   try {
-    isPasswordValid = await argon2.verify(
-      config.privateAccessPasswordHash,
-      parsedBody.data.password
-    );
+    isPasswordValid = await argon2.verify(authUser.passwordHash, parsedBody.data.password);
   } catch {
     res.status(503).json({
       authenticated: false,
@@ -161,16 +200,21 @@ app.post("/auth/login", loginRateLimiter, async (req, res) => {
   if (!isPasswordValid) {
     res.status(401).json({
       authenticated: false,
-      error: "Invalid password."
+      error: "Invalid username or password."
     });
     return;
   }
 
-  const sessionToken = createSession(config.sessionTtlMs);
+  const sessionToken = createSession(config.sessionTtlMs, {
+    username: authUser.username,
+    role: authUser.role
+  });
 
   res.cookie(config.sessionCookieName, sessionToken, sessionCookieOptions);
   res.status(200).json({
-    authenticated: true
+    authenticated: true,
+    username: authUser.username,
+    role: authUser.role
   });
 });
 
@@ -183,9 +227,13 @@ app.post("/auth/logout", (req, res) => {
 });
 
 app.get("/auth/me", requireAuth, (_req, res) => {
+  const user = getResponseUser(res);
+
   res.status(200).json({
     authenticated: true,
-    area: "private"
+    area: "private",
+    username: user?.username,
+    role: user?.role
   });
 });
 
@@ -220,7 +268,7 @@ app.get("/subjects/:slug", async (req, res, next) => {
   }
 });
 
-app.get("/admin/subjects", requireAuth, async (_req, res, next) => {
+app.get("/admin/subjects", requireAdmin, async (_req, res, next) => {
   try {
     const subjects = await listAdminSubjects(config.subjectDataFilePath);
     res.status(200).json({
@@ -231,7 +279,7 @@ app.get("/admin/subjects", requireAuth, async (_req, res, next) => {
   }
 });
 
-app.post("/admin/subjects", requireAuth, async (req, res, next) => {
+app.post("/admin/subjects", requireAdmin, async (req, res, next) => {
   const parsedBody = subjectSchema.safeParse(req.body);
 
   if (!parsedBody.success) {
@@ -253,7 +301,7 @@ app.post("/admin/subjects", requireAuth, async (req, res, next) => {
   }
 });
 
-app.put("/admin/subjects/:id", requireAuth, async (req, res, next) => {
+app.put("/admin/subjects/:id", requireAdmin, async (req, res, next) => {
   const subjectId = getRouteParam(req.params.id);
 
   if (!subjectId) {
@@ -297,7 +345,7 @@ app.put("/admin/subjects/:id", requireAuth, async (req, res, next) => {
   }
 });
 
-app.delete("/admin/subjects/:id", requireAuth, async (req, res, next) => {
+app.delete("/admin/subjects/:id", requireAdmin, async (req, res, next) => {
   const subjectId = getRouteParam(req.params.id);
 
   if (!subjectId) {
@@ -324,9 +372,11 @@ app.delete("/admin/subjects/:id", requireAuth, async (req, res, next) => {
 });
 
 app.get("/private/content", requireAuth, (_req, res) => {
+  const user = getResponseUser(res);
+
   res.status(200).json({
     title: "Privater Bereich",
-    message: "Du bist angemeldet. Echte private Inhalte werden später serverseitig geladen.",
+    message: `Du bist als ${user?.username ?? "Nutzer"} angemeldet. Echte private Inhalte werden später serverseitig geladen.`,
     items: [
       "Session wird über ein httpOnly Cookie geschützt.",
       "Das Passwort wird nur als Argon2-Hash im Backend geprüft.",

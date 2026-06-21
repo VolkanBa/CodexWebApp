@@ -223,7 +223,9 @@ Backend:
 ```env
 PORT=4000
 FRONTEND_ORIGIN=http://localhost:3000
+PRIVATE_ACCESS_ADMIN_USERNAME=Volle
 PRIVATE_ACCESS_PASSWORD_HASH=$argon2id$v=19$...
+PRIVATE_ACCESS_USERS_JSON=[{"username":"Neo","passwordHash":"","role":"user"}]
 SESSION_COOKIE_NAME=private_session
 SESSION_COOKIE_SECURE=false
 SESSION_TTL_MINUTES=1440

@@ -101,3 +101,7 @@ Linear-Team: `CodexWebApp`
   - Branch: `codex/landing-auth-state`
   - Linear: `https://linear.app/codexwebapp/issue/COD-42/web-027-landing-page-login-status-anzeigen-und-logout-ermoglichen`
   - Ergebnis: Landing Page zeigt bei aktiver Session `Log out` und blendet den großen Anmeldebutton aus.
+- [x] COD-43 / WEB-028: Mehrbenutzer-Login mit Admin- und Nutzerrollen einführen
+  - Branch: `codex/multi-user-auth`
+  - Linear: `https://linear.app/codexwebapp/issue/COD-43/web-028-mehrbenutzer-login-mit-admin-und-nutzerrollen-einfuhren`
+  - Ergebnis: Login nutzt Benutzername und Passwort; `Volle` ist Admin, 9 weitere Nutzer sind als normale Nutzer vorgesehen.

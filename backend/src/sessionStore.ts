@@ -1,8 +1,15 @@
 import { randomBytes } from "node:crypto";
+import type { UserRole } from "./config.js";
+
+export type SessionUser = {
+  username: string;
+  role: UserRole;
+};
 
 type Session = {
   createdAt: number;
   expiresAt: number;
+  user: SessionUser;
 };
 
 const sessions = new Map<string, Session>();
@@ -17,7 +24,7 @@ const removeExpiredSessions = () => {
   }
 };
 
-export const createSession = (ttlMs: number) => {
+export const createSession = (ttlMs: number, user: SessionUser) => {
   removeExpiredSessions();
 
   const token = randomBytes(32).toString("base64url");
@@ -25,29 +32,30 @@ export const createSession = (ttlMs: number) => {
 
   sessions.set(token, {
     createdAt: now,
-    expiresAt: now + ttlMs
+    expiresAt: now + ttlMs,
+    user
   });
 
   return token;
 };
 
-export const isValidSession = (token: string | undefined) => {
+export const getSessionUser = (token: string | undefined) => {
   if (!token) {
-    return false;
+    return undefined;
   }
 
   const session = sessions.get(token);
 
   if (!session) {
-    return false;
+    return undefined;
   }
 
   if (session.expiresAt <= Date.now()) {
     sessions.delete(token);
-    return false;
+    return undefined;
   }
 
-  return true;
+  return session.user;
 };
 
 export const destroySession = (token: string | undefined) => {

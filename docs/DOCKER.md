@@ -67,7 +67,7 @@ Unter Windows PowerShell:
 Copy-Item backend/.env.docker.example backend/.env
 ```
 
-Wichtig: `backend/.env` wird nicht nach GitHub gepusht. Dort muss dein echter `PRIVATE_ACCESS_PASSWORD_HASH` stehen, wenn Login und Admin-Bereich funktionieren sollen.
+Wichtig: `backend/.env` wird nicht nach GitHub gepusht. Dort muss dein echter `PRIVATE_ACCESS_PASSWORD_HASH` stehen, wenn Login und Admin-Bereich funktionieren sollen. Weitere Nutzer werden über `PRIVATE_ACCESS_USERS_JSON` konfiguriert; Details stehen in `docs/AUTH_USERS.md`.
 Compose liest diese Datei im Raw-Format, damit `$`-Zeichen in Argon2-Hashes nicht als Umgebungsvariablen interpretiert werden.
 
 Einen Argon2-Hash erzeugst du lokal so:
@@ -214,6 +214,8 @@ ss -ltnp | grep ':4000'
 Prüfe `backend/.env`:
 
 - `PRIVATE_ACCESS_PASSWORD_HASH` muss ein echter Argon2-Hash sein.
+- `PRIVATE_ACCESS_ADMIN_USERNAME` sollte lokal `Volle` sein.
+- `PRIVATE_ACCESS_USERS_JSON` braucht für aktivierte Nutzer echte Argon2-Hashes.
 - `FRONTEND_ORIGIN` muss `http://localhost:3000` sein.
 - `SESSION_COOKIE_SECURE` muss lokal und in Docker `false` sein, weil `http://localhost` kein HTTPS ist.
 - Nach Änderungen Container neu starten:

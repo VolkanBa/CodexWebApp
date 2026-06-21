@@ -69,7 +69,7 @@ export function SubjectAdminEditor() {
       cache: "no-store"
     });
 
-    if (response.status === 401) {
+    if (response.status === 401 || response.status === 403) {
       setAuthStatus("unauthorized");
       return;
     }
@@ -173,7 +173,7 @@ export function SubjectAdminEditor() {
         body: JSON.stringify(payload)
       });
 
-      if (response.status === 401) {
+      if (response.status === 401 || response.status === 403) {
         setAuthStatus("unauthorized");
         return;
       }
