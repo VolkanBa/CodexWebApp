@@ -22,6 +22,13 @@ Der Login nutzt Benutzername und Passwort. Passwörter werden weiterhin nicht im
 | `Ezio` | `user` | Videospiel |
 | `Tesla` | `user` | historischer Kontext |
 
+## Passwort-Policy
+
+- `Volle` behält ein eigenes Admin-Passwort.
+- Die 9 normalen Nutzer verwenden lokal aktuell ein gemeinsames Passwort.
+- Das gemeinsame Passwort steht nur in der lokalen Datei `private-data/USER_PASSWORDS.md`.
+- `private-data/` ist per `.gitignore` ausgeschlossen und wird nicht nach GitHub gepusht.
+
 ## Konfiguration
 
 Der Admin `Volle` nutzt den bestehenden Hash:
@@ -49,3 +56,5 @@ node -e "import('argon2').then(async (argon2) => console.log(await argon2.hash(p
 
 - `/private` und `GET /private/content`: `admin` und `user`
 - `/admin/subjects` und Schreibzugriffe im Hochschul-Admin: nur `admin`
+- Pro Benutzername ist nur eine aktive Session erlaubt.
+- Nach 60 Minuten ohne Aktivität läuft die Session automatisch ab.

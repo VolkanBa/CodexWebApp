@@ -53,7 +53,7 @@ PRIVATE_ACCESS_PASSWORD_HASH=$argon2id$v=19$...
 PRIVATE_ACCESS_USERS_JSON=[{"username":"Neo","passwordHash":"","role":"user"}]
 SESSION_COOKIE_NAME=private_session
 SESSION_COOKIE_SECURE=false
-SESSION_TTL_MINUTES=1440
+SESSION_TTL_MINUTES=60
 AUTH_RATE_LIMIT_WINDOW_MINUTES=15
 AUTH_RATE_LIMIT_MAX=5
 ```
@@ -65,6 +65,8 @@ AUTH_RATE_LIMIT_MAX=5
 - Das Cookie ist für JavaScript im Browser nicht lesbar.
 - Lokal und in Docker wird `SESSION_COOKIE_SECURE=false` verwendet, weil die App über `http://localhost` läuft.
 - In echter HTTPS-Produktion muss `SESSION_COOKIE_SECURE=true` gesetzt werden, damit das Cookie nur über HTTPS gesendet wird.
+- Sessions laufen nach 60 Minuten ohne Aktivität ab. Jede authentifizierte Anfrage verlängert die Session wieder um 60 Minuten.
+- Pro Benutzerkonto ist nur eine aktive Session erlaubt. Ein weiterer Loginversuch auf einen belegten Account wird mit `Jemand ist schon auf dem Acc` abgelehnt.
 - Sessions werden aktuell im Speicher des Backend-Prozesses gehalten.
 
 Wichtige Grenze: Der In-Memory-Session-Store ist für die erste Version geeignet, aber nicht für mehrere Backend-Instanzen oder Neustarts. Für Produktion sollte später Redis, eine Datenbank oder ein anderer zentraler Session-Store genutzt werden.
@@ -95,6 +97,7 @@ Wichtige Grenze: Der In-Memory-Session-Store ist für die erste Version geeignet
 - API-Eingaben werden validiert.
 - Private Endpunkte prüfen die Session serverseitig.
 - Admin-Endpunkte verlangen Rolle `admin`.
+- Pro Konto ist nur eine aktive Session erlaubt.
 
 ## Nächste Ausbaustufe
 

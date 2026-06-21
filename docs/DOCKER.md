@@ -218,6 +218,7 @@ Prüfe `backend/.env`:
 - `PRIVATE_ACCESS_USERS_JSON` braucht für aktivierte Nutzer echte Argon2-Hashes.
 - `FRONTEND_ORIGIN` muss `http://localhost:3000` sein.
 - `SESSION_COOKIE_SECURE` muss lokal und in Docker `false` sein, weil `http://localhost` kein HTTPS ist.
+- `SESSION_TTL_MINUTES` ist lokal auf `60` gesetzt; das entspricht 1 Stunde Inaktivitäts-Logout.
 - Nach Änderungen Container neu starten:
 
 ```bash

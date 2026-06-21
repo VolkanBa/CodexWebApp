@@ -7,7 +7,13 @@ import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import { z } from "zod";
 import { config } from "./config.js";
-import { createSession, destroySession, getSessionUser, type SessionUser } from "./sessionStore.js";
+import {
+  createSession,
+  destroySession,
+  getSessionUser,
+  hasActiveSessionForUsername,
+  type SessionUser
+} from "./sessionStore.js";
 import {
   createSubject,
   deleteSubject,
@@ -71,7 +77,11 @@ const getSessionToken = (req: Request) => {
   return typeof value === "string" ? value : undefined;
 };
 
-const getAuthenticatedUser = (req: Request) => getSessionUser(getSessionToken(req));
+const refreshSessionCookie = (res: Response, sessionToken: string) => {
+  res.cookie(config.sessionCookieName, sessionToken, sessionCookieOptions);
+};
+
+const getAuthenticatedUser = (req: Request) => getSessionUser(getSessionToken(req), config.sessionTtlMs);
 
 const getRouteParam = (value: string | string[] | undefined) => {
   if (Array.isArray(value)) {
@@ -82,6 +92,7 @@ const getRouteParam = (value: string | string[] | undefined) => {
 };
 
 const requireAuth = (req: Request, res: Response, next: NextFunction) => {
+  const sessionToken = getSessionToken(req);
   const user = getAuthenticatedUser(req);
 
   if (!user) {
@@ -92,6 +103,10 @@ const requireAuth = (req: Request, res: Response, next: NextFunction) => {
     return;
   }
 
+  if (sessionToken) {
+    refreshSessionCookie(res, sessionToken);
+  }
+
   res.locals.user = user;
   next();
 };
@@ -99,6 +114,7 @@ const requireAuth = (req: Request, res: Response, next: NextFunction) => {
 const getResponseUser = (res: Response) => res.locals.user as SessionUser | undefined;
 
 const requireAdmin = (req: Request, res: Response, next: NextFunction) => {
+  const sessionToken = getSessionToken(req);
   const user = getAuthenticatedUser(req);
 
   if (!user) {
@@ -115,6 +131,10 @@ const requireAdmin = (req: Request, res: Response, next: NextFunction) => {
       error: "Admin role required."
     });
     return;
+  }
+
+  if (sessionToken) {
+    refreshSessionCookie(res, sessionToken);
   }
 
   res.locals.user = user;
@@ -201,6 +221,14 @@ app.post("/auth/login", loginRateLimiter, async (req, res) => {
     res.status(401).json({
       authenticated: false,
       error: "Invalid username or password."
+    });
+    return;
+  }
+
+  if (hasActiveSessionForUsername(authUser.username)) {
+    res.status(409).json({
+      authenticated: false,
+      error: "Jemand ist schon auf dem Acc"
     });
     return;
   }

@@ -36,6 +36,8 @@ export function LoginForm({ redirectTo = "/" }: { redirectTo?: string }) {
 
       if (response.status === 503) {
         setMessage("Der private Zugang ist serverseitig noch nicht vollständig konfiguriert.");
+      } else if (response.status === 409) {
+        setMessage("Jemand ist schon auf dem Acc");
       } else if (response.status === 429) {
         setMessage("Zu viele Loginversuche. Bitte versuche es später erneut.");
       } else {

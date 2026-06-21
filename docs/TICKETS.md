@@ -105,3 +105,7 @@ Linear-Team: `CodexWebApp`
   - Branch: `codex/multi-user-auth`
   - Linear: `https://linear.app/codexwebapp/issue/COD-43/web-028-mehrbenutzer-login-mit-admin-und-nutzerrollen-einfuhren`
   - Ergebnis: Login nutzt Benutzername und Passwort; `Volle` ist Admin, 9 weitere Nutzer sind als normale Nutzer vorgesehen.
+- [x] COD-44 / WEB-029: Ein Account nur einmal gleichzeitig und 1h Inaktivitäts-Logout
+  - Branch: `codex/account-session-policy`
+  - Linear: `https://linear.app/codexwebapp/issue/COD-44/web-029-ein-account-nur-einmal-gleichzeitig-und-1h-inaktivitats-logout`
+  - Ergebnis: Die 9 normalen Nutzer teilen sich lokal ein neues sicheres Passwort, `Volle` behält das eigene Admin-Passwort. Pro Benutzername ist nur eine aktive Session erlaubt; nach 1 Stunde Inaktivität läuft die Session ab.
