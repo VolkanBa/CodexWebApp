@@ -25,6 +25,10 @@ Die WebSocket-Verbindung authentifiziert sich über das bestehende `httpOnly` Se
 - Eine Lobby kann per Join-Link geteilt werden.
 - Der Join-Link hat das Format `/private/games/wizard/join/[gameId]`.
 - Der Backend-Store ist aktuell in-memory. Nach Backend-Neustart sind laufende Spiele weg.
+- Admins sehen zusätzlich einen Debugmodus-Button.
+- Im Debugmodus erstellt das Backend zwei virtuelle Spieler: `Volle 1` und `Volle 2`.
+- Beide Debug-Spieler werden vom Admin-Account gesteuert.
+- In der UI wird farbig angezeigt, welcher Debug-Spieler gerade am Zug ist.
 
 Für produktive Online-Nutzung sollte später ein persistenter Store ergänzt werden, zum Beispiel PostgreSQL oder Redis.
 
@@ -82,6 +86,7 @@ Abgedeckt sind unter anderem:
 - Bombe
 - Vampir-Kopie
 - parallele Spiel-IDs
+- Admin-Debugspiel mit zwei kontrollierten Seats
 
 ## Kartendesigns
 

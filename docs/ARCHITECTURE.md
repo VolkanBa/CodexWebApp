@@ -101,7 +101,7 @@ Private Spiele:
 - `GET /private/games`: geschützte Übersicht für geplante Spiele wie Uno, Wizard und 6 nimmt
 - `WS /ws/wizard`: geschützter WebSocket für Wizard-Lobbys und Live-Spielstatus
 
-Wizard nutzt eine serverseitige Regel-Engine unter `backend/src/games/wizard/`. Lobbys, Züge, Stichauflösung und Punktewertung werden im Backend validiert. Der aktuelle Store ist in-memory und eignet sich für lokale Entwicklung; für Produktion sollte ein persistenter Store ergänzt werden.
+Wizard nutzt eine serverseitige Regel-Engine unter `backend/src/games/wizard/`. Lobbys, Züge, Stichauflösung und Punktewertung werden im Backend validiert. Der aktuelle Store ist in-memory und eignet sich für lokale Entwicklung; für Produktion sollte ein persistenter Store ergänzt werden. Admins können über den Wizard-Debugmodus zwei virtuelle Seats steuern, damit Regeln und UI ohne zweite echte Anmeldung geprüft werden können.
 
 ## Docker
 

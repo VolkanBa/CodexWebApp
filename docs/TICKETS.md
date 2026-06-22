@@ -124,3 +124,7 @@ Linear-Team: `CodexWebApp`
     - [x] COD-50 / WEB-031-TESTS: Wizard Regeltests
     - [x] COD-51 / WEB-031-ASSETS: Wizard Kartendesign-Mapping vorbereiten
     - [x] COD-52 / WEB-031-DOCS: Wizard Dokumentation ergänzen
+- [x] COD-53 / WEB-032: Admin-Debugmodus für Wizard hinzufügen
+  - Branch: `codex/wizard-admin-debug-mode`
+  - Linear: `https://linear.app/codexwebapp/issue/COD-53/web-032-admin-debugmodus-fur-wizard-hinzufugen`
+  - Ergebnis: Admins sehen einen Debugmodus-Button und können ein Wizard-Testspiel mit `Volle 1` und `Volle 2` starten. Beide virtuellen Spieler werden vom Admin gesteuert; der aktive Spieler wird farbig angezeigt.

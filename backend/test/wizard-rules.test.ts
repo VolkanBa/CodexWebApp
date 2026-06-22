@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createWizardGame } from "../src/games/wizard/store.js";
+import {
+  createWizardDebugGame,
+  createWizardGame,
+  getWizardGameView,
+  makeWizardPrediction
+} from "../src/games/wizard/store.js";
 import { calculateRoundScore, determineTrickWinner, getEffectiveCard, validateCardPlay } from "../src/games/wizard/rules.js";
 import type { PlayedWizardCard, WizardCard, WizardGame, WizardPlayer } from "../src/games/wizard/types.js";
 
@@ -27,6 +32,7 @@ const played = (playerUsername: string, card: WizardCard, playId = `${playerUser
 const gameForRules = (overrides: Partial<WizardGame>): WizardGame => ({
   id: "game",
   ownerUsername: "Volle",
+  debugMode: null,
   status: "playing",
   settings: {
     maxPlayers: 6,
@@ -156,4 +162,28 @@ test("parallel wizard games receive separate ids", () => {
   assert.notEqual(firstGame.id, secondGame.id);
   assert.equal(firstGame.players[0]?.username, "Volle");
   assert.equal(secondGame.players[0]?.username, "Neo");
+});
+
+test("admin debug game creates two controlled Volle seats", () => {
+  const game = createWizardDebugGame("Volle");
+  const view = getWizardGameView(game, "Volle");
+
+  assert.equal(game.debugMode?.enabled, true);
+  assert.equal(game.players.length, 2);
+  assert.equal(game.players[0]?.username, "Volle 1");
+  assert.equal(game.players[1]?.username, "Volle 2");
+  assert.equal(view.controlledHands.length, 2);
+  assert.equal(view.players.every((player) => player.controlledBySelf), true);
+});
+
+test("admin can make predictions for both debug seats", () => {
+  const game = createWizardDebugGame("Volle");
+  game.status = "prediction";
+  game.roundNumber = 1;
+
+  makeWizardPrediction(game.id, "Volle", 0, "Volle 1");
+  makeWizardPrediction(game.id, "Volle", 1, "Volle 2");
+
+  assert.equal(game.players[0]?.prediction, 0);
+  assert.equal(game.players[1]?.prediction, 1);
 });

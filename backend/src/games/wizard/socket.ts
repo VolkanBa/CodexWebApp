@@ -4,6 +4,7 @@ import { config } from "../../config.js";
 import { getSessionUser, type SessionUser } from "../../sessionStore.js";
 import {
   chooseWizardTrump,
+  createWizardDebugGame,
   createWizardGame,
   getWizardGame,
   getWizardGameView,
@@ -33,6 +34,10 @@ type WizardClientMessage =
       settings?: WizardCreateGameInput;
     }
   | {
+      type: "createDebugGame";
+      settings?: WizardCreateGameInput;
+    }
+  | {
       type: "joinGame";
       gameId: string;
     }
@@ -53,11 +58,13 @@ type WizardClientMessage =
       type: "makePrediction";
       gameId: string;
       prediction: number;
+      playerUsername?: string;
     }
   | {
       type: "playCard";
       gameId: string;
       cardId: string;
+      playerUsername?: string;
       shapeshifterMode?: "wizard" | "jester";
       chosenTrumpSuit?: WizardSuit;
     }
@@ -192,9 +199,13 @@ export const registerWizardSocketServer = (server: Server) => {
     }
 
     const playerNames = new Set(game.players.map((player) => player.username.toLowerCase()));
+    const debugController = game.debugMode?.controllerUsername.toLowerCase();
 
     for (const connection of connections) {
-      if (playerNames.has(connection.user.username.toLowerCase())) {
+      if (
+        playerNames.has(connection.user.username.toLowerCase()) ||
+        debugController === connection.user.username.toLowerCase()
+      ) {
         sendJson(connection.socket, {
           type: "gameState",
           game: getWizardGameView(game, connection.user.username)
@@ -251,6 +262,16 @@ export const registerWizardSocketServer = (server: Server) => {
             broadcastGamesList();
             break;
           }
+          case "createDebugGame": {
+            if (user.role !== "admin") {
+              throw new Error("Nur Admins dürfen den Wizard-Debugmodus starten.");
+            }
+
+            const game = createWizardDebugGame(user.username, message.settings);
+            sendGameState(connection, game.id);
+            broadcastGamesList();
+            break;
+          }
           case "joinGame": {
             const game = joinWizardGame(message.gameId, user.username);
             broadcastGameState(game.id);
@@ -277,7 +298,7 @@ export const registerWizardSocketServer = (server: Server) => {
             break;
           }
           case "makePrediction": {
-            const game = makeWizardPrediction(message.gameId, user.username, message.prediction);
+            const game = makeWizardPrediction(message.gameId, user.username, message.prediction, message.playerUsername);
             broadcastGameState(game.id);
             broadcastGamesList();
             break;
@@ -285,6 +306,7 @@ export const registerWizardSocketServer = (server: Server) => {
           case "playCard": {
             const game = playWizardCard(message.gameId, user.username, {
               cardId: message.cardId,
+              playerUsername: message.playerUsername,
               shapeshifterMode: message.shapeshifterMode,
               chosenTrumpSuit: message.chosenTrumpSuit
             });

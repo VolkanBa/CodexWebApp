@@ -48,6 +48,7 @@ type PlayedWizardCard = {
 
 type WizardPlayer = {
   username: string;
+  controlledBySelf: boolean;
   seat: number;
   handCount: number;
   prediction: number | null;
@@ -78,6 +79,10 @@ type WizardPendingEffect =
 type WizardGame = {
   id: string;
   ownerUsername: string;
+  debugMode: {
+    enabled: boolean;
+    controllerUsername: string;
+  } | null;
   status: "lobby" | "trumpSelection" | "prediction" | "playing" | "effect" | "roundEnded" | "finished";
   settings: {
     maxPlayers: number;
@@ -87,7 +92,13 @@ type WizardGame = {
   };
   players: WizardPlayer[];
   selfHand: WizardCard[];
+  selfHandOwnerUsername: string | null;
   validCardIds: string[];
+  controlledHands: Array<{
+    username: string;
+    hand: WizardCard[];
+    validCardIds: string[];
+  }>;
   roundNumber: number;
   maxRounds: number;
   dealerUsername: string | null;
@@ -118,6 +129,7 @@ type WizardSocketMessage =
   | {
       type: "hello";
       username: string;
+      role: "admin" | "user";
     }
   | {
       type: "gamesList";
@@ -148,6 +160,25 @@ const getStatusLabel = (status: WizardGame["status"]) => {
 
 const getSuitLabel = (suit: WizardSuit | null) => suitOptions.find(([value]) => value === suit)?.[1] ?? "Keine";
 
+const getDebugPlayerClassName = (username: string, isActive: boolean) => {
+  const isFirstDebugPlayer = username.trim().endsWith("1");
+  const baseClass = "border px-4 py-3 text-sm font-black transition";
+
+  if (isFirstDebugPlayer) {
+    return `${baseClass} ${
+      isActive
+        ? "border-suit-orange bg-suit-orange text-suit-black"
+        : "border-suit-orange/45 bg-suit-orange/10 text-suit-orange"
+    }`;
+  }
+
+  return `${baseClass} ${
+    isActive
+      ? "border-suit-green bg-suit-green text-suit-black"
+      : "border-suit-green/45 bg-suit-green/10 text-suit-green"
+  }`;
+};
+
 export function WizardGameClient({
   initialJoinGameId = null
 }: {
@@ -157,6 +188,7 @@ export function WizardGameClient({
   const didAutoJoinRef = useRef(false);
   const [socketStatus, setSocketStatus] = useState<"connecting" | "open" | "closed">("connecting");
   const [username, setUsername] = useState<string | null>(null);
+  const [role, setRole] = useState<"admin" | "user" | null>(null);
   const [games, setGames] = useState<WizardGameListItem[]>([]);
   const [game, setGame] = useState<WizardGame | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -169,9 +201,29 @@ export function WizardGameClient({
   const [shapeshifterMode, setShapeshifterMode] = useState<"wizard" | "jester">("wizard");
   const [witchHandCardId, setWitchHandCardId] = useState("");
   const [witchTrickPlayId, setWitchTrickPlayId] = useState("");
+  const [selectedControlledUsername, setSelectedControlledUsername] = useState<string | null>(null);
 
   const isSelfOwner = username && game?.ownerUsername.toLowerCase() === username.toLowerCase();
+  const isAdmin = role === "admin";
   const selfPlayer = game?.players.find((player) => player.isSelf) ?? null;
+  const controlledHands = game?.controlledHands ?? [];
+  const activeControlledHand =
+    controlledHands.find((entry) => entry.username === selectedControlledUsername) ??
+    controlledHands.find((entry) => entry.username === game?.activeUsername) ??
+    controlledHands[0] ??
+    null;
+  const displayedHand = game?.debugMode?.enabled ? activeControlledHand?.hand ?? [] : game?.selfHand ?? [];
+  const displayedValidCardIds = game?.debugMode?.enabled ? activeControlledHand?.validCardIds ?? [] : game?.validCardIds ?? [];
+  const displayedHandOwnerUsername = game?.debugMode?.enabled
+    ? activeControlledHand?.username ?? null
+    : game?.selfHandOwnerUsername ?? username;
+  const debugPlayers = game?.debugMode?.enabled ? game.players.filter((player) => player.controlledBySelf) : [];
+  const isDisplayedHandActive =
+    Boolean(displayedHandOwnerUsername) && game?.activeUsername?.toLowerCase() === displayedHandOwnerUsername?.toLowerCase();
+  const pendingEffectUsername =
+    game?.pendingEffect?.type === "cloud" || game?.pendingEffect?.type === "witch" ? game.pendingEffect.username : null;
+  const pendingEffectControlledHand =
+    pendingEffectUsername ? controlledHands.find((entry) => entry.username === pendingEffectUsername) : null;
   const joinUrl = useMemo(() => {
     if (!game || typeof window === "undefined") {
       return "";
@@ -202,6 +254,7 @@ export function WizardGameClient({
 
       if (message.type === "hello") {
         setUsername(message.username);
+        setRole(message.role);
       }
 
       if (message.type === "gamesList") {
@@ -215,6 +268,31 @@ export function WizardGameClient({
           }
 
           return message.game;
+        });
+        setSelectedControlledUsername((currentUsername) => {
+          const availableUsernames = message.game.controlledHands.map((entry) => entry.username);
+
+          if (!availableUsernames.length) {
+            return null;
+          }
+
+          if (
+            message.game.status === "playing" &&
+            message.game.activeUsername &&
+            availableUsernames.includes(message.game.activeUsername)
+          ) {
+            return message.game.activeUsername;
+          }
+
+          if (currentUsername && availableUsernames.includes(currentUsername)) {
+            return currentUsername;
+          }
+
+          if (message.game.activeUsername && availableUsernames.includes(message.game.activeUsername)) {
+            return message.game.activeUsername;
+          }
+
+          return availableUsernames[0];
         });
         setPrediction(message.game.roundNumber);
         setError(null);
@@ -256,11 +334,23 @@ export function WizardGameClient({
     });
   };
 
+  const createDebugGame = () => {
+    send({
+      type: "createDebugGame",
+      settings: {
+        enabledOptionalCards,
+        timeLimitSeconds: timeLimitSeconds ? Number(timeLimitSeconds) : null,
+        scoreboardVisibleDefault: scoreboardVisible
+      }
+    });
+  };
+
   const playCard = (card: WizardCard) => {
     send({
       type: "playCard",
       gameId: game?.id,
       cardId: card.id,
+      playerUsername: game?.debugMode?.enabled ? displayedHandOwnerUsername : undefined,
       shapeshifterMode: card.kind === "shapeshifter" ? shapeshifterMode : undefined,
       chosenTrumpSuit: selectedTrumpSuit
     });
@@ -348,6 +438,15 @@ export function WizardGameClient({
             >
               Lobby erstellen
             </button>
+            {isAdmin ? (
+              <button
+                type="button"
+                onClick={createDebugGame}
+                className="ml-0 mt-3 bg-suit-green px-5 py-3 text-sm font-bold text-suit-black transition hover:bg-green-300 sm:ml-3"
+              >
+                Debugmodus starten
+              </button>
+            ) : null}
           </section>
 
           <section className="border border-white/12 bg-white/[0.045] p-5">
@@ -411,6 +510,11 @@ export function WizardGameClient({
             {game.status === "lobby" ? (
               <div className="mt-6">
                 <h3 className="text-xl font-black text-white">Spieler</h3>
+                {game.debugMode?.enabled ? (
+                  <div className="mt-3 border border-suit-green/40 bg-suit-green/10 p-3 text-sm font-semibold text-suit-green">
+                    Admin-Debugmodus: Du steuerst beide Spieler.
+                  </div>
+                ) : null}
                 <div className="mt-3 grid gap-2 sm:grid-cols-2">
                   {game.players.map((player) => (
                     <div key={player.username} className="border border-white/10 bg-suit-black/40 p-3 text-white/72">
@@ -430,7 +534,32 @@ export function WizardGameClient({
               </div>
             ) : null}
 
-            {game.status === "trumpSelection" && game.trumpChoicePendingFor?.toLowerCase() === username?.toLowerCase() ? (
+            {game.debugMode?.enabled ? (
+              <div className="mt-6 border border-white/12 bg-suit-black/40 p-4">
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/50">Debug-Zuganzeige</p>
+                <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                  {debugPlayers.map((player) => {
+                    const isActive = game.activeUsername === player.username || game.trumpChoicePendingFor === player.username;
+
+                    return (
+                      <button
+                        key={player.username}
+                        type="button"
+                        onClick={() => setSelectedControlledUsername(player.username)}
+                        className={getDebugPlayerClassName(player.username, isActive)}
+                      >
+                        {player.username}
+                        {isActive ? " ist am Zug" : ""}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : null}
+
+            {game.status === "trumpSelection" &&
+            (game.trumpChoicePendingFor?.toLowerCase() === username?.toLowerCase() ||
+              controlledHands.some((entry) => entry.username === game.trumpChoicePendingFor)) ? (
               <div className="mt-6 border border-suit-green/40 bg-suit-green/10 p-4">
                 <h3 className="text-xl font-black text-white">Trumpf bestimmen</h3>
                 <div className="mt-4 flex flex-wrap gap-2">
@@ -448,9 +577,27 @@ export function WizardGameClient({
               </div>
             ) : null}
 
-            {game.status === "prediction" && selfPlayer?.prediction === null ? (
+            {game.status === "prediction" && (game.debugMode?.enabled || selfPlayer?.prediction === null) ? (
               <div className="mt-6 border border-white/12 bg-suit-black/40 p-4">
                 <h3 className="text-xl font-black text-white">Stiche vorhersagen</h3>
+                {game.debugMode?.enabled ? (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {controlledHands.map((entry) => {
+                      const player = game.players.find((candidate) => candidate.username === entry.username);
+
+                      return (
+                        <button
+                          key={entry.username}
+                          type="button"
+                          onClick={() => setSelectedControlledUsername(entry.username)}
+                          className={getDebugPlayerClassName(entry.username, selectedControlledUsername === entry.username)}
+                        >
+                          {entry.username}: {player?.prediction ?? "offen"}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : null}
                 <div className="mt-4 flex flex-wrap items-end gap-3">
                   <label className="text-sm font-bold text-white/78">
                     Vorhersage
@@ -465,10 +612,17 @@ export function WizardGameClient({
                   </label>
                   <button
                     type="button"
-                    onClick={() => send({ type: "makePrediction", gameId: game.id, prediction })}
+                    onClick={() =>
+                      send({
+                        type: "makePrediction",
+                        gameId: game.id,
+                        prediction,
+                        playerUsername: game.debugMode?.enabled ? displayedHandOwnerUsername : undefined
+                      })
+                    }
                     className="bg-suit-orange px-5 py-3 text-sm font-bold text-suit-black transition hover:bg-orange-400"
                   >
-                    Abgeben
+                    Für {game.debugMode?.enabled ? displayedHandOwnerUsername : "dich"} abgeben
                   </button>
                 </div>
               </div>
@@ -501,8 +655,9 @@ export function WizardGameClient({
                 <h3 className="text-xl font-black text-white">Sondereffekt</h3>
                 {game.pendingEffect.type === "cloud" ? (
                   <div className="mt-3">
-                    <p className="text-sm text-white/72">Wolke: {game.pendingEffect.username} muss die Vorhersage ändern.</p>
-                    {game.pendingEffect.username.toLowerCase() === username?.toLowerCase() ? (
+                    <p className="text-sm text-white/72">Wolke: {pendingEffectUsername} muss die Vorhersage ändern.</p>
+                    {pendingEffectUsername?.toLowerCase() === username?.toLowerCase() ||
+                    controlledHands.some((entry) => entry.username === pendingEffectUsername) ? (
                       <div className="mt-3 flex gap-2">
                         <button
                           type="button"
@@ -536,8 +691,9 @@ export function WizardGameClient({
                 ) : null}
                 {game.pendingEffect.type === "witch" ? (
                   <div className="mt-3">
-                    <p className="text-sm text-white/72">Hexe: {game.pendingEffect.username} darf eine Karte tauschen.</p>
-                    {game.pendingEffect.username.toLowerCase() === username?.toLowerCase() ? (
+                    <p className="text-sm text-white/72">Hexe: {pendingEffectUsername} darf eine Karte tauschen.</p>
+                    {pendingEffectUsername?.toLowerCase() === username?.toLowerCase() ||
+                    controlledHands.some((entry) => entry.username === pendingEffectUsername) ? (
                       <div className="mt-3 grid gap-3 sm:grid-cols-2">
                         <select
                           value={witchHandCardId}
@@ -545,7 +701,7 @@ export function WizardGameClient({
                           className="border border-white/12 bg-suit-black px-3 py-3 text-white"
                         >
                           <option value="">Handkarte wählen</option>
-                          {game.selfHand.map((card) => (
+                          {(pendingEffectControlledHand?.hand ?? game.selfHand).map((card) => (
                             <option key={card.id} value={card.id}>
                               {card.label}
                             </option>
@@ -588,7 +744,9 @@ export function WizardGameClient({
 
             <div className="mt-6">
               <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <h3 className="text-xl font-black text-white">Deine Hand</h3>
+                <h3 className="text-xl font-black text-white">
+                  {game.debugMode?.enabled ? `Hand von ${displayedHandOwnerUsername ?? "Debug-Spieler"}` : "Deine Hand"}
+                </h3>
                 <div className="flex flex-wrap gap-2">
                   <select
                     value={selectedTrumpSuit}
@@ -612,9 +770,9 @@ export function WizardGameClient({
                 </div>
               </div>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {game.selfHand.map((card) => {
-                  const isValid = game.validCardIds.includes(card.id);
-                  const isActive = game.activeUsername?.toLowerCase() === username?.toLowerCase();
+                {displayedHand.map((card) => {
+                  const isValid = displayedValidCardIds.includes(card.id);
+                  const isActive = game.debugMode?.enabled ? isDisplayedHandActive : game.activeUsername?.toLowerCase() === username?.toLowerCase();
 
                   return (
                     <button

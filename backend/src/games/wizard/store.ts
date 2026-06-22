@@ -62,6 +62,67 @@ const getPlayer = (game: WizardGame, username: string) =>
 const getPlayerIndex = (game: WizardGame, username: string) =>
   game.players.findIndex((player) => player.username.toLowerCase() === username.toLowerCase());
 
+const canControlPlayer = (game: WizardGame, player: WizardPlayer, username: string) => {
+  if (player.username.toLowerCase() === username.toLowerCase()) {
+    return true;
+  }
+
+  return (
+    game.debugMode?.enabled === true &&
+    game.debugMode.controllerUsername.toLowerCase() === username.toLowerCase() &&
+    player.controlledByUsername?.toLowerCase() === username.toLowerCase()
+  );
+};
+
+const getControlledPlayers = (game: WizardGame, username: string) =>
+  game.players.filter((player) => canControlPlayer(game, player, username));
+
+const resolveControlledPlayer = (
+  game: WizardGame,
+  username: string,
+  requestedUsername?: string
+) => {
+  if (requestedUsername) {
+    const requestedPlayer = getPlayer(game, requestedUsername);
+
+    if (requestedPlayer && canControlPlayer(game, requestedPlayer, username)) {
+      return requestedPlayer;
+    }
+
+    return undefined;
+  }
+
+  const directPlayer = getPlayer(game, username);
+
+  if (directPlayer) {
+    return directPlayer;
+  }
+
+  if (game.debugMode?.controllerUsername.toLowerCase() !== username.toLowerCase()) {
+    return undefined;
+  }
+
+  if (game.status === "trumpSelection" && game.trumpChoicePendingFor) {
+    return getPlayer(game, game.trumpChoicePendingFor);
+  }
+
+  if (game.status === "playing") {
+    return game.players[game.activePlayerIndex];
+  }
+
+  if (game.status === "effect" && game.pendingEffect) {
+    if (game.pendingEffect.type === "cloud" || game.pendingEffect.type === "witch") {
+      return getPlayer(game, game.pendingEffect.username);
+    }
+  }
+
+  if (game.status === "prediction") {
+    return getControlledPlayers(game, username).find((player) => player.prediction === null);
+  }
+
+  return getControlledPlayers(game, username)[0];
+};
+
 const getNextPlayerIndex = (game: WizardGame, currentIndex: number) => (currentIndex + 1) % game.players.length;
 
 const setUpdated = (game: WizardGame) => {
@@ -291,6 +352,7 @@ export const createWizardGame = (username: string, input?: WizardCreateGameInput
   const game: WizardGame = {
     id: gameId,
     ownerUsername: username,
+    debugMode: null,
     status: "lobby",
     settings,
     players: [
@@ -325,6 +387,67 @@ export const createWizardGame = (username: string, input?: WizardCreateGameInput
   return game;
 };
 
+export const createWizardDebugGame = (username: string, input?: WizardCreateGameInput) => {
+  const gameId = createGameId();
+  const createdAt = now();
+  const settings = normalizeSettings({
+    ...input,
+    maxPlayers: 2
+  });
+  const game: WizardGame = {
+    id: gameId,
+    ownerUsername: username,
+    debugMode: {
+      enabled: true,
+      controllerUsername: username
+    },
+    status: "lobby",
+    settings: {
+      ...settings,
+      maxPlayers: 2
+    },
+    players: [
+      {
+        username: `${username} 1`,
+        controlledByUsername: username,
+        seat: 0,
+        hand: [],
+        prediction: null,
+        tricksWon: 0,
+        score: 0
+      },
+      {
+        username: `${username} 2`,
+        controlledByUsername: username,
+        seat: 1,
+        hand: [],
+        prediction: null,
+        tricksWon: 0,
+        score: 0
+      }
+    ],
+    roundNumber: 0,
+    maxRounds: 0,
+    dealerIndex: 0,
+    leaderIndex: 0,
+    activePlayerIndex: 0,
+    deck: [],
+    trumpCard: null,
+    trumpSuit: null,
+    vampireCopyCard: null,
+    trumpChoicePendingFor: null,
+    currentTrick: [],
+    lastTrick: [],
+    pendingEffect: null,
+    messages: ["Admin-Debugmodus wurde gestartet."],
+    createdAt,
+    updatedAt: createdAt
+  };
+
+  games.set(game.id, game);
+  return game;
+};
+
 export const getWizardGame = (gameId: string) => games.get(gameId);
 
 export const joinWizardGame = (gameId: string, username: string) => {
@@ -336,6 +459,10 @@ export const joinWizardGame = (gameId: string, username: string) => {
 
   if (game.status !== "lobby") {
     throw new Error("Dieses Wizard-Spiel wurde bereits gestartet.");
+  }
+
+  if (game.debugMode?.enabled) {
+    throw new Error("Debug-Lobbys können nicht von weiteren Accounts betreten werden.");
   }
 
   if (getPlayer(game, username)) {
@@ -393,7 +520,13 @@ export const chooseWizardTrump = (gameId: string, username: string, suit: Wizard
     throw new Error("Wizard-Spiel wurde nicht gefunden.");
   }
 
-  if (game.status !== "trumpSelection" || game.trumpChoicePendingFor?.toLowerCase() !== username.toLowerCase()) {
+  const actingPlayer = resolveControlledPlayer(game, username);
+
+  if (
+    game.status !== "trumpSelection" ||
+    !actingPlayer ||
+    game.trumpChoicePendingFor?.toLowerCase() !== actingPlayer.username.toLowerCase()
+  ) {
     throw new Error("Du darfst die Trumpffarbe gerade nicht bestimmen.");
   }
 
@@ -404,12 +537,17 @@ export const chooseWizardTrump = (gameId: string, username: string, suit: Wizard
   game.trumpSuit = suit;
   game.trumpChoicePendingFor = null;
   game.status = "prediction";
-  addMessage(game, `${username} bestimmt ${suitLabels[suit]} als Trumpf.`);
+  addMessage(game, `${actingPlayer.username} bestimmt ${suitLabels[suit]} als Trumpf.`);
   setUpdated(game);
   return game;
 };
 
-export const makeWizardPrediction = (gameId: string, username: string, prediction: number) => {
+export const makeWizardPrediction = (
+  gameId: string,
+  username: string,
+  prediction: number,
+  playerUsername?: string
+) => {
   const game = games.get(gameId);
 
   if (!game) {
@@ -420,7 +558,7 @@ export const makeWizardPrediction = (gameId: string, username: string, predictio
     throw new Error("Vorhersagen sind gerade nicht möglich.");
   }
 
-  const player = getPlayer(game, username);
+  const player = resolveControlledPlayer(game, username, playerUsername);
 
   if (!player) {
     throw new Error("Du bist nicht in diesem Wizard-Spiel.");
@@ -444,7 +582,7 @@ export const playWizardCard = (gameId: string, username: string, input: WizardPl
     throw new Error("Wizard-Spiel wurde nicht gefunden.");
   }
 
-  const player = getPlayer(game, username);
+  const player = resolveControlledPlayer(game, username, input.playerUsername);
 
   if (!player) {
     throw new Error("Du bist nicht in diesem Wizard-Spiel.");
@@ -500,11 +638,13 @@ export const resolveWizardCloud = (gameId: string, username: string, delta: 1 | 
     throw new Error("Es wartet aktuell keine Wolken-Entscheidung.");
   }
 
-  if (game.pendingEffect.username.toLowerCase() !== username.toLowerCase()) {
+  const actingPlayer = resolveControlledPlayer(game, username);
+
+  if (!actingPlayer || game.pendingEffect.username.toLowerCase() !== actingPlayer.username.toLowerCase()) {
     throw new Error("Nur der Stichgewinner darf die Wolke auflösen.");
   }
 
-  const player = getPlayer(game, username);
+  const player = actingPlayer;
 
   if (!player || player.prediction === null) {
     throw new Error("Vorhersage konnte nicht angepasst werden.");
@@ -517,7 +657,7 @@ export const resolveWizardCloud = (gameId: string, username: string, delta: 1 | 
   }
 
   player.prediction = nextPrediction;
-  addMessage(game, `Wolke: ${username} verändert die Vorhersage um ${delta > 0 ? "+1" : "-1"}.`);
+  addMessage(game, `Wolke: ${player.username} verändert die Vorhersage um ${delta > 0 ? "+1" : "-1"}.`);
   const { nextLeaderUsername, trick } = game.pendingEffect;
   game.pendingEffect = null;
   continueAfterEffects(game, nextLeaderUsername, trick);
@@ -532,7 +672,7 @@ export const resolveWizardJuggler = (gameId: string, username: string) => {
     throw new Error("Es wartet aktuell kein Jongleur-Effekt.");
   }
 
-  if (!getPlayer(game, username)) {
+  if (getControlledPlayers(game, username).length === 0) {
     throw new Error("Du bist nicht in diesem Wizard-Spiel.");
   }
 
@@ -555,11 +695,13 @@ export const resolveWizardWitchExchange = (
     throw new Error("Es wartet aktuell kein Hexen-Tausch.");
   }
 
-  if (game.pendingEffect.username.toLowerCase() !== username.toLowerCase()) {
+  const actingPlayer = resolveControlledPlayer(game, username);
+
+  if (!actingPlayer || game.pendingEffect.username.toLowerCase() !== actingPlayer.username.toLowerCase()) {
     throw new Error("Nur die Person mit der Hexe darf jetzt tauschen.");
   }
 
-  const player = getPlayer(game, username);
+  const player = actingPlayer;
 
   if (!player) {
     throw new Error("Du bist nicht in diesem Wizard-Spiel.");
@@ -596,24 +738,37 @@ export const resolveWizardWitchExchange = (
 };
 
 export const getWizardGameView = (game: WizardGame, username: string): WizardGameView => {
-  const self = getPlayer(game, username);
+  const controlledPlayers = getControlledPlayers(game, username);
+  const activePlayer = game.players[game.activePlayerIndex];
+  const self =
+    controlledPlayers.find((player) => player.username === activePlayer?.username) ??
+    controlledPlayers.find((player) => player.prediction === null) ??
+    controlledPlayers[0];
 
   return {
     id: game.id,
     ownerUsername: game.ownerUsername,
+    debugMode: game.debugMode,
     status: game.status,
     settings: game.settings,
     players: game.players.map((player) => ({
       username: player.username,
+      controlledBySelf: canControlPlayer(game, player, username),
       seat: player.seat,
       handCount: player.hand.length,
       prediction: player.prediction,
       tricksWon: player.tricksWon,
       score: player.score,
-      isSelf: player.username.toLowerCase() === username.toLowerCase()
+      isSelf: canControlPlayer(game, player, username)
     })),
     selfHand: self?.hand ?? [],
+    selfHandOwnerUsername: self?.username ?? null,
     validCardIds: self ? getValidCardsForPlayer(game, self) : [],
+    controlledHands: controlledPlayers.map((player) => ({
+      username: player.username,
+      hand: player.hand,
+      validCardIds: getValidCardsForPlayer(game, player)
+    })),
     roundNumber: game.roundNumber,
     maxRounds: game.maxRounds,
     dealerUsername: game.players[game.dealerIndex]?.username ?? null,

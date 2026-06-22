@@ -49,6 +49,7 @@ export type PlayedWizardCard = {
 
 export type WizardPlayer = {
   username: string;
+  controlledByUsername?: string;
   seat: number;
   hand: WizardCard[];
   prediction: number | null;
@@ -94,6 +95,10 @@ export type WizardGameSettings = {
 export type WizardGame = {
   id: string;
   ownerUsername: string;
+  debugMode: {
+    enabled: boolean;
+    controllerUsername: string;
+  } | null;
   status: WizardGameStatus;
   settings: WizardGameSettings;
   players: WizardPlayer[];
@@ -127,6 +132,7 @@ export type WizardGameListItem = {
 
 export type WizardPublicPlayer = {
   username: string;
+  controlledBySelf: boolean;
   seat: number;
   handCount: number;
   prediction: number | null;
@@ -138,11 +144,21 @@ export type WizardPublicPlayer = {
 export type WizardGameView = {
   id: string;
   ownerUsername: string;
+  debugMode: {
+    enabled: boolean;
+    controllerUsername: string;
+  } | null;
   status: WizardGameStatus;
   settings: WizardGameSettings;
   players: WizardPublicPlayer[];
   selfHand: WizardCard[];
+  selfHandOwnerUsername: string | null;
   validCardIds: string[];
+  controlledHands: Array<{
+    username: string;
+    hand: WizardCard[];
+    validCardIds: string[];
+  }>;
   roundNumber: number;
   maxRounds: number;
   dealerUsername: string | null;
@@ -168,6 +184,7 @@ export type WizardCreateGameInput = {
 
 export type WizardPlayCardInput = {
   cardId: string;
+  playerUsername?: string;
   shapeshifterMode?: ShapeshifterMode;
   chosenTrumpSuit?: WizardSuit;
 };
