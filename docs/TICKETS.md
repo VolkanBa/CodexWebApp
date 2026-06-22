@@ -168,3 +168,11 @@ Linear-Team: `CodexWebApp`
     - [x] COD-71 / WEB-037-BE: Wizard Effekt- und Trumpfregeln korrigieren
     - [x] COD-72 / WEB-037-FE: Wizard UI für Jongleur, Trumpf und Lobby-Rejoin verbessern
     - [x] COD-73 / WEB-037-TESTS-DOCS: Wizard Bugfixes testen und dokumentieren
+- [x] COD-74 / WEB-038: Wizard Regeln, Timeout und Hand-UI korrigieren
+  - Branch: `codex/wizard-rules-hand-ui-fixes`
+  - Linear: `https://linear.app/codexwebapp/issue/COD-74/web-038-wizard-regeln-timeout-und-hand-ui-korrigieren`
+  - Ergebnis: Lobbies laufen nach 1 Stunde Inaktivität ab, Wolke/Jongleur ignorieren Farbzwang und wirken nur bei Stichgewinn, Vorhersagen sind gesperrt, Maximalrunden folgen der Spielerzahl, Werwolf startet aus der Hand vor der Vorhersage, Vampir zieht eine Restdeck-Trumpfkarte, Debugmodus hat 4 Spieler und die Handkartenleiste ist unten fixiert.
+  - Untertickets:
+    - [x] COD-75 / WEB-038-BE: Wizard Regel-Engine und Lobby-Timeout korrigieren
+    - [x] COD-76 / WEB-038-FE: Wizard Handbereich und Debugmodus verbessern
+    - [x] COD-77 / WEB-038-TESTS-DOCS: Wizard Regressionen testen und dokumentieren

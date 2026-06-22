@@ -127,7 +127,7 @@ const cardCanServeSuit = (
   suit: WizardSuit
 ) => {
   if (isFlexibleSuitCard(card)) {
-    return true;
+    return false;
   }
 
   if (card.kind === "vampire") {
@@ -214,7 +214,7 @@ export const validateCardPlay = (
   const ledSuit = getLedSuit(game);
   const hasLedSuit = ledSuit ? player.hand.some((candidate) => cardCanServeSuit(game, candidate, ledSuit)) : false;
 
-  if (ledSuit && hasLedSuit && !effectiveCard.isSpecial && effectiveCard.suit !== ledSuit) {
+  if (ledSuit && hasLedSuit && !isFlexibleSuitCard(card) && !effectiveCard.isSpecial && effectiveCard.suit !== ledSuit) {
     return `Farbzwang: ${suitLabels[ledSuit]} muss bedient werden.`;
   }
 

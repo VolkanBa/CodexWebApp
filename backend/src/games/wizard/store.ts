@@ -43,6 +43,68 @@ const createLogId = () => randomUUID().slice(0, 10);
 
 const createPlayId = () => randomUUID().slice(0, 12);
 
+const inactiveGameTtlMs = 60 * 60 * 1000;
+
+const suitSortOrder: Record<WizardSuit, number> = {
+  red: 0,
+  green: 1,
+  blue: 2,
+  yellow: 3
+};
+
+const maxRoundsByPlayerCount: Record<number, number> = {
+  2: 30,
+  3: 20,
+  4: 15,
+  5: 12,
+  6: 10
+};
+
+const getMaxRoundsForPlayerCount = (playerCount: number) => maxRoundsByPlayerCount[playerCount] ?? 10;
+
+const sortHandCards = (cards: WizardCard[]) =>
+  cards.sort((left, right) => {
+    const leftSuitOrder = left.suit ? suitSortOrder[left.suit] : 99;
+    const rightSuitOrder = right.suit ? suitSortOrder[right.suit] : 99;
+
+    if (leftSuitOrder !== rightSuitOrder) {
+      return leftSuitOrder - rightSuitOrder;
+    }
+
+    const leftValue = typeof left.value === "number" ? left.value : 99;
+    const rightValue = typeof right.value === "number" ? right.value : 99;
+
+    if (leftValue !== rightValue) {
+      return leftValue - rightValue;
+    }
+
+    return left.label.localeCompare(right.label, "de");
+  });
+
+const sortAllHands = (game: WizardGame) => {
+  for (const player of game.players) {
+    sortHandCards(player.hand);
+  }
+};
+
+const pruneInactiveGames = () => {
+  const cutoff = Date.now() - inactiveGameTtlMs;
+
+  for (const [gameId, game] of games.entries()) {
+    if (new Date(game.updatedAt).getTime() < cutoff) {
+      games.delete(gameId);
+    }
+  }
+};
+
+const getStoredGame = (gameId: string) => {
+  pruneInactiveGames();
+  return games.get(gameId);
+};
+
+const inactivePruneInterval = setInterval(pruneInactiveGames, 60 * 1000);
+inactivePruneInterval.unref();
+
 const normalizeSettings = (input: WizardCreateGameInput | undefined): WizardGameSettings => {
   const enabledOptionalCards = input?.enabledOptionalCards?.filter((kind): kind is OptionalWizardCardKind =>
     optionalWizardCards.includes(kind as OptionalWizardCardKind)
@@ -170,10 +232,75 @@ const addMessage = (
 
 const getJoinPath = (gameId: string) => `/private/games/wizard/join/${gameId}`;
 
+const getPublicPendingEffect = (pendingEffect: WizardPendingEffect | null): WizardPendingEffect | null => {
+  if (pendingEffect?.type !== "juggler") {
+    return pendingEffect;
+  }
+
+  return {
+    ...pendingEffect,
+    selectedCardIds: Object.fromEntries(Object.keys(pendingEffect.selectedCardIds).map((username) => [username, "selected"]))
+  };
+};
+
 const formatScoreDelta = (delta: number) => (delta >= 0 ? `+${delta}` : String(delta));
 
 const hasActiveBomb = (game: WizardGame, trick: PlayedWizardCard[]) =>
   trick.some((playedCard, index) => index > 0 && !playedCard.effectSuppressed && getEffectiveCard(game, playedCard).kind === "bomb");
+
+const drawRandomDeckCard = (game: WizardGame) => {
+  if (!game.deck.length) {
+    return null;
+  }
+
+  const cardIndex = Math.floor(Math.random() * game.deck.length);
+  return game.deck.splice(cardIndex, 1)[0] ?? null;
+};
+
+const applyTrumpCard = (game: WizardGame, card: WizardCard | null) => {
+  game.trumpCard = card;
+  game.vampireCopyCard = card;
+  game.trumpSuit = card?.suit ?? null;
+};
+
+const activateStartingWerewolf = (game: WizardGame, revealedTrumpCard: WizardCard | null) => {
+  for (const player of game.players) {
+    const werewolfIndex = player.hand.findIndex((card) => card.kind === "werewolf");
+
+    if (werewolfIndex < 0) {
+      continue;
+    }
+
+    const werewolf = player.hand.splice(werewolfIndex, 1)[0];
+
+    if (!werewolf) {
+      return false;
+    }
+
+    if (revealedTrumpCard) {
+      player.hand.push(revealedTrumpCard);
+    }
+
+    sortHandCards(player.hand);
+    game.trumpCard = werewolf;
+    game.vampireCopyCard = werewolf;
+    game.trumpSuit = null;
+    game.trumpChoicePendingFor = player.username;
+    addMessage(
+      game,
+      `Werwolf von ${player.username} wurde automatisch auf den Trumpfplatz gezogen und mit ${getCardLabel(revealedTrumpCard)} getauscht. ${player.username} bestimmt die Trumpffarbe vor der Vorhersage.`,
+      {
+        type: "trump",
+        emoji: "🐺",
+        playerUsername: player.username,
+        card: werewolf
+      }
+    );
+    return true;
+  }
+
+  return false;
+};
 
 const resetRoundPlayers = (players: WizardPlayer[]) => {
   for (const player of players) {
@@ -189,8 +316,7 @@ const setTrumpFromCard = (
   chooserUsername: string,
   flexibleCardChooserUsername = chooserUsername
 ) => {
-  game.trumpCard = card;
-  game.vampireCopyCard = card;
+  applyTrumpCard(game, card);
   game.trumpChoicePendingFor = null;
 
   if (!card) {
@@ -280,6 +406,8 @@ const beginRound = (game: WizardGame) => {
     }
   }
 
+  sortAllHands(game);
+
   game.deck = shuffledDeck;
   game.currentTrick = [];
   game.lastTrick = [];
@@ -287,12 +415,17 @@ const beginRound = (game: WizardGame) => {
   game.dealerIndex = (game.roundNumber - 1) % game.players.length;
   game.leaderIndex = getNextPlayerIndex(game, game.dealerIndex);
   game.activePlayerIndex = game.leaderIndex;
-  setTrumpFromCard(
-    game,
-    game.deck.shift() ?? null,
-    game.players[game.dealerIndex]?.username ?? game.ownerUsername,
-    game.players[game.activePlayerIndex]?.username ?? game.ownerUsername
-  );
+  const revealedTrumpCard = game.deck.shift() ?? null;
+  const werewolfActivated = activateStartingWerewolf(game, revealedTrumpCard);
+
+  if (!werewolfActivated) {
+    setTrumpFromCard(
+      game,
+      revealedTrumpCard,
+      game.players[game.dealerIndex]?.username ?? game.ownerUsername,
+      game.players[game.activePlayerIndex]?.username ?? game.ownerUsername
+    );
+  }
   game.status = game.trumpChoicePendingFor ? "trumpSelection" : "prediction";
   addMessage(game, `Runde ${game.roundNumber} beginnt. Jede Person erhält ${cardsPerPlayer} Karte(n).`, {
     type: "round",
@@ -375,6 +508,7 @@ const applyJugglerEffect = (game: WizardGame, selectedCardIds: Record<string, st
     const receiver = game.players[getNextPlayerIndex(game, index)];
     receiver?.hand.push(card);
   });
+  sortAllHands(game);
 
   addMessage(game, "Jongleur: Alle gewählten Handkarten wurden nach links weitergegeben.", {
     type: "effect",
@@ -386,12 +520,13 @@ const continueAfterEffects = (
   game: WizardGame,
   nextLeaderUsername: string,
   trick: PlayedWizardCard[],
-  resolvedEffects: { juggler?: boolean; witch?: boolean } = {}
+  resolvedEffects: { juggler?: boolean; witch?: boolean } = {},
+  winningPlay: PlayedWizardCard | null = null
 ) => {
-  const hasJuggler = trick.some((playedCard) => playedCard.card.kind === "juggler");
+  const hasWinningJuggler = winningPlay?.card.kind === "juggler" && !winningPlay.effectSuppressed;
   const witchCard = trick.find((playedCard) => playedCard.card.kind === "witch");
 
-  if (hasJuggler && !resolvedEffects.juggler && getJugglerPlayersNeedingChoice(game).length > 0) {
+  if (hasWinningJuggler && !resolvedEffects.juggler && getJugglerPlayersNeedingChoice(game).length > 0) {
     game.pendingEffect = {
       type: "juggler",
       nextLeaderUsername,
@@ -444,7 +579,7 @@ const resolveCompletedTrick = (game: WizardGame) => {
   const fallbackWinner = determineTrickWinner(game, trick, { ignoreBomb: true });
   const nextLeaderUsername = (actualWinner ?? fallbackWinner)?.playerUsername ?? game.players[game.leaderIndex]?.username;
   const hasBomb = hasActiveBomb(game, trick);
-  const hasCloud = trick.some((playedCard) => playedCard.card.kind === "cloud");
+  const hasWinningCloud = actualWinner?.card.kind === "cloud" && !actualWinner.effectSuppressed;
 
   if (actualWinner && !hasBomb) {
     const player = getPlayer(game, actualWinner.playerUsername);
@@ -464,7 +599,7 @@ const resolveCompletedTrick = (game: WizardGame) => {
     addMessage(game, "Bombe: Niemand gewinnt diesen Stich.", { type: "effect", emoji: "💥" });
   }
 
-  if (hasCloud && actualWinner && !hasBomb) {
+  if (hasWinningCloud && actualWinner && !hasBomb) {
     game.pendingEffect = {
       type: "cloud",
       username: actualWinner.playerUsername,
@@ -475,11 +610,13 @@ const resolveCompletedTrick = (game: WizardGame) => {
     return;
   }
 
-  continueAfterEffects(game, nextLeaderUsername, trick);
+  continueAfterEffects(game, nextLeaderUsername, trick, {}, actualWinner);
 };
 
-export const listWizardGames = (): WizardGameListItem[] =>
-  [...games.values()].map((game) => ({
+export const listWizardGames = (): WizardGameListItem[] => {
+  pruneInactiveGames();
+
+  return [...games.values()].map((game) => ({
     id: game.id,
     ownerUsername: game.ownerUsername,
     status: game.status,
@@ -488,6 +625,7 @@ export const listWizardGames = (): WizardGameListItem[] =>
     roundNumber: game.roundNumber,
     joinPath: getJoinPath(game.id)
   }));
+};
 
 export const createWizardGame = (username: string, input?: WizardCreateGameInput) => {
   const gameId = createGameId();
@@ -537,8 +675,17 @@ export const createWizardDebugGame = (username: string, input?: WizardCreateGame
   const createdAt = now();
   const settings = normalizeSettings({
     ...input,
-    maxPlayers: 2
+    maxPlayers: 4
   });
+  const debugPlayers: WizardPlayer[] = Array.from({ length: 4 }, (_, index) => ({
+    username: `${username} ${index + 1}`,
+    controlledByUsername: username,
+    seat: index,
+    hand: [],
+    prediction: null,
+    tricksWon: 0,
+    score: 0
+  }));
   const game: WizardGame = {
     id: gameId,
     ownerUsername: username,
@@ -549,28 +696,9 @@ export const createWizardDebugGame = (username: string, input?: WizardCreateGame
     status: "lobby",
     settings: {
       ...settings,
-      maxPlayers: 2
+      maxPlayers: 4
     },
-    players: [
-      {
-        username: `${username} 1`,
-        controlledByUsername: username,
-        seat: 0,
-        hand: [],
-        prediction: null,
-        tricksWon: 0,
-        score: 0
-      },
-      {
-        username: `${username} 2`,
-        controlledByUsername: username,
-        seat: 1,
-        hand: [],
-        prediction: null,
-        tricksWon: 0,
-        score: 0
-      }
-    ],
+    players: debugPlayers,
     roundNumber: 0,
     maxRounds: 0,
     dealerIndex: 0,
@@ -594,10 +722,10 @@ export const createWizardDebugGame = (username: string, input?: WizardCreateGame
   return game;
 };
 
-export const getWizardGame = (gameId: string) => games.get(gameId);
+export const getWizardGame = (gameId: string) => getStoredGame(gameId);
 
 export const joinWizardGame = (gameId: string, username: string) => {
-  const game = games.get(gameId);
+  const game = getStoredGame(gameId);
 
   if (!game) {
     throw new Error("Wizard-Lobby wurde nicht gefunden.");
@@ -636,7 +764,7 @@ export const joinWizardGame = (gameId: string, username: string) => {
 };
 
 export const startWizardGame = (gameId: string, username: string) => {
-  const game = games.get(gameId);
+  const game = getStoredGame(gameId);
 
   if (!game) {
     throw new Error("Wizard-Spiel wurde nicht gefunden.");
@@ -654,8 +782,7 @@ export const startWizardGame = (gameId: string, username: string) => {
     throw new Error("Wizard benötigt mindestens 2 Personen.");
   }
 
-  const deckSize = createWizardDeck(game.settings).length;
-  game.maxRounds = Math.floor(deckSize / game.players.length);
+  game.maxRounds = getMaxRoundsForPlayerCount(game.players.length);
   game.roundNumber = game.status === "roundEnded" ? game.roundNumber + 1 : 1;
   beginRound(game);
   setUpdated(game);
@@ -663,7 +790,7 @@ export const startWizardGame = (gameId: string, username: string) => {
 };
 
 export const chooseWizardTrump = (gameId: string, username: string, suit: WizardSuit) => {
-  const game = games.get(gameId);
+  const game = getStoredGame(gameId);
 
   if (!game) {
     throw new Error("Wizard-Spiel wurde nicht gefunden.");
@@ -703,7 +830,7 @@ export const makeWizardPrediction = (
   prediction: number,
   playerUsername?: string
 ) => {
-  const game = games.get(gameId);
+  const game = getStoredGame(gameId);
 
   if (!game) {
     throw new Error("Wizard-Spiel wurde nicht gefunden.");
@@ -717,6 +844,10 @@ export const makeWizardPrediction = (
 
   if (!player) {
     throw new Error("Du bist nicht in diesem Wizard-Spiel.");
+  }
+
+  if (player.prediction !== null) {
+    throw new Error("Diese Stichvorhersage wurde bereits abgegeben.");
   }
 
   if (!Number.isInteger(prediction) || prediction < 0 || prediction > game.roundNumber) {
@@ -735,7 +866,7 @@ export const makeWizardPrediction = (
 };
 
 export const playWizardCard = (gameId: string, username: string, input: WizardPlayCardInput) => {
-  const game = games.get(gameId);
+  const game = getStoredGame(gameId);
 
   if (!game) {
     throw new Error("Wizard-Spiel wurde nicht gefunden.");
@@ -770,6 +901,31 @@ export const playWizardCard = (gameId: string, username: string, input: WizardPl
     chosenTrumpSuit: input.chosenTrumpSuit,
     chosenSuit: input.chosenSuit
   };
+
+  if (card.kind === "vampire") {
+    const copiedTrumpCard = drawRandomDeckCard(game);
+
+    if (copiedTrumpCard) {
+      applyTrumpCard(game, copiedTrumpCard);
+      addMessage(game, `Vampir: ${player.username} deckt ${copiedTrumpCard.label} aus dem Restdeck auf. Diese Karte ist jetzt die neue Trumpfkarte.`, {
+        type: "trump",
+        emoji: "🧛",
+        playerUsername: player.username,
+        card: copiedTrumpCard,
+        chosenSuit: copiedTrumpCard.suit
+      });
+    } else if (game.trumpCard) {
+      game.vampireCopyCard = game.trumpCard;
+      addMessage(game, `Vampir: ${player.username} kopiert die aktuelle Trumpfkarte ${game.trumpCard.label}.`, {
+        type: "trump",
+        emoji: "🧛",
+        playerUsername: player.username,
+        card: game.trumpCard,
+        chosenSuit: game.trumpSuit ?? undefined
+      });
+    }
+  }
+
   game.currentTrick.push(playedCard);
 
   const effectiveCard = getEffectiveCard(game, playedCard);
@@ -811,7 +967,7 @@ export const playWizardCard = (gameId: string, username: string, input: WizardPl
 };
 
 export const resolveWizardCloud = (gameId: string, username: string, delta: 1 | -1) => {
-  const game = games.get(gameId);
+  const game = getStoredGame(gameId);
 
   if (!game || game.pendingEffect?.type !== "cloud") {
     throw new Error("Es wartet aktuell keine Wolken-Entscheidung.");
@@ -853,7 +1009,7 @@ export const resolveWizardJuggler = (
   username: string,
   input: { playerUsername?: string; cardId: string }
 ) => {
-  const game = games.get(gameId);
+  const game = getStoredGame(gameId);
 
   if (!game || game.pendingEffect?.type !== "juggler") {
     throw new Error("Es wartet aktuell kein Jongleur-Effekt.");
@@ -905,7 +1061,7 @@ export const resolveWizardWitchExchange = (
   username: string,
   input: { handCardId: string; trickPlayId: string }
 ) => {
-  const game = games.get(gameId);
+  const game = getStoredGame(gameId);
 
   if (!game || game.pendingEffect?.type !== "witch") {
     throw new Error("Es wartet aktuell kein Hexen-Tausch.");
@@ -938,6 +1094,7 @@ export const resolveWizardWitchExchange = (
 
   player.hand.splice(handCardIndex, 1);
   player.hand.push(trickCard.card);
+  sortHandCards(player.hand);
   game.pendingEffect.trick[trickCardIndex] = {
     playId: createPlayId(),
     playerUsername: player.username,
@@ -1002,7 +1159,7 @@ export const getWizardGameView = (game: WizardGame, username: string): WizardGam
     trumpChoicePendingFor: game.trumpChoicePendingFor,
     currentTrick: game.currentTrick,
     lastTrick: game.lastTrick,
-    pendingEffect: game.pendingEffect,
+    pendingEffect: getPublicPendingEffect(game.pendingEffect),
     messages: game.messages,
     joinPath: getJoinPath(game.id)
   };

@@ -188,22 +188,22 @@ const getStatusLabel = (status: WizardGame["status"]) => {
 const getSuitLabel = (suit: WizardSuit | null) => suitOptions.find(([value]) => value === suit)?.[1] ?? "Keine";
 
 const getDebugPlayerClassName = (username: string, isActive: boolean) => {
-  const isFirstDebugPlayer = username.trim().endsWith("1");
+  const debugSeat = Number(username.trim().match(/(\d+)$/)?.[1] ?? "1");
   const baseClass = "border px-4 py-3 text-sm font-black transition";
 
-  if (isFirstDebugPlayer) {
-    return `${baseClass} ${
-      isActive
-        ? "border-suit-orange bg-suit-orange text-suit-black"
-        : "border-suit-orange/45 bg-suit-orange/10 text-suit-orange"
-    }`;
+  if (debugSeat === 1) {
+    return `${baseClass} ${isActive ? "border-suit-orange bg-suit-orange text-suit-black" : "border-suit-orange/45 bg-suit-orange/10 text-suit-orange"}`;
   }
 
-  return `${baseClass} ${
-    isActive
-      ? "border-suit-green bg-suit-green text-suit-black"
-      : "border-suit-green/45 bg-suit-green/10 text-suit-green"
-  }`;
+  if (debugSeat === 2) {
+    return `${baseClass} ${isActive ? "border-suit-green bg-suit-green text-suit-black" : "border-suit-green/45 bg-suit-green/10 text-suit-green"}`;
+  }
+
+  if (debugSeat === 3) {
+    return `${baseClass} ${isActive ? "border-sky-400 bg-sky-400 text-suit-black" : "border-sky-400/45 bg-sky-400/10 text-sky-300"}`;
+  }
+
+  return `${baseClass} ${isActive ? "border-fuchsia-400 bg-fuchsia-400 text-suit-black" : "border-fuchsia-400/45 bg-fuchsia-400/10 text-fuchsia-300"}`;
 };
 
 const suitVisuals: Record<WizardSuit, { color: string; symbol: string }> = {
@@ -716,7 +716,7 @@ export function WizardGameClient({
   };
 
   return (
-    <section className="w-full text-left">
+    <section className="w-full pb-56 text-left">
       <PrivateTabs />
 
       <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
@@ -1156,13 +1156,15 @@ export function WizardGameClient({
               </div>
             ) : null}
 
-            <div className="mt-6">
-              <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <h3 className="text-xl font-black text-white">
-                  {game.debugMode?.enabled ? `Hand von ${displayedHandOwnerUsername ?? "Debug-Spieler"}` : "Deine Hand"}
-                </h3>
-              </div>
-              <div className="grid grid-cols-[repeat(auto-fit,minmax(9.5rem,1fr))] gap-4">
+            <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-white/12 bg-[#08070d]/95 px-4 py-3 shadow-[0_-16px_40px_rgba(0,0,0,0.45)] backdrop-blur">
+              <div className="mx-auto max-w-7xl">
+                <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <h3 className="text-base font-black text-white">
+                    {game.debugMode?.enabled ? `Hand von ${displayedHandOwnerUsername ?? "Debug-Spieler"}` : "Deine Hand"}
+                  </h3>
+                  <p className="text-xs font-semibold text-white/50">{displayedHand.length} Karte(n)</p>
+                </div>
+                <div className="flex min-h-36 items-end gap-2 overflow-x-auto overflow-y-visible pb-6 pt-2">
                 {displayedHand.length ? (
                   displayedHand.map((card) => {
                     const isValid = displayedValidCardIds.includes(card.id);
@@ -1175,19 +1177,20 @@ export function WizardGameClient({
                         type="button"
                         disabled={!canPlay}
                         onClick={() => requestPlayCard(card)}
-                        className={`group flex justify-center border p-2 transition ${
+                        className={`group relative flex w-24 shrink-0 justify-center border p-1 transition duration-150 hover:z-20 hover:-translate-y-8 hover:scale-125 focus:z-20 focus:-translate-y-8 focus:scale-125 ${
                           canPlay
                             ? "border-suit-green/60 bg-suit-purple/35 hover:border-suit-orange hover:bg-suit-orange/20"
                             : "border-white/10 bg-suit-black/40"
                         }`}
                       >
-                        <WizardCardFrame card={card} muted={!canPlay} statusLabel={isValid ? "spielbar" : "gesperrt"} />
+                        <WizardCardFrame card={card} muted={!canPlay} statusLabel={isValid ? "spielbar" : "gesperrt"} variant="compact" />
                       </button>
                     );
                   })
                 ) : (
                   <p className="text-sm text-white/60">Keine Handkarten sichtbar.</p>
                 )}
+                </div>
               </div>
             </div>
           </section>

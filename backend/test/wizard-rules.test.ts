@@ -4,8 +4,10 @@ import {
   chooseWizardTrump,
   createWizardDebugGame,
   createWizardGame,
+  getWizardGame,
   getWizardGameView,
   joinWizardGame,
+  listWizardGames,
   makeWizardPrediction,
   playWizardCard,
   resolveWizardCloud,
@@ -194,7 +196,7 @@ test("wizard deck contains one flexible cloud and one flexible juggler", () => {
   assert.equal(jugglers[0]?.suit, undefined);
 });
 
-test("flexible cloud and juggler require a chosen suit and obey follow suit", () => {
+test("flexible cloud and juggler require a chosen suit but ignore follow suit", () => {
   const cloud: WizardCard = {
     id: "cloud",
     kind: "cloud",
@@ -226,7 +228,7 @@ test("flexible cloud and juggler require a chosen suit and obey follow suit", ()
   });
 
   assert.match(validateCardPlay(game, player, cloud, {}) ?? "", /braucht beim Ausspielen eine Farbe/);
-  assert.match(validateCardPlay(game, player, cloud, { chosenSuit: "blue" }) ?? "", /Farbzwang/);
+  assert.equal(validateCardPlay(game, player, cloud, { chosenSuit: "blue" }), null);
   assert.equal(validateCardPlay(game, player, cloud, { chosenSuit: "red" }), null);
 
   const winner = determineTrickWinner(
@@ -317,6 +319,114 @@ test("cloud effect can increase or decrease prediction without going below zero"
   assert.equal(game.players[0]?.prediction, 1);
 });
 
+test("cloud and juggler effects only trigger when their card wins the trick", () => {
+  const cloudGame = createWizardGame("Volle", {
+    enabledOptionalCards: ["cloud"],
+    scoreboardVisibleDefault: true
+  });
+  joinWizardGame(cloudGame.id, "Neo");
+  const cloud: WizardCard = {
+    id: "cloud",
+    kind: "cloud",
+    label: "Wolke 9 3/4",
+    value: 9.75
+  };
+
+  cloudGame.status = "playing";
+  cloudGame.roundNumber = 2;
+  cloudGame.maxRounds = 10;
+  cloudGame.leaderIndex = 0;
+  cloudGame.activePlayerIndex = 0;
+  cloudGame.players[0]!.prediction = 1;
+  cloudGame.players[1]!.prediction = 0;
+  cloudGame.players[0]!.hand = [suited("red-13", "red", 13), suited("blue-1", "blue", 1)];
+  cloudGame.players[1]!.hand = [cloud, suited("yellow-2", "yellow", 2)];
+
+  playWizardCard(cloudGame.id, "Volle", {
+    cardId: "red-13"
+  });
+  playWizardCard(cloudGame.id, "Neo", {
+    cardId: cloud.id,
+    chosenSuit: "yellow"
+  });
+
+  assert.equal(cloudGame.pendingEffect, null);
+  assert.equal(cloudGame.players[0]?.tricksWon, 1);
+
+  const jugglerGame = createWizardGame("Volle", {
+    enabledOptionalCards: ["juggler"],
+    scoreboardVisibleDefault: true
+  });
+  joinWizardGame(jugglerGame.id, "Neo");
+  const juggler: WizardCard = {
+    id: "juggler",
+    kind: "juggler",
+    label: "Jongleur 7 1/2",
+    value: 7.5
+  };
+
+  jugglerGame.status = "playing";
+  jugglerGame.roundNumber = 2;
+  jugglerGame.maxRounds = 10;
+  jugglerGame.leaderIndex = 0;
+  jugglerGame.activePlayerIndex = 0;
+  jugglerGame.players[0]!.prediction = 1;
+  jugglerGame.players[1]!.prediction = 0;
+  jugglerGame.players[0]!.hand = [suited("green-13", "green", 13), suited("blue-1", "blue", 1)];
+  jugglerGame.players[1]!.hand = [juggler, suited("yellow-2", "yellow", 2)];
+
+  playWizardCard(jugglerGame.id, "Volle", {
+    cardId: "green-13"
+  });
+  playWizardCard(jugglerGame.id, "Neo", {
+    cardId: juggler.id,
+    chosenSuit: "red"
+  });
+
+  assert.equal(jugglerGame.pendingEffect, null);
+  assert.equal(jugglerGame.players[0]?.tricksWon, 1);
+});
+
+test("predictions cannot be changed after they were submitted", () => {
+  const game = createWizardDebugGame("Volle", {
+    enabledOptionalCards: [],
+    scoreboardVisibleDefault: true
+  });
+  game.status = "prediction";
+  game.roundNumber = 1;
+
+  makeWizardPrediction(game.id, "Volle", 0, "Volle 1");
+
+  assert.throws(() => makeWizardPrediction(game.id, "Volle", 1, "Volle 1"), /bereits abgegeben/);
+});
+
+test("wizard games expire after one hour without activity", () => {
+  const game = createWizardGame("Volle");
+  game.updatedAt = new Date(Date.now() - 61 * 60 * 1000).toISOString();
+
+  assert.equal(getWizardGame(game.id), undefined);
+  assert.equal(listWizardGames().some((item) => item.id === game.id), false);
+});
+
+test("max rounds are fixed by player count", () => {
+  const twoPlayerGame = createWizardGame("Volle", {
+    enabledOptionalCards: [],
+    scoreboardVisibleDefault: true
+  });
+  joinWizardGame(twoPlayerGame.id, "Neo");
+  startWizardGame(twoPlayerGame.id, "Volle");
+  assert.equal(twoPlayerGame.maxRounds, 30);
+
+  const debugGame = createWizardDebugGame("Volle", {
+    enabledOptionalCards: [],
+    scoreboardVisibleDefault: true
+  });
+  startWizardGame(debugGame.id, "Volle");
+
+  assert.equal(debugGame.players.length, 4);
+  assert.equal(debugGame.maxRounds, 15);
+});
+
 test("juggler lets every player choose the card passed left", () => {
   const game = createWizardGame("Volle");
   joinWizardGame(game.id, "Neo");
@@ -365,7 +475,7 @@ test("juggler lets every player choose the card passed left", () => {
   );
   assert.deepEqual(
     game.players[1]?.hand.map((card) => card.id),
-    [neoKept.id, vollePassed.id]
+    [vollePassed.id, neoKept.id]
   );
 });
 
@@ -447,28 +557,32 @@ test("parallel wizard games receive separate ids", () => {
   assert.equal(secondGame.players[0]?.username, "Neo");
 });
 
-test("admin debug game creates two controlled Volle seats", () => {
+test("admin debug game creates four controlled Volle seats", () => {
   const game = createWizardDebugGame("Volle");
   const view = getWizardGameView(game, "Volle");
 
   assert.equal(game.debugMode?.enabled, true);
-  assert.equal(game.players.length, 2);
+  assert.equal(game.players.length, 4);
   assert.equal(game.players[0]?.username, "Volle 1");
-  assert.equal(game.players[1]?.username, "Volle 2");
-  assert.equal(view.controlledHands.length, 2);
+  assert.equal(game.players[3]?.username, "Volle 4");
+  assert.equal(view.controlledHands.length, 4);
   assert.equal(view.players.every((player) => player.controlledBySelf), true);
 });
 
-test("admin can make predictions for both debug seats", () => {
+test("admin can make predictions for all debug seats", () => {
   const game = createWizardDebugGame("Volle");
   game.status = "prediction";
   game.roundNumber = 1;
 
   makeWizardPrediction(game.id, "Volle", 0, "Volle 1");
   makeWizardPrediction(game.id, "Volle", 1, "Volle 2");
+  makeWizardPrediction(game.id, "Volle", 0, "Volle 3");
+  makeWizardPrediction(game.id, "Volle", 1, "Volle 4");
 
   assert.equal(game.players[0]?.prediction, 0);
   assert.equal(game.players[1]?.prediction, 1);
+  assert.equal(game.players[2]?.prediction, 0);
+  assert.equal(game.players[3]?.prediction, 1);
 });
 
 test("admin debug card plays are attributed to the controlled seat", () => {
@@ -483,8 +597,12 @@ test("admin debug card plays are attributed to the controlled seat", () => {
   game.maxRounds = 10;
   game.players[0]!.hand = [firstCard];
   game.players[1]!.hand = [suited("blue-1", "blue", 1)];
+  game.players[2]!.hand = [suited("green-1", "green", 1)];
+  game.players[3]!.hand = [suited("yellow-1", "yellow", 1)];
   game.players[0]!.prediction = 1;
   game.players[1]!.prediction = 0;
+  game.players[2]!.prediction = 0;
+  game.players[3]!.prediction = 0;
 
   playWizardCard(game.id, "Volle", {
     cardId: firstCard.id,
@@ -511,8 +629,10 @@ test("wizard automatically starts the next round after a completed round", () =>
 
   makeWizardPrediction(game.id, "Volle", 0, "Volle 1");
   makeWizardPrediction(game.id, "Volle", 0, "Volle 2");
+  makeWizardPrediction(game.id, "Volle", 0, "Volle 3");
+  makeWizardPrediction(game.id, "Volle", 0, "Volle 4");
 
-  for (let playCount = 0; playCount < 2; playCount += 1) {
+  for (let playCount = 0; playCount < 4; playCount += 1) {
     const view = getWizardGameView(game, "Volle");
     const activeHand = view.controlledHands.find((hand) => hand.username === view.activeUsername);
     const validCardId = activeHand?.validCardIds[0];
@@ -533,5 +653,5 @@ test("wizard automatically starts the next round after a completed round", () =>
 
   assert.ok(scoreLogEntry);
   assert.match(scoreLogEntry.message, /Punkte:/);
-  assert.equal(scoreLogEntry.scoreChanges?.length, 2);
+  assert.equal(scoreLogEntry.scoreChanges?.length, 4);
 });
