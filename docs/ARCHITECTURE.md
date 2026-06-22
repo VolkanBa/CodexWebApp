@@ -30,6 +30,7 @@ Aktuelle Routen:
 - `/business/hochschule-gelsenkirchen/admin`: geschützter Adminbereich für Fächer
 - `/private/login`: serverseitig angebundenes Loginformular
 - `/private`: geschützte private Ansicht
+- `/private/games`: geschützter privater Spiele-Bereich
 
 Das Frontend prüft keine Passwörter. Passwortprüfung und Session-Erstellung liegen im Backend.
 
@@ -79,6 +80,7 @@ Auth-Routen:
 - `POST /auth/logout`
 - `GET /auth/me`
 - `GET /private/content`
+- `GET /private/games`
 
 Fächer-Routen:
 
@@ -90,6 +92,12 @@ Fächer-Routen:
 - `DELETE /admin/subjects/:id`: Fach löschen
 
 Die Admin-Routen verwenden dieselbe serverseitige Session-Prüfung wie der private Bereich. Fächertexte liegen lokal in `backend/data/subjects.json`, Bilder in `uploads/subjects/`. Pro Fach sind mehrere Bilder möglich; ihre Reihenfolge wird im JSON gespeichert. Beide Pfade werden nicht nach GitHub gepusht.
+
+Private Spiele:
+
+- `GET /private/games`: geschützte Übersicht für geplante Spiele wie Uno, Wizard und 6 nimmt
+
+Die aktuelle Spiele-Route liefert nur Planungsdaten. Spielstände, Lobbys und Regel-Engines werden später serverseitig ergänzt.
 
 ## Docker
 

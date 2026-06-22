@@ -109,3 +109,7 @@ Linear-Team: `CodexWebApp`
   - Branch: `codex/account-session-policy`
   - Linear: `https://linear.app/codexwebapp/issue/COD-44/web-029-ein-account-nur-einmal-gleichzeitig-und-1h-inaktivitats-logout`
   - Ergebnis: Die 9 normalen Nutzer teilen sich lokal ein neues sicheres Passwort, `Volle` behält das eigene Admin-Passwort. Pro Benutzername ist nur eine aktive Session erlaubt; nach 1 Stunde Inaktivität läuft die Session ab.
+- [x] COD-45 / WEB-030: Privaten Spiele-Bereich vorbereiten
+  - Branch: `codex/private-games-tab`
+  - Linear: `https://linear.app/codexwebapp/issue/COD-45/web-030-privaten-spiele-bereich-vorbereiten`
+  - Ergebnis: Der private Bereich enthält einen geschützten Tab `Spiele` mit eigener Route `/private/games` und geschütztem Backend-Endpunkt `GET /private/games`.

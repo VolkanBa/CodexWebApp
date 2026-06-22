@@ -151,6 +151,30 @@ const loginRateLimiter = rateLimit({
   }
 });
 
+const privateGames = [
+  {
+    id: "uno",
+    title: "Uno",
+    status: "Geplant",
+    summary: "Schnelles Kartenablegen mit Farben, Zahlen und Aktionskarten.",
+    nextSteps: ["Regelmodell festlegen", "Mehrspieler-Runden planen", "Spielstand serverseitig speichern"]
+  },
+  {
+    id: "wizard",
+    title: "Wizard",
+    status: "Geplant",
+    summary: "Stichspiel mit Vorhersagen, Sonderkarten und Rundenauswertung.",
+    nextSteps: ["Stichlogik modellieren", "Rundenwertung abbilden", "Scoreboard vorbereiten"]
+  },
+  {
+    id: "six-nimmt",
+    title: "6 nimmt",
+    status: "Geplant",
+    summary: "Taktisches Ablegespiel mit Reihen, Hornochsen und Risikomanagement.",
+    nextSteps: ["Reihenlogik definieren", "Kartenwahl synchronisieren", "Punktewertung implementieren"]
+  }
+];
+
 app.use(
   helmet({
     crossOriginResourcePolicy: {
@@ -410,6 +434,15 @@ app.get("/private/content", requireAuth, (_req, res) => {
       "Das Passwort wird nur als Argon2-Hash im Backend geprüft.",
       "Private Inhalte werden nicht im Frontend hardcodiert."
     ]
+  });
+});
+
+app.get("/private/games", requireAuth, (_req, res) => {
+  res.status(200).json({
+    title: "Spiele",
+    description:
+      "Hier entsteht der geschützte Spiele-Bereich für Kartenspiele und spätere private Spielrunden.",
+    games: privateGames
   });
 });
 
