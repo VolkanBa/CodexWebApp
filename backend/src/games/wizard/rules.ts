@@ -207,7 +207,7 @@ export const validateCardPlay = (
     chosenSuit: options.chosenSuit
   });
 
-  if (effectiveCard.kind === "werewolf" && !options.chosenTrumpSuit) {
+  if (card.kind !== "vampire" && effectiveCard.kind === "werewolf" && !options.chosenTrumpSuit) {
     return "Der Werwolf muss sofort eine neue Trumpffarbe bestimmen.";
   }
 

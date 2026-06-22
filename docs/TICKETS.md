@@ -176,3 +176,7 @@ Linear-Team: `CodexWebApp`
     - [x] COD-75 / WEB-038-BE: Wizard Regel-Engine und Lobby-Timeout korrigieren
     - [x] COD-76 / WEB-038-FE: Wizard Handbereich und Debugmodus verbessern
     - [x] COD-77 / WEB-038-TESTS-DOCS: Wizard Regressionen testen und dokumentieren
+- [x] COD-78 / WEB-039: Wizard Karten-UI und Vampir/Werwolf-Bugfixes
+  - Branch: `codex/wizard-card-ui-vampire-fix`
+  - Linear: `https://linear.app/codexwebapp/issue/COD-78/web-039-wizard-karten-ui-und-vampirwerwolf-bugfixes`
+  - Ergebnis: Gesperrte Handkarten bleiben farbig sichtbar und zeigen keinen Status-Text mehr. Die feste Handkartenleiste ist transparent, der Hover vergrößert Karten deutlich und der Vampir ersetzt einen Werwolf-Trumpf durch eine zufällige Restdeckkarte.

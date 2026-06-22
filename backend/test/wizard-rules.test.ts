@@ -269,6 +269,43 @@ test("werewolf card play requires and applies a trump suit", () => {
   assert.equal(game.trumpSuit, "green");
 });
 
+test("vampire replaces werewolf trump with a random remaining deck card", () => {
+  const game = createWizardDebugGame("Volle", {
+    enabledOptionalCards: ["vampire", "werewolf"],
+    scoreboardVisibleDefault: true
+  });
+  const vampire = special("vampire");
+  const werewolf = special("werewolf");
+  const replacementTrump = suited("yellow-9", "yellow", 9);
+
+  game.status = "playing";
+  game.roundNumber = 1;
+  game.maxRounds = 10;
+  game.activePlayerIndex = 0;
+  game.trumpCard = werewolf;
+  game.vampireCopyCard = werewolf;
+  game.trumpSuit = "green";
+  game.deck = [replacementTrump];
+  game.players[0]!.hand = [vampire];
+  game.players[1]!.hand = [suited("blue-1", "blue", 1)];
+  game.players[2]!.hand = [suited("green-1", "green", 1)];
+  game.players[3]!.hand = [suited("red-1", "red", 1)];
+  for (const player of game.players) {
+    player.prediction = 0;
+  }
+
+  playWizardCard(game.id, "Volle", {
+    cardId: vampire.id,
+    playerUsername: "Volle 1"
+  });
+
+  assert.equal(game.trumpCard?.id, replacementTrump.id);
+  assert.equal(game.vampireCopyCard?.id, replacementTrump.id);
+  assert.equal(game.trumpSuit, "yellow");
+  assert.equal(game.deck.length, 0);
+  assert.equal(getEffectiveCard(game, game.currentTrick[0]!).suit, "yellow");
+});
+
 test("cloud effect can increase or decrease prediction without going below zero", () => {
   const game = createWizardDebugGame("Volle", {
     enabledOptionalCards: ["cloud"],

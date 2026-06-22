@@ -361,7 +361,7 @@ function WizardCardFrame({
     <div
       className={`relative mx-auto aspect-[5/7] w-full overflow-hidden border bg-[#17121f] shadow-lg transition ${
         isMini ? "max-w-[3.5rem]" : isCompact ? "max-w-[7.25rem]" : "max-w-[12rem]"
-      } ${muted ? "opacity-55 grayscale" : "opacity-100"}`}
+      } ${muted ? "opacity-75" : "opacity-100"}`}
       style={{
         borderColor: muted ? "rgba(255,255,255,0.16)" : visual.color
       }}
@@ -1156,15 +1156,15 @@ export function WizardGameClient({
               </div>
             ) : null}
 
-            <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-white/12 bg-[#08070d]/95 px-4 py-3 shadow-[0_-16px_40px_rgba(0,0,0,0.45)] backdrop-blur">
-              <div className="mx-auto max-w-7xl">
+            <div className="pointer-events-none fixed bottom-0 left-0 right-0 z-40 px-4 pb-3 pt-10">
+              <div className="pointer-events-auto mx-auto max-w-7xl">
                 <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                  <h3 className="text-base font-black text-white">
+                  <h3 className="text-base font-black text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
                     {game.debugMode?.enabled ? `Hand von ${displayedHandOwnerUsername ?? "Debug-Spieler"}` : "Deine Hand"}
                   </h3>
-                  <p className="text-xs font-semibold text-white/50">{displayedHand.length} Karte(n)</p>
+                  <p className="text-xs font-semibold text-white/72 drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">{displayedHand.length} Karte(n)</p>
                 </div>
-                <div className="flex min-h-36 items-end gap-2 overflow-x-auto overflow-y-visible pb-6 pt-2">
+                <div className="flex min-h-72 items-end gap-2 overflow-x-auto overflow-y-visible pb-12 pt-2">
                 {displayedHand.length ? (
                   displayedHand.map((card) => {
                     const isValid = displayedValidCardIds.includes(card.id);
@@ -1177,13 +1177,13 @@ export function WizardGameClient({
                         type="button"
                         disabled={!canPlay}
                         onClick={() => requestPlayCard(card)}
-                        className={`group relative flex w-24 shrink-0 justify-center border p-1 transition duration-150 hover:z-20 hover:-translate-y-8 hover:scale-125 focus:z-20 focus:-translate-y-8 focus:scale-125 ${
+                        className={`group relative flex w-24 shrink-0 origin-bottom justify-center border border-transparent bg-transparent p-0 transition duration-150 hover:z-50 hover:-translate-y-20 hover:scale-200 focus:z-50 focus:-translate-y-20 focus:scale-200 ${
                           canPlay
-                            ? "border-suit-green/60 bg-suit-purple/35 hover:border-suit-orange hover:bg-suit-orange/20"
-                            : "border-white/10 bg-suit-black/40"
+                            ? "cursor-pointer"
+                            : "cursor-not-allowed"
                         }`}
                       >
-                        <WizardCardFrame card={card} muted={!canPlay} statusLabel={isValid ? "spielbar" : "gesperrt"} variant="compact" />
+                        <WizardCardFrame card={card} variant="compact" />
                       </button>
                     );
                   })

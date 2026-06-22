@@ -72,7 +72,7 @@ Erweiterungen:
 - `Bombe`: annulliert den Stich. Niemand bekommt einen Stichpunkt. Die Person, die ohne Bombe gewonnen hätte, eröffnet den nächsten Stich. Wird die Bombe als erste Karte eines Stichs gespielt, zählt sie als Narr und annulliert den Stich nicht.
 - `Werwolf`: Wenn der Werwolf zu Rundenbeginn auf einer Hand liegt, zieht ihn das System vor jeder Vorhersage automatisch auf den Trumpfplatz. Die ursprünglich aufgedeckte Trumpfkarte wird mit dem Werwolf getauscht und auf diese Hand gelegt. Die Person, die den Werwolf hatte, bestimmt die Trumpffarbe.
 - `Gestaltwandler`: wird erst beim Ausspielen per Popup als Wizard oder Narr gewählt.
-- `Vampir`: Beim Ausspielen deckt der Vampir eine zufällige Karte aus dem Restdeck auf. Diese Karte wird sofort zur neuen Trumpfkarte und wird vom Vampir für den aktuellen Stich kopiert.
+- `Vampir`: Beim Ausspielen deckt der Vampir eine zufällige Karte aus dem Restdeck auf. Diese Karte wird sofort zur neuen Trumpfkarte und wird vom Vampir für den aktuellen Stich kopiert. Liegt vorher der Werwolf auf dem Trumpfplatz, kopiert der Vampir nicht den Werwolf, sondern ersetzt ihn durch die gezogene Restdeckkarte.
 - `Hexe`: sehr niedrige Sonderkarte. Nach der Stichauflösung tauscht nur die Person, die die Hexe gespielt hat, eine eigene Handkarte gegen eine Karte aus dem Stich; die neu gelegte Karte hat keinen Effekt. Nach dem Tausch wird der Effekt serverseitig geschlossen, damit das Tauschmenü nicht erneut erscheint.
 - `Jongleur 7 1/2`: kommt nur einmal im Deck vor. Die Karte ist auf der Hand farblos, kann immer gespielt werden und wird beim Ausspielen per Popup frei eingefärbt. Farbzwang gilt für diese Karte nicht. Der Weitergabe-Effekt tritt nur ein, wenn der Jongleur den Stich gewinnt. Dann wählt jede Person geheim eine eigene Handkarte aus; diese Karten werden gleichzeitig nach links weitergegeben.
 - `Wolke 9 3/4`: kommt nur einmal im Deck vor. Die Karte ist auf der Hand farblos, kann immer gespielt werden und wird beim Ausspielen per Popup frei eingefärbt. Farbzwang gilt für diese Karte nicht. Der Vorhersage-Effekt tritt nur ein, wenn die Wolke den Stich gewinnt. Der Stichgewinner verändert die eigene Vorhersage um `+1` oder `-1`; die Vorhersage darf nicht unter `0` fallen.
@@ -95,6 +95,7 @@ Abgedeckt sind unter anderem:
 - Fee gegen Drache
 - Bombe
 - Vampir-Kopie
+- Vampir ersetzt Werwolf-Trumpf durch eine Restdeckkarte
 - flexible Farbwahl für Wolke und Jongleur
 - freie Jongleur-Auswahl pro Spieler
 - Wolke/Jongleur ohne Farbzwang und Effekte nur bei Stichgewinn

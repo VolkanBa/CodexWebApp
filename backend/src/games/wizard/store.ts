@@ -914,14 +914,13 @@ export const playWizardCard = (gameId: string, username: string, input: WizardPl
         card: copiedTrumpCard,
         chosenSuit: copiedTrumpCard.suit
       });
-    } else if (game.trumpCard) {
-      game.vampireCopyCard = game.trumpCard;
-      addMessage(game, `Vampir: ${player.username} kopiert die aktuelle Trumpfkarte ${game.trumpCard.label}.`, {
+    } else {
+      game.vampireCopyCard = null;
+      addMessage(game, `Vampir: ${player.username} findet keine Karte mehr im Restdeck und zählt als Narr.`, {
         type: "trump",
         emoji: "🧛",
         playerUsername: player.username,
-        card: game.trumpCard,
-        chosenSuit: game.trumpSuit ?? undefined
+        card
       });
     }
   }
