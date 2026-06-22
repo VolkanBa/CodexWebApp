@@ -49,6 +49,20 @@ export type PlayedWizardCard = {
   effectSuppressed?: boolean;
 };
 
+export type WizardLogEntryType = "system" | "round" | "trump" | "play" | "winner" | "effect";
+
+export type WizardLogEntry = {
+  id: string;
+  type: WizardLogEntryType;
+  emoji: string;
+  message: string;
+  playerUsername?: string;
+  winnerUsername?: string;
+  card?: WizardCard;
+  chosenSuit?: WizardSuit;
+  createdAt: string;
+};
+
 export type WizardPlayer = {
   username: string;
   controlledByUsername?: string;
@@ -117,7 +131,7 @@ export type WizardGame = {
   currentTrick: PlayedWizardCard[];
   lastTrick: PlayedWizardCard[];
   pendingEffect: WizardPendingEffect | null;
-  messages: string[];
+  messages: WizardLogEntry[];
   createdAt: string;
   updatedAt: string;
 };
@@ -173,7 +187,7 @@ export type WizardGameView = {
   currentTrick: PlayedWizardCard[];
   lastTrick: PlayedWizardCard[];
   pendingEffect: WizardPendingEffect | null;
-  messages: string[];
+  messages: WizardLogEntry[];
   joinPath: string;
 };
 

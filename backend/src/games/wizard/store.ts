@@ -16,6 +16,7 @@ import {
   type WizardGameListItem,
   type WizardGameSettings,
   type WizardGameView,
+  type WizardLogEntryType,
   type WizardPendingEffect,
   type WizardPlayCardInput,
   type WizardPlayer,
@@ -37,6 +38,8 @@ const clamp = (value: number, min: number, max: number) => Math.min(Math.max(val
 const now = () => new Date().toISOString();
 
 const createGameId = () => randomUUID().slice(0, 8);
+
+const createLogId = () => randomUUID().slice(0, 10);
 
 const createPlayId = () => randomUUID().slice(0, 12);
 
@@ -129,8 +132,32 @@ const setUpdated = (game: WizardGame) => {
   game.updatedAt = now();
 };
 
-const addMessage = (game: WizardGame, message: string) => {
-  game.messages = [message, ...game.messages].slice(0, 12);
+const addMessage = (
+  game: WizardGame,
+  message: string,
+  details: {
+    type?: WizardLogEntryType;
+    emoji?: string;
+    playerUsername?: string;
+    winnerUsername?: string;
+    card?: WizardCard;
+    chosenSuit?: WizardSuit;
+  } = {}
+) => {
+  game.messages = [
+    {
+      id: createLogId(),
+      type: details.type ?? "system",
+      emoji: details.emoji ?? "ℹ️",
+      message,
+      playerUsername: details.playerUsername,
+      winnerUsername: details.winnerUsername,
+      card: details.card,
+      chosenSuit: details.chosenSuit,
+      createdAt: now()
+    },
+    ...game.messages
+  ].slice(0, 16);
 };
 
 const getJoinPath = (gameId: string) => `/private/games/wizard/join/${gameId}`;
@@ -144,38 +171,56 @@ const resetRoundPlayers = (players: WizardPlayer[]) => {
 };
 
 const setTrumpFromCard = (game: WizardGame, card: WizardCard | null, chooserUsername: string) => {
-  game.trumpCard = card;
-  game.vampireCopyCard = card;
+    game.trumpCard = card;
+    game.vampireCopyCard = card;
   game.trumpChoicePendingFor = null;
 
   if (!card) {
     game.trumpSuit = null;
-    addMessage(game, "Es wurde keine Trumpfkarte aufgedeckt.");
+    addMessage(game, "Es wurde keine Trumpfkarte aufgedeckt.", { type: "trump", emoji: "🎨" });
     return;
   }
 
   if (card.suit) {
     game.trumpSuit = card.suit;
-    addMessage(game, `${getCardLabel(card)} wurde aufgedeckt. ${suitLabels[card.suit]} ist Trumpf.`);
+    addMessage(game, `${getCardLabel(card)} wurde aufgedeckt. ${suitLabels[card.suit]} ist Trumpf.`, {
+      type: "trump",
+      emoji: "🎨",
+      card
+    });
     return;
   }
 
   if (card.kind === "werewolf") {
     game.trumpSuit = null;
     game.trumpChoicePendingFor = chooserUsername;
-    addMessage(game, `Werwolf wurde als Trumpfkarte aufgedeckt. ${chooserUsername} bestimmt die Trumpffarbe.`);
+    addMessage(game, `Werwolf wurde als Trumpfkarte aufgedeckt. ${chooserUsername} bestimmt die Trumpffarbe.`, {
+      type: "trump",
+      emoji: "🐺",
+      playerUsername: chooserUsername,
+      card
+    });
     return;
   }
 
   if (card.kind === "wizard" || card.kind === "shapeshifter" || card.kind === "vampire") {
     game.trumpSuit = null;
     game.trumpChoicePendingFor = chooserUsername;
-    addMessage(game, `${getCardLabel(card)} wurde aufgedeckt. ${chooserUsername} bestimmt die Trumpffarbe.`);
+    addMessage(game, `${getCardLabel(card)} wurde aufgedeckt. ${chooserUsername} bestimmt die Trumpffarbe.`, {
+      type: "trump",
+      emoji: "🎨",
+      playerUsername: chooserUsername,
+      card
+    });
     return;
   }
 
   game.trumpSuit = null;
-  addMessage(game, `${getCardLabel(card)} wurde aufgedeckt. In dieser Runde gibt es keine Trumpffarbe.`);
+  addMessage(game, `${getCardLabel(card)} wurde aufgedeckt. In dieser Runde gibt es keine Trumpffarbe.`, {
+    type: "trump",
+    emoji: "🚫",
+    card
+  });
 };
 
 const beginRound = (game: WizardGame) => {
@@ -186,7 +231,10 @@ const beginRound = (game: WizardGame) => {
 
   if (requiredCards > shuffledDeck.length) {
     game.status = "finished";
-    addMessage(game, "Das Spiel ist beendet, weil nicht genug Karten für eine weitere Runde vorhanden sind.");
+    addMessage(game, "Das Spiel ist beendet, weil nicht genug Karten für eine weitere Runde vorhanden sind.", {
+      type: "round",
+      emoji: "🏁"
+    });
     return;
   }
 
@@ -211,7 +259,10 @@ const beginRound = (game: WizardGame) => {
   game.activePlayerIndex = game.leaderIndex;
   setTrumpFromCard(game, game.deck.shift() ?? null, game.players[game.dealerIndex]?.username ?? game.ownerUsername);
   game.status = game.trumpChoicePendingFor ? "trumpSelection" : "prediction";
-  addMessage(game, `Runde ${game.roundNumber} beginnt. Jede Person erhält ${cardsPerPlayer} Karte(n).`);
+  addMessage(game, `Runde ${game.roundNumber} beginnt. Jede Person erhält ${cardsPerPlayer} Karte(n).`, {
+    type: "round",
+    emoji: "🔄"
+  });
 };
 
 const allPredictionsDone = (game: WizardGame) => game.players.every((player) => player.prediction !== null);
@@ -220,7 +271,11 @@ const startPlayingIfReady = (game: WizardGame) => {
   if (game.status === "prediction" && allPredictionsDone(game)) {
     game.status = "playing";
     game.activePlayerIndex = game.leaderIndex;
-    addMessage(game, `${game.players[game.activePlayerIndex]?.username} eröffnet den ersten Stich.`);
+    addMessage(game, `${game.players[game.activePlayerIndex]?.username} eröffnet den ersten Stich.`, {
+      type: "round",
+      emoji: "▶️",
+      playerUsername: game.players[game.activePlayerIndex]?.username
+    });
   }
 };
 
@@ -231,11 +286,14 @@ const finishRound = (game: WizardGame) => {
 
   if (game.roundNumber >= game.maxRounds) {
     game.status = "finished";
-    addMessage(game, "Das Spiel ist beendet. Der finale Punktestand steht fest.");
+    addMessage(game, "Das Spiel ist beendet. Der finale Punktestand steht fest.", { type: "round", emoji: "🏁" });
     return;
   }
 
-  addMessage(game, `Runde ${game.roundNumber} ist beendet. Der Punktestand wurde aktualisiert.`);
+  addMessage(game, `Runde ${game.roundNumber} ist beendet. Der Punktestand wurde aktualisiert.`, {
+    type: "round",
+    emoji: "📊"
+  });
   game.roundNumber += 1;
   beginRound(game);
 };
@@ -252,7 +310,10 @@ const applyJugglerEffect = (game: WizardGame) => {
     receiver?.hand.push(card);
   });
 
-  addMessage(game, "Jongleur: Alle Personen geben ihre letzte Handkarte nach links weiter.");
+  addMessage(game, "Jongleur: Alle Personen geben ihre letzte Handkarte nach links weiter.", {
+    type: "effect",
+    emoji: "🔁"
+  });
 };
 
 const continueAfterEffects = (game: WizardGame, nextLeaderUsername: string, trick: PlayedWizardCard[]) => {
@@ -298,7 +359,11 @@ const continueAfterEffects = (game: WizardGame, nextLeaderUsername: string, tric
   game.leaderIndex = nextLeaderIndex >= 0 ? nextLeaderIndex : game.leaderIndex;
   game.activePlayerIndex = game.leaderIndex;
   game.status = "playing";
-  addMessage(game, `${game.players[game.activePlayerIndex]?.username} eröffnet den nächsten Stich.`);
+  addMessage(game, `${game.players[game.activePlayerIndex]?.username} eröffnet den nächsten Stich.`, {
+    type: "round",
+    emoji: "▶️",
+    playerUsername: game.players[game.activePlayerIndex]?.username
+  });
 };
 
 const resolveCompletedTrick = (game: WizardGame) => {
@@ -316,9 +381,15 @@ const resolveCompletedTrick = (game: WizardGame) => {
       player.tricksWon += 1;
     }
 
-    addMessage(game, `${actualWinner.playerUsername} gewinnt den Stich.`);
+    addMessage(game, `${actualWinner.playerUsername} gewinnt den Stich.`, {
+      type: "winner",
+      emoji: "🏆",
+      winnerUsername: actualWinner.playerUsername,
+      card: actualWinner.card,
+      chosenSuit: actualWinner.chosenSuit
+    });
   } else {
-    addMessage(game, "Bombe: Niemand gewinnt diesen Stich.");
+    addMessage(game, "Bombe: Niemand gewinnt diesen Stich.", { type: "effect", emoji: "💥" });
   }
 
   if (hasCloud && actualWinner && !hasBomb) {
@@ -379,12 +450,13 @@ export const createWizardGame = (username: string, input?: WizardCreateGameInput
     currentTrick: [],
     lastTrick: [],
     pendingEffect: null,
-    messages: ["Lobby wurde erstellt."],
+    messages: [],
     createdAt,
     updatedAt: createdAt
   };
 
   games.set(game.id, game);
+  addMessage(game, "Lobby wurde erstellt.", { type: "system", emoji: "🏠" });
   return game;
 };
 
@@ -440,12 +512,13 @@ export const createWizardDebugGame = (username: string, input?: WizardCreateGame
     currentTrick: [],
     lastTrick: [],
     pendingEffect: null,
-    messages: ["Admin-Debugmodus wurde gestartet."],
+    messages: [],
     createdAt,
     updatedAt: createdAt
   };
 
   games.set(game.id, game);
+  addMessage(game, "Admin-Debugmodus wurde gestartet.", { type: "system", emoji: "🧪" });
   return game;
 };
 
@@ -482,7 +555,7 @@ export const joinWizardGame = (gameId: string, username: string) => {
     tricksWon: 0,
     score: 0
   });
-  addMessage(game, `${username} ist der Lobby beigetreten.`);
+  addMessage(game, `${username} ist der Lobby beigetreten.`, { type: "system", emoji: "➕", playerUsername: username });
   setUpdated(game);
   return game;
 };
@@ -538,7 +611,11 @@ export const chooseWizardTrump = (gameId: string, username: string, suit: Wizard
   game.trumpSuit = suit;
   game.trumpChoicePendingFor = null;
   game.status = "prediction";
-  addMessage(game, `${actingPlayer.username} bestimmt ${suitLabels[suit]} als Trumpf.`);
+  addMessage(game, `${actingPlayer.username} bestimmt ${suitLabels[suit]} als Trumpf.`, {
+    type: "trump",
+    emoji: "🎨",
+    playerUsername: actingPlayer.username
+  });
   setUpdated(game);
   return game;
 };
@@ -570,7 +647,11 @@ export const makeWizardPrediction = (
   }
 
   player.prediction = prediction;
-  addMessage(game, `${player.username} sagt ${prediction} Stich(e) voraus.`);
+  addMessage(game, `${player.username} sagt ${prediction} Stich(e) voraus.`, {
+    type: "system",
+    emoji: "🔮",
+    playerUsername: player.username
+  });
   startPlayingIfReady(game);
   setUpdated(game);
   return game;
@@ -618,11 +699,28 @@ export const playWizardCard = (gameId: string, username: string, input: WizardPl
 
   if (effectiveCard.kind === "werewolf" && input.chosenTrumpSuit) {
     game.trumpSuit = input.chosenTrumpSuit;
-    addMessage(game, `${player.username} spielt ${card.label}. ${suitLabels[input.chosenTrumpSuit]} ist ab sofort bis Rundenende Trumpf.`);
+    addMessage(game, `${player.username} spielt ${card.label}. ${suitLabels[input.chosenTrumpSuit]} ist ab sofort bis Rundenende Trumpf.`, {
+      type: "play",
+      emoji: "🃏",
+      playerUsername: player.username,
+      card,
+      chosenSuit: input.chosenSuit
+    });
   } else if ((card.kind === "juggler" || card.kind === "cloud") && input.chosenSuit) {
-    addMessage(game, `${player.username} spielt ${card.label} als ${suitLabels[input.chosenSuit]}.`);
+    addMessage(game, `${player.username} spielt ${card.label} als ${suitLabels[input.chosenSuit]}.`, {
+      type: "play",
+      emoji: "🃏",
+      playerUsername: player.username,
+      card,
+      chosenSuit: input.chosenSuit
+    });
   } else {
-    addMessage(game, `${player.username} spielt ${card.label}.`);
+    addMessage(game, `${player.username} spielt ${card.label}.`, {
+      type: "play",
+      emoji: "🃏",
+      playerUsername: player.username,
+      card
+    });
   }
 
   if (game.currentTrick.length === game.players.length) {
@@ -635,7 +733,7 @@ export const playWizardCard = (gameId: string, username: string, input: WizardPl
   return game;
 };
 
-export const resolveWizardCloud = (gameId: string, username: string, delta: 1) => {
+export const resolveWizardCloud = (gameId: string, username: string, delta: 1 | -1) => {
   const game = games.get(gameId);
 
   if (!game || game.pendingEffect?.type !== "cloud") {
@@ -654,12 +752,18 @@ export const resolveWizardCloud = (gameId: string, username: string, delta: 1) =
     throw new Error("Vorhersage konnte nicht angepasst werden.");
   }
 
-  if (delta !== 1) {
-    throw new Error("Die Wolke kann die Vorhersage nur um +1 erhöhen.");
+  const nextPrediction = player.prediction + delta;
+
+  if (nextPrediction < 0) {
+    throw new Error("Die Vorhersage kann nicht unter 0 fallen.");
   }
 
-  player.prediction += 1;
-  addMessage(game, `Wolke: ${player.username} erhöht die Vorhersage um +1.`);
+  player.prediction = nextPrediction;
+  addMessage(game, `Wolke: ${player.username} verändert die Vorhersage um ${delta > 0 ? "+1" : "-1"}.`, {
+    type: "effect",
+    emoji: "☁️",
+    playerUsername: player.username
+  });
   const { nextLeaderUsername, trick } = game.pendingEffect;
   game.pendingEffect = null;
   continueAfterEffects(game, nextLeaderUsername, trick);
@@ -730,7 +834,13 @@ export const resolveWizardWitchExchange = (
     card: handCard,
     effectSuppressed: true
   };
-  addMessage(game, `Hexe: ${player.username} tauscht eine Handkarte gegen ${trickCard.card.label}.`);
+  addMessage(game, `Hexe: ${player.username} tauscht eine Handkarte gegen ${trickCard.card.label}.`, {
+    type: "effect",
+    emoji: "🪄",
+    playerUsername: player.username,
+    card: trickCard.card,
+    chosenSuit: trickCard.chosenSuit
+  });
 
   const { nextLeaderUsername, trick } = game.pendingEffect;
   game.pendingEffect = null;

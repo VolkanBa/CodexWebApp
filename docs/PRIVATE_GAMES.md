@@ -30,6 +30,8 @@ Die WebSocket-Verbindung authentifiziert sich über das bestehende `httpOnly` Se
 - Beide Debug-Spieler werden vom Admin-Account gesteuert.
 - In der UI wird farbig angezeigt, welcher Debug-Spieler gerade am Zug ist.
 - Nach dem letzten Stich einer Runde wertet das Backend automatisch und startet direkt die nächste Runde, solange das Spiel noch nicht beendet ist.
+- Die Trumpfwahl bei aufgedecktem Wizard, Gestaltwandler, Vampir oder Werwolf ist intern an den Geber der Runde gebunden. Der Geber rotiert pro Runde über `dealerIndex = (roundNumber - 1) % players.length` im Spielerarray und damit im Uhrzeigersinn.
+- Das Spiel-Log wird strukturiert übertragen. Gespielte Karten werden im Log als kleine Karten angezeigt; Gewinnernamen werden im Frontend hervorgehoben.
 
 Für produktive Online-Nutzung sollte später ein persistenter Store ergänzt werden, zum Beispiel PostgreSQL oder Redis.
 
@@ -66,7 +68,7 @@ Erweiterungen:
 - `Vampir`: kopiert die Karte, die bei der Trumpfbestimmung aufgedeckt wurde.
 - `Hexe`: sehr niedrige Sonderkarte. Nach der Stichauflösung tauscht die spielende Person eine Handkarte gegen eine Karte aus dem Stich; die neu gelegte Karte hat keinen Effekt.
 - `Jongleur 7 1/2`: kommt nur einmal im Deck vor. Die Karte ist auf der Hand farblos; beim Ausspielen wird per Popup eine Farbe gewählt. Nach Stichauflösung geben alle ihre letzte Handkarte nach links weiter.
-- `Wolke 9 3/4`: kommt nur einmal im Deck vor. Die Karte ist auf der Hand farblos; beim Ausspielen wird per Popup eine Farbe gewählt. Der Stichgewinner erhöht die eigene Vorhersage um `+1`.
+- `Wolke 9 3/4`: kommt nur einmal im Deck vor. Die Karte ist auf der Hand farblos; beim Ausspielen wird per Popup eine Farbe gewählt. Der Stichgewinner verändert die eigene Vorhersage um `+1` oder `-1`; die Vorhersage darf nicht unter `0` fallen.
 
 Sonderkarten können vor dem Spiel in der Lobby ein- oder ausgeschaltet werden.
 
@@ -88,6 +90,8 @@ Abgedeckt sind unter anderem:
 - Vampir-Kopie
 - flexible Farbwahl für Wolke und Jongleur
 - Werwolf-Trumpfwahl
+- Wolke `+1` und `-1`
+- rotierende Trumpfwahlberechtigung über den Geber
 - parallele Spiel-IDs
 - Admin-Debugspiel mit zwei kontrollierten Seats
 

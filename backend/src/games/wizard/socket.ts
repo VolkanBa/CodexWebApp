@@ -72,7 +72,7 @@ type WizardClientMessage =
   | {
       type: "resolveCloud";
       gameId: string;
-      delta: 1;
+      delta: 1 | -1;
     }
   | {
       type: "resolveJuggler";

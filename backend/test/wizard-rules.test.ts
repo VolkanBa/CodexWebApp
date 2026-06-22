@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  chooseWizardTrump,
   createWizardDebugGame,
   createWizardGame,
   getWizardGameView,
+  joinWizardGame,
   makeWizardPrediction,
   playWizardCard,
   resolveWizardCloud,
@@ -251,7 +253,7 @@ test("werewolf card play requires and applies a trump suit", () => {
   assert.equal(game.trumpSuit, "green");
 });
 
-test("cloud effect only increases prediction by one", () => {
+test("cloud effect can increase or decrease prediction without going below zero", () => {
   const game = createWizardDebugGame("Volle", {
     enabledOptionalCards: ["cloud"],
     scoreboardVisibleDefault: true
@@ -266,7 +268,7 @@ test("cloud effect only increases prediction by one", () => {
   game.status = "effect";
   game.roundNumber = 1;
   game.maxRounds = 10;
-  game.players[0]!.prediction = 0;
+  game.players[0]!.prediction = 1;
   game.players[0]!.hand = [suited("green-2", "green", 2)];
   game.players[1]!.hand = [suited("yellow-2", "yellow", 2)];
   game.pendingEffect = {
@@ -276,10 +278,56 @@ test("cloud effect only increases prediction by one", () => {
     trick: [played("Volle 1", cloud, "cloud-play", { chosenSuit: "red" })]
   };
 
-  assert.throws(() => resolveWizardCloud(game.id, "Volle", -1 as 1), /nur um \+1/);
+  resolveWizardCloud(game.id, "Volle", -1);
+
+  assert.equal(game.players[0]?.prediction, 0);
+
+  game.status = "effect";
+  game.pendingEffect = {
+    type: "cloud",
+    username: "Volle 1",
+    nextLeaderUsername: "Volle 1",
+    trick: [played("Volle 1", cloud, "cloud-play-2", { chosenSuit: "red" })]
+  };
+  assert.throws(() => resolveWizardCloud(game.id, "Volle", -1), /nicht unter 0/);
+
+  game.status = "effect";
+  game.pendingEffect = {
+    type: "cloud",
+    username: "Volle 1",
+    nextLeaderUsername: "Volle 1",
+    trick: [played("Volle 1", cloud, "cloud-play-3", { chosenSuit: "red" })]
+  };
   resolveWizardCloud(game.id, "Volle", 1);
 
   assert.equal(game.players[0]?.prediction, 1);
+});
+
+test("trump choice is restricted to the pending chooser", () => {
+  const game = createWizardGame("Volle");
+  joinWizardGame(game.id, "Neo");
+  game.status = "trumpSelection";
+  game.trumpChoicePendingFor = "Neo";
+
+  assert.throws(() => chooseWizardTrump(game.id, "Volle", "red"), /nicht bestimmen/);
+  chooseWizardTrump(game.id, "Neo", "green");
+
+  assert.equal(game.trumpSuit, "green");
+  assert.equal(game.trumpChoicePendingFor, null);
+});
+
+test("trump chooser follows the rotating dealer order clockwise", () => {
+  const game = createWizardGame("Volle");
+  joinWizardGame(game.id, "Neo");
+  joinWizardGame(game.id, "Leia");
+
+  const dealerOrder = [1, 2, 3, 4].map((roundNumber) => {
+    game.roundNumber = roundNumber;
+    game.dealerIndex = (roundNumber - 1) % game.players.length;
+    return game.players[game.dealerIndex]?.username;
+  });
+
+  assert.deepEqual(dealerOrder, ["Volle", "Neo", "Leia", "Volle"]);
 });
 
 test("parallel wizard games receive separate ids", () => {
@@ -336,7 +384,7 @@ test("admin debug card plays are attributed to the controlled seat", () => {
   });
 
   assert.equal(game.currentTrick[0]?.playerUsername, "Volle 1");
-  assert.match(game.messages[0] ?? "", /Volle 1 spielt/);
+  assert.match(game.messages[0]?.message ?? "", /Volle 1 spielt/);
 });
 
 test("wizard automatically starts the next round after a completed round", () => {

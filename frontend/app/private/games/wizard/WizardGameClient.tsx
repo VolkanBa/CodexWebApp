@@ -48,6 +48,18 @@ type PlayedWizardCard = {
   effectSuppressed?: boolean;
 };
 
+type WizardLogEntry = {
+  id: string;
+  type: "system" | "round" | "trump" | "play" | "winner" | "effect";
+  emoji: string;
+  message: string;
+  playerUsername?: string;
+  winnerUsername?: string;
+  card?: WizardCard;
+  chosenSuit?: WizardSuit;
+  createdAt: string;
+};
+
 type WizardPlayer = {
   username: string;
   controlledBySelf: boolean;
@@ -113,7 +125,7 @@ type WizardGame = {
   currentTrick: PlayedWizardCard[];
   lastTrick: PlayedWizardCard[];
   pendingEffect: WizardPendingEffect | null;
-  messages: string[];
+  messages: WizardLogEntry[];
   joinPath: string;
 };
 
@@ -304,13 +316,14 @@ function WizardCardFrame({
   chosenSuit?: WizardSuit;
   muted?: boolean;
   statusLabel?: string;
-  variant?: "hand" | "compact";
+  variant?: "hand" | "compact" | "mini";
 }) {
   const [imageFailed, setImageFailed] = useState(false);
   const visual = getCardVisual(card, chosenSuit);
   const imageSrc = card.imagePath ? `${apiBaseUrl}${card.imagePath}` : null;
   const rank = getCardRank(card);
   const isCompact = variant === "compact";
+  const isMini = variant === "mini";
 
   useEffect(() => {
     setImageFailed(false);
@@ -319,7 +332,7 @@ function WizardCardFrame({
   return (
     <div
       className={`relative mx-auto aspect-[5/7] w-full overflow-hidden border bg-[#17121f] shadow-lg transition ${
-        isCompact ? "max-w-[7.25rem]" : "max-w-[12rem]"
+        isMini ? "max-w-[3.5rem]" : isCompact ? "max-w-[7.25rem]" : "max-w-[12rem]"
       } ${muted ? "opacity-55 grayscale" : "opacity-100"}`}
       style={{
         borderColor: muted ? "rgba(255,255,255,0.16)" : visual.color
@@ -340,53 +353,71 @@ function WizardCardFrame({
       <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/50" />
       <div
         className={`absolute left-2 top-2 flex min-w-7 flex-col items-center bg-black/70 px-1 py-1 font-black leading-none shadow ${
-          isCompact ? "text-sm" : "text-xl"
+          isMini ? "text-[10px]" : isCompact ? "text-sm" : "text-xl"
         }`}
         style={{ color: visual.color }}
       >
         <span>{rank}</span>
-        <span className={isCompact ? "text-[10px]" : "text-sm"}>{visual.symbol}</span>
+        <span className={isMini ? "text-[8px]" : isCompact ? "text-[10px]" : "text-sm"}>{visual.symbol}</span>
       </div>
       <div
         className={`absolute right-2 top-2 flex min-w-7 flex-col items-center bg-black/70 px-1 py-1 font-black leading-none shadow ${
-          isCompact ? "text-sm" : "text-xl"
+          isMini ? "text-[10px]" : isCompact ? "text-sm" : "text-xl"
         }`}
         style={{ color: visual.color }}
       >
         <span>{rank}</span>
-        <span className={isCompact ? "text-[10px]" : "text-sm"}>{visual.symbol}</span>
+        <span className={isMini ? "text-[8px]" : isCompact ? "text-[10px]" : "text-sm"}>{visual.symbol}</span>
       </div>
-      <p
-        className={`absolute left-10 right-10 top-3 truncate text-center font-black text-white drop-shadow ${
-          isCompact ? "text-[10px]" : "text-xs"
-        }`}
-      >
-        {card.label}
-      </p>
+      {!isMini ? (
+        <p
+          className={`absolute left-10 right-10 top-3 truncate text-center font-black text-white drop-shadow ${
+            isCompact ? "text-[10px]" : "text-xs"
+          }`}
+        >
+          {card.label}
+        </p>
+      ) : null}
       <div
         className={`absolute bottom-2 left-2 flex min-w-7 rotate-180 flex-col items-center bg-black/70 px-1 py-1 font-black leading-none shadow ${
-          isCompact ? "text-sm" : "text-xl"
+          isMini ? "text-[10px]" : isCompact ? "text-sm" : "text-xl"
         }`}
         style={{ color: visual.color }}
       >
         <span>{rank}</span>
-        <span className={isCompact ? "text-[10px]" : "text-sm"}>{visual.symbol}</span>
+        <span className={isMini ? "text-[8px]" : isCompact ? "text-[10px]" : "text-sm"}>{visual.symbol}</span>
       </div>
       <div
         className={`absolute bottom-2 right-2 flex min-w-7 rotate-180 flex-col items-center bg-black/70 px-1 py-1 font-black leading-none shadow ${
-          isCompact ? "text-sm" : "text-xl"
+          isMini ? "text-[10px]" : isCompact ? "text-sm" : "text-xl"
         }`}
         style={{ color: visual.color }}
       >
         <span>{rank}</span>
-        <span className={isCompact ? "text-[10px]" : "text-sm"}>{visual.symbol}</span>
+        <span className={isMini ? "text-[8px]" : isCompact ? "text-[10px]" : "text-sm"}>{visual.symbol}</span>
       </div>
-      {statusLabel ? (
+      {statusLabel && !isMini ? (
         <span className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-black/75 px-2 py-1 text-[11px] font-bold text-white">
           {statusLabel}
         </span>
       ) : null}
     </div>
+  );
+}
+
+function WizardLogText({ entry }: { entry: WizardLogEntry }) {
+  if (!entry.winnerUsername || !entry.message.includes(entry.winnerUsername)) {
+    return <>{entry.message}</>;
+  }
+
+  const [beforeWinner, ...afterWinnerParts] = entry.message.split(entry.winnerUsername);
+
+  return (
+    <>
+      {beforeWinner}
+      <strong className="font-black text-suit-green">{entry.winnerUsername}</strong>
+      {afterWinnerParts.join(entry.winnerUsername)}
+    </>
   );
 }
 
@@ -943,6 +974,13 @@ export function WizardGameClient({
                         >
                           +1
                         </button>
+                        <button
+                          type="button"
+                          onClick={() => send({ type: "resolveCloud", gameId: game.id, delta: -1 })}
+                          className="bg-suit-purple px-4 py-2 text-sm font-bold text-white"
+                        >
+                          -1
+                        </button>
                       </div>
                     ) : null}
                   </div>
@@ -1079,11 +1117,26 @@ export function WizardGameClient({
 
             <section className="border border-white/12 bg-white/[0.045] p-5">
               <h2 className="text-2xl font-black text-white">Log</h2>
-              <div className="mt-4 grid gap-2">
-                {game.messages.map((message) => (
-                  <p key={message} className="border-l-2 border-suit-green/70 pl-3 text-sm leading-6 text-white/68">
-                    {message}
-                  </p>
+              <div className="mt-4 grid gap-3">
+                {game.messages.map((entry) => (
+                  <article
+                    key={entry.id}
+                    className="grid grid-cols-[auto_1fr] items-center gap-3 border border-white/10 bg-suit-black/45 p-3"
+                  >
+                    <span className="flex h-9 w-9 items-center justify-center bg-white/[0.08] text-lg" aria-hidden="true">
+                      {entry.emoji}
+                    </span>
+                    <div className="flex items-center gap-3">
+                      {entry.card ? (
+                        <div className="w-12 shrink-0">
+                          <WizardCardFrame card={entry.card} chosenSuit={entry.chosenSuit} variant="mini" />
+                        </div>
+                      ) : null}
+                      <p className="text-sm leading-6 text-white/76">
+                        <WizardLogText entry={entry} />
+                      </p>
+                    </div>
+                  </article>
                 ))}
               </div>
             </section>

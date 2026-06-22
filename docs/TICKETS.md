@@ -139,8 +139,16 @@ Linear-Team: `CodexWebApp`
 - [x] COD-58 / WEB-034: Wizard Popup-Entscheidungen und flexible Wolke/Jongleur-Regeln
   - Branch: `codex/wizard-popup-card-decisions`
   - Linear: `https://linear.app/codexwebapp/issue/COD-58/web-034-wizard-popup-entscheidungen-und-flexible-wolkejongleur-regeln`
-  - Ergebnis: Werwolf, Gestaltwandler, Wolke und Jongleur fragen Entscheidungen erst beim Ausspielen ab. Wolke und Jongleur kommen je nur einmal vor, sind farblos auf der Hand und erhalten ihre Farbe per Popup. Wolke erhöht nur noch um `+1`.
+  - Ergebnis: Werwolf, Gestaltwandler, Wolke und Jongleur fragen Entscheidungen erst beim Ausspielen ab. Wolke und Jongleur kommen je nur einmal vor, sind farblos auf der Hand und erhalten ihre Farbe per Popup. Hinweis: Die Wolkenauswahl wurde in `WEB-035` wieder auf `+1` und `-1` erweitert.
   - Untertickets:
     - [x] COD-59 / WEB-034-BE: Flexible Wizard-Karten serverseitig validieren
     - [x] COD-60 / WEB-034-FE: Wizard-Auswahl-Popups beim Kartenspiel
     - [x] COD-61 / WEB-034-TESTS-DOCS: Wizard Popup-Regeln testen und dokumentieren
+- [x] COD-62 / WEB-035: Wizard Wolke-Auswahl und visuelles Log verbessern
+  - Branch: `codex/wizard-log-cloud-rotation`
+  - Linear: `https://linear.app/codexwebapp/issue/COD-62/web-035-wizard-wolke-auswahl-und-visuelles-log-verbessern`
+  - Ergebnis: Wolke bietet wieder `+1` und `-1`. Das Wizard-Log nutzt strukturierte Einträge mit Emojis, kleinen Karten und fett markiertem Gewinnernamen. Die Trumpfwahlberechtigung bleibt serverseitig über `trumpChoicePendingFor` geschützt und die Geberrotation ist getestet.
+  - Untertickets:
+    - [x] COD-63 / WEB-035-BE: Wolke-Delta und Trumpfwahl-Tracking absichern
+    - [x] COD-64 / WEB-035-FE: Wizard-Log mit Karten und Emojis darstellen
+    - [x] COD-65 / WEB-035-DOCS: Wizard-Log und Trumpfwahlrotation dokumentieren
