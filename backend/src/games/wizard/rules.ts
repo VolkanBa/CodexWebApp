@@ -5,7 +5,8 @@ import {
   type WizardCard,
   type WizardGame,
   type WizardPlayer,
-  type WizardSuit
+  type WizardSuit,
+  wizardSuits
 } from "./types.js";
 
 type EffectiveCard = {
@@ -30,6 +31,8 @@ const specialKinds = new Set<WizardCard["kind"]>([
 
 export const isSpecialCard = (card: WizardCard) => specialKinds.has(card.kind);
 
+const isFlexibleSuitCard = (card: WizardCard) => card.kind === "juggler" || card.kind === "cloud";
+
 export const calculateRoundScore = (prediction: number, tricksWon: number) => {
   if (prediction === tricksWon) {
     return 20 + 10 * tricksWon;
@@ -40,12 +43,12 @@ export const calculateRoundScore = (prediction: number, tricksWon: number) => {
 
 export const getEffectiveCard = (
   game: Pick<WizardGame, "vampireCopyCard">,
-  playedCard: Pick<PlayedWizardCard, "card" | "shapeshifterMode" | "effectSuppressed">
+  playedCard: Pick<PlayedWizardCard, "card" | "shapeshifterMode" | "chosenSuit" | "effectSuppressed">
 ): EffectiveCard => {
   if (playedCard.effectSuppressed) {
     return {
       kind: playedCard.card.kind,
-      suit: playedCard.card.suit,
+      suit: playedCard.chosenSuit ?? playedCard.card.suit,
       value: playedCard.card.value,
       label: `${playedCard.card.label} (ohne Effekt)`,
       isSpecial: false
@@ -59,6 +62,18 @@ export const getEffectiveCard = (
       kind: mode === "wizard" ? "wizard" : "jester",
       label: mode === "wizard" ? "Gestaltwandler als Wizard" : "Gestaltwandler als Narr",
       isSpecial: true
+    };
+  }
+
+  if (isFlexibleSuitCard(playedCard.card)) {
+    return {
+      kind: playedCard.card.kind,
+      suit: playedCard.chosenSuit ?? playedCard.card.suit,
+      value: playedCard.card.value,
+      label: playedCard.chosenSuit
+        ? `${playedCard.card.label} als ${suitLabels[playedCard.chosenSuit]}`
+        : playedCard.card.label,
+      isSpecial: false
     };
   }
 
@@ -111,6 +126,10 @@ const cardCanServeSuit = (
   card: WizardCard,
   suit: WizardSuit
 ) => {
+  if (isFlexibleSuitCard(card)) {
+    return true;
+  }
+
   if (card.kind === "vampire") {
     const copiedCard = getEffectiveCard(game, { card });
     return !copiedCard.isSpecial && copiedCard.suit === suit;
@@ -143,6 +162,10 @@ export const getValidCardsForPlayer = (game: WizardGame, player: WizardPlayer) =
         return effectiveCard.isSpecial || effectiveCard.suit === ledSuit;
       }
 
+      if (isFlexibleSuitCard(card)) {
+        return true;
+      }
+
       return isSpecialCard(card) || card.suit === ledSuit;
     })
     .map((card) => card.id);
@@ -152,7 +175,7 @@ export const validateCardPlay = (
   game: WizardGame,
   player: WizardPlayer,
   card: WizardCard,
-  options: { shapeshifterMode?: ShapeshifterMode; chosenTrumpSuit?: WizardSuit }
+  options: { shapeshifterMode?: ShapeshifterMode; chosenTrumpSuit?: WizardSuit; chosenSuit?: WizardSuit }
 ) => {
   if (game.status !== "playing") {
     return "Es läuft gerade keine spielbare Stichphase.";
@@ -166,19 +189,38 @@ export const validateCardPlay = (
     return "Der Gestaltwandler muss als Wizard oder Narr gespielt werden.";
   }
 
+  if (isFlexibleSuitCard(card) && !options.chosenSuit) {
+    return `${card.label} braucht beim Ausspielen eine Farbe.`;
+  }
+
+  if (options.chosenSuit && !wizardSuits.includes(options.chosenSuit)) {
+    return "Ungültige Kartenfarbe.";
+  }
+
+  if (options.chosenTrumpSuit && !wizardSuits.includes(options.chosenTrumpSuit)) {
+    return "Ungültige Trumpffarbe.";
+  }
+
   const effectiveCard = getEffectiveCard(game, {
     card,
-    shapeshifterMode: options.shapeshifterMode
+    shapeshifterMode: options.shapeshifterMode,
+    chosenSuit: options.chosenSuit
   });
 
   if (effectiveCard.kind === "werewolf" && !options.chosenTrumpSuit) {
     return "Der Werwolf muss sofort eine neue Trumpffarbe bestimmen.";
   }
 
+  const ledSuit = getLedSuit(game);
+  const hasLedSuit = ledSuit ? player.hand.some((candidate) => cardCanServeSuit(game, candidate, ledSuit)) : false;
+
+  if (ledSuit && hasLedSuit && !effectiveCard.isSpecial && effectiveCard.suit !== ledSuit) {
+    return `Farbzwang: ${suitLabels[ledSuit]} muss bedient werden.`;
+  }
+
   const validCardIds = getValidCardsForPlayer(game, player);
 
   if (!validCardIds.includes(card.id)) {
-    const ledSuit = getLedSuit(game);
     return ledSuit
       ? `Farbzwang: ${suitLabels[ledSuit]} muss bedient werden.`
       : "Diese Karte kann aktuell nicht gespielt werden.";

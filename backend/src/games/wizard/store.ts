@@ -161,9 +161,9 @@ const setTrumpFromCard = (game: WizardGame, card: WizardCard | null, chooserUser
   }
 
   if (card.kind === "werewolf") {
-    const nextCard = game.deck.shift() ?? null;
-    addMessage(game, `Werwolf wurde als Trumpfkarte aufgedeckt. Es wird sofort neu aufgedeckt.`);
-    setTrumpFromCard(game, nextCard, chooserUsername);
+    game.trumpSuit = null;
+    game.trumpChoicePendingFor = chooserUsername;
+    addMessage(game, `Werwolf wurde als Trumpfkarte aufgedeckt. ${chooserUsername} bestimmt die Trumpffarbe.`);
     return;
   }
 
@@ -609,7 +609,8 @@ export const playWizardCard = (gameId: string, username: string, input: WizardPl
     playerUsername: player.username,
     card,
     shapeshifterMode: input.shapeshifterMode,
-    chosenTrumpSuit: input.chosenTrumpSuit
+    chosenTrumpSuit: input.chosenTrumpSuit,
+    chosenSuit: input.chosenSuit
   };
   game.currentTrick.push(playedCard);
 
@@ -618,6 +619,8 @@ export const playWizardCard = (gameId: string, username: string, input: WizardPl
   if (effectiveCard.kind === "werewolf" && input.chosenTrumpSuit) {
     game.trumpSuit = input.chosenTrumpSuit;
     addMessage(game, `${player.username} spielt ${card.label}. ${suitLabels[input.chosenTrumpSuit]} ist ab sofort bis Rundenende Trumpf.`);
+  } else if ((card.kind === "juggler" || card.kind === "cloud") && input.chosenSuit) {
+    addMessage(game, `${player.username} spielt ${card.label} als ${suitLabels[input.chosenSuit]}.`);
   } else {
     addMessage(game, `${player.username} spielt ${card.label}.`);
   }
@@ -632,7 +635,7 @@ export const playWizardCard = (gameId: string, username: string, input: WizardPl
   return game;
 };
 
-export const resolveWizardCloud = (gameId: string, username: string, delta: 1 | -1) => {
+export const resolveWizardCloud = (gameId: string, username: string, delta: 1) => {
   const game = games.get(gameId);
 
   if (!game || game.pendingEffect?.type !== "cloud") {
@@ -651,14 +654,12 @@ export const resolveWizardCloud = (gameId: string, username: string, delta: 1 | 
     throw new Error("Vorhersage konnte nicht angepasst werden.");
   }
 
-  const nextPrediction = player.prediction + delta;
-
-  if (nextPrediction < 0) {
-    throw new Error("Die Vorhersage kann nicht unter 0 fallen.");
+  if (delta !== 1) {
+    throw new Error("Die Wolke kann die Vorhersage nur um +1 erhöhen.");
   }
 
-  player.prediction = nextPrediction;
-  addMessage(game, `Wolke: ${player.username} verändert die Vorhersage um ${delta > 0 ? "+1" : "-1"}.`);
+  player.prediction += 1;
+  addMessage(game, `Wolke: ${player.username} erhöht die Vorhersage um +1.`);
   const { nextLeaderUsername, trick } = game.pendingEffect;
   game.pendingEffect = null;
   continueAfterEffects(game, nextLeaderUsername, trick);

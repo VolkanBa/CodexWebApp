@@ -6,10 +6,12 @@ import {
   getWizardGameView,
   makeWizardPrediction,
   playWizardCard,
+  resolveWizardCloud,
   startWizardGame
 } from "../src/games/wizard/store.js";
+import { createWizardDeck } from "../src/games/wizard/cards.js";
 import { calculateRoundScore, determineTrickWinner, getEffectiveCard, validateCardPlay } from "../src/games/wizard/rules.js";
-import type { PlayedWizardCard, WizardCard, WizardGame, WizardPlayer } from "../src/games/wizard/types.js";
+import type { OptionalWizardCardKind, PlayedWizardCard, WizardCard, WizardGame, WizardPlayer } from "../src/games/wizard/types.js";
 
 const suited = (id: string, suit: WizardCard["suit"], value: number): WizardCard => ({
   id,
@@ -25,10 +27,16 @@ const special = (kind: WizardCard["kind"]): WizardCard => ({
   label: kind
 });
 
-const played = (playerUsername: string, card: WizardCard, playId = `${playerUsername}-${card.id}`): PlayedWizardCard => ({
+const played = (
+  playerUsername: string,
+  card: WizardCard,
+  playId = `${playerUsername}-${card.id}`,
+  overrides: Partial<PlayedWizardCard> = {}
+): PlayedWizardCard => ({
   playId,
   playerUsername,
-  card
+  card,
+  ...overrides
 });
 
 const gameForRules = (overrides: Partial<WizardGame>): WizardGame => ({
@@ -155,6 +163,123 @@ test("vampire copies the revealed trump card for trick logic", () => {
   assert.equal(vampire.kind, "number");
   assert.equal(vampire.suit, "red");
   assert.equal(vampire.value, 13);
+});
+
+test("wizard deck contains one flexible cloud and one flexible juggler", () => {
+  const deck = createWizardDeck({
+    enabledOptionalCards: ["cloud", "juggler"] as OptionalWizardCardKind[]
+  });
+  const clouds = deck.filter((card) => card.kind === "cloud");
+  const jugglers = deck.filter((card) => card.kind === "juggler");
+
+  assert.equal(clouds.length, 1);
+  assert.equal(jugglers.length, 1);
+  assert.equal(clouds[0]?.suit, undefined);
+  assert.equal(jugglers[0]?.suit, undefined);
+});
+
+test("flexible cloud and juggler require a chosen suit and obey follow suit", () => {
+  const cloud: WizardCard = {
+    id: "cloud",
+    kind: "cloud",
+    label: "Wolke 9 3/4",
+    value: 9.75
+  };
+  const player: WizardPlayer = {
+    username: "Neo",
+    seat: 1,
+    hand: [cloud],
+    prediction: 0,
+    tricksWon: 0,
+    score: 0
+  };
+  const game = gameForRules({
+    players: [
+      {
+        username: "Volle",
+        seat: 0,
+        hand: [],
+        prediction: 0,
+        tricksWon: 0,
+        score: 0
+      },
+      player
+    ],
+    activePlayerIndex: 1,
+    currentTrick: [played("Volle", suited("red-7", "red", 7))]
+  });
+
+  assert.match(validateCardPlay(game, player, cloud, {}) ?? "", /braucht beim Ausspielen eine Farbe/);
+  assert.match(validateCardPlay(game, player, cloud, { chosenSuit: "blue" }) ?? "", /Farbzwang/);
+  assert.equal(validateCardPlay(game, player, cloud, { chosenSuit: "red" }), null);
+
+  const winner = determineTrickWinner(
+    {
+      trumpSuit: null,
+      vampireCopyCard: null
+    },
+    [played("Volle", suited("red-7", "red", 7)), played("Neo", cloud, "neo-cloud", { chosenSuit: "red" })]
+  );
+
+  assert.equal(winner?.playerUsername, "Neo");
+});
+
+test("werewolf card play requires and applies a trump suit", () => {
+  const game = createWizardDebugGame("Volle", {
+    enabledOptionalCards: ["werewolf"],
+    scoreboardVisibleDefault: true
+  });
+  const werewolf = special("werewolf");
+
+  game.status = "playing";
+  game.roundNumber = 1;
+  game.maxRounds = 10;
+  game.activePlayerIndex = 0;
+  game.players[0]!.hand = [werewolf];
+  game.players[1]!.hand = [suited("blue-1", "blue", 1)];
+  game.players[0]!.prediction = 0;
+  game.players[1]!.prediction = 0;
+
+  assert.match(validateCardPlay(game, game.players[0]!, werewolf, {}) ?? "", /Werwolf/);
+
+  playWizardCard(game.id, "Volle", {
+    cardId: werewolf.id,
+    playerUsername: "Volle 1",
+    chosenTrumpSuit: "green"
+  });
+
+  assert.equal(game.trumpSuit, "green");
+});
+
+test("cloud effect only increases prediction by one", () => {
+  const game = createWizardDebugGame("Volle", {
+    enabledOptionalCards: ["cloud"],
+    scoreboardVisibleDefault: true
+  });
+  const cloud: WizardCard = {
+    id: "cloud",
+    kind: "cloud",
+    label: "Wolke 9 3/4",
+    value: 9.75
+  };
+
+  game.status = "effect";
+  game.roundNumber = 1;
+  game.maxRounds = 10;
+  game.players[0]!.prediction = 0;
+  game.players[0]!.hand = [suited("green-2", "green", 2)];
+  game.players[1]!.hand = [suited("yellow-2", "yellow", 2)];
+  game.pendingEffect = {
+    type: "cloud",
+    username: "Volle 1",
+    nextLeaderUsername: "Volle 1",
+    trick: [played("Volle 1", cloud, "cloud-play", { chosenSuit: "red" })]
+  };
+
+  assert.throws(() => resolveWizardCloud(game.id, "Volle", -1 as 1), /nur um \+1/);
+  resolveWizardCloud(game.id, "Volle", 1);
+
+  assert.equal(game.players[0]?.prediction, 1);
 });
 
 test("parallel wizard games receive separate ids", () => {

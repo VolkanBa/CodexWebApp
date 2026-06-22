@@ -44,6 +44,7 @@ type PlayedWizardCard = {
   card: WizardCard;
   shapeshifterMode?: "wizard" | "jester";
   chosenTrumpSuit?: WizardSuit;
+  chosenSuit?: WizardSuit;
   effectSuppressed?: boolean;
 };
 
@@ -145,6 +146,12 @@ type WizardSocketMessage =
       message: string;
     };
 
+type PlayDecisionPrompt = {
+  card: WizardCard;
+  playerUsername: string | null;
+  type: "shapeshifter" | "werewolf" | "suit";
+};
+
 const getStatusLabel = (status: WizardGame["status"]) => {
   const labels: Record<WizardGame["status"], string> = {
     lobby: "Lobby",
@@ -230,6 +237,16 @@ const specialVisuals: Record<string, { color: string; rank: string; symbol: stri
     rank: "WW",
     symbol: "☾"
   },
+  juggler: {
+    color: "#f7f4ff",
+    rank: "7½",
+    symbol: "Ϟ"
+  },
+  cloud: {
+    color: "#f7f4ff",
+    rank: "9¾",
+    symbol: "ϟ"
+  },
   witch: {
     color: "#9c7cff",
     rank: "H",
@@ -263,9 +280,11 @@ const getCardRank = (card: WizardCard) => {
   return specialVisuals[card.kind]?.rank ?? card.label.slice(0, 2).toUpperCase();
 };
 
-const getCardVisual = (card: WizardCard) => {
-  if (card.suit) {
-    return suitVisuals[card.suit];
+const getCardVisual = (card: WizardCard, chosenSuit?: WizardSuit) => {
+  const effectiveSuit = chosenSuit ?? card.suit;
+
+  if (effectiveSuit) {
+    return suitVisuals[effectiveSuit];
   }
 
   return specialVisuals[card.kind] ?? {
@@ -276,17 +295,19 @@ const getCardVisual = (card: WizardCard) => {
 
 function WizardCardFrame({
   card,
+  chosenSuit,
   muted = false,
   statusLabel,
   variant = "hand"
 }: {
   card: WizardCard;
+  chosenSuit?: WizardSuit;
   muted?: boolean;
   statusLabel?: string;
   variant?: "hand" | "compact";
 }) {
   const [imageFailed, setImageFailed] = useState(false);
-  const visual = getCardVisual(card);
+  const visual = getCardVisual(card, chosenSuit);
   const imageSrc = card.imagePath ? `${apiBaseUrl}${card.imagePath}` : null;
   const rank = getCardRank(card);
   const isCompact = variant === "compact";
@@ -387,11 +408,10 @@ export function WizardGameClient({
   const [enabledOptionalCards, setEnabledOptionalCards] = useState<string[]>(optionalCards.map(([value]) => value));
   const [scoreboardVisible, setScoreboardVisible] = useState(true);
   const [prediction, setPrediction] = useState(0);
-  const [selectedTrumpSuit, setSelectedTrumpSuit] = useState<WizardSuit>("red");
-  const [shapeshifterMode, setShapeshifterMode] = useState<"wizard" | "jester">("wizard");
   const [witchHandCardId, setWitchHandCardId] = useState("");
   const [witchTrickPlayId, setWitchTrickPlayId] = useState("");
   const [selectedControlledUsername, setSelectedControlledUsername] = useState<string | null>(null);
+  const [playDecisionPrompt, setPlayDecisionPrompt] = useState<PlayDecisionPrompt | null>(null);
 
   const isSelfOwner = username && game?.ownerUsername.toLowerCase() === username.toLowerCase();
   const isAdmin = role === "admin";
@@ -535,15 +555,75 @@ export function WizardGameClient({
     });
   };
 
-  const playCard = (card: WizardCard) => {
+  const playCard = (
+    card: WizardCard,
+    options: {
+      playerUsername?: string | null;
+      shapeshifterMode?: "wizard" | "jester";
+      chosenTrumpSuit?: WizardSuit;
+      chosenSuit?: WizardSuit;
+    } = {}
+  ) => {
     send({
       type: "playCard",
       gameId: game?.id,
       cardId: card.id,
-      playerUsername: game?.debugMode?.enabled ? displayedHandOwnerUsername : undefined,
-      shapeshifterMode: card.kind === "shapeshifter" ? shapeshifterMode : undefined,
-      chosenTrumpSuit: selectedTrumpSuit
+      playerUsername: options.playerUsername ?? (game?.debugMode?.enabled ? displayedHandOwnerUsername : undefined),
+      shapeshifterMode: options.shapeshifterMode,
+      chosenTrumpSuit: options.chosenTrumpSuit,
+      chosenSuit: options.chosenSuit
     });
+  };
+
+  const requestPlayCard = (card: WizardCard) => {
+    const playerUsername = game?.debugMode?.enabled ? displayedHandOwnerUsername : undefined;
+
+    if (card.kind === "shapeshifter") {
+      setPlayDecisionPrompt({
+        card,
+        playerUsername: playerUsername ?? null,
+        type: "shapeshifter"
+      });
+      return;
+    }
+
+    if (card.kind === "werewolf") {
+      setPlayDecisionPrompt({
+        card,
+        playerUsername: playerUsername ?? null,
+        type: "werewolf"
+      });
+      return;
+    }
+
+    if (card.kind === "juggler" || card.kind === "cloud") {
+      setPlayDecisionPrompt({
+        card,
+        playerUsername: playerUsername ?? null,
+        type: "suit"
+      });
+      return;
+    }
+
+    playCard(card, {
+      playerUsername
+    });
+  };
+
+  const choosePlayDecision = (decision: {
+    shapeshifterMode?: "wizard" | "jester";
+    chosenTrumpSuit?: WizardSuit;
+    chosenSuit?: WizardSuit;
+  }) => {
+    if (!playDecisionPrompt) {
+      return;
+    }
+
+    playCard(playDecisionPrompt.card, {
+      playerUsername: playDecisionPrompt.playerUsername,
+      ...decision
+    });
+    setPlayDecisionPrompt(null);
   };
 
   return (
@@ -825,7 +905,7 @@ export function WizardGameClient({
                   {game.currentTrick.length ? (
                     game.currentTrick.map((played) => (
                       <div key={played.playId} className="border border-white/10 bg-black/20 p-2">
-                        <WizardCardFrame card={played.card} variant="compact" />
+                        <WizardCardFrame card={played.card} chosenSuit={played.chosenSuit} variant="compact" />
                         <p className="mt-2 truncate text-center text-xs font-bold text-white/72">{played.playerUsername}</p>
                       </div>
                     ))
@@ -862,13 +942,6 @@ export function WizardGameClient({
                           className="bg-suit-purple px-4 py-2 text-sm font-bold text-white"
                         >
                           +1
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => send({ type: "resolveCloud", gameId: game.id, delta: -1 })}
-                          className="bg-suit-purple px-4 py-2 text-sm font-bold text-white"
-                        >
-                          -1
                         </button>
                       </div>
                     ) : null}
@@ -944,27 +1017,6 @@ export function WizardGameClient({
                 <h3 className="text-xl font-black text-white">
                   {game.debugMode?.enabled ? `Hand von ${displayedHandOwnerUsername ?? "Debug-Spieler"}` : "Deine Hand"}
                 </h3>
-                <div className="flex flex-wrap gap-2">
-                  <select
-                    value={selectedTrumpSuit}
-                    onChange={(event) => setSelectedTrumpSuit(event.target.value as WizardSuit)}
-                    className="border border-white/12 bg-suit-black px-3 py-2 text-sm text-white"
-                  >
-                    {suitOptions.map(([value, label]) => (
-                      <option key={value} value={value}>
-                        Werwolf: {label}
-                      </option>
-                    ))}
-                  </select>
-                  <select
-                    value={shapeshifterMode}
-                    onChange={(event) => setShapeshifterMode(event.target.value as "wizard" | "jester")}
-                    className="border border-white/12 bg-suit-black px-3 py-2 text-sm text-white"
-                  >
-                    <option value="wizard">Gestaltwandler als Wizard</option>
-                    <option value="jester">Gestaltwandler als Narr</option>
-                  </select>
-                </div>
               </div>
               <div className="grid grid-cols-[repeat(auto-fit,minmax(9.5rem,1fr))] gap-4">
                 {displayedHand.length ? (
@@ -978,7 +1030,7 @@ export function WizardGameClient({
                         key={card.id}
                         type="button"
                         disabled={!canPlay}
-                        onClick={() => playCard(card)}
+                        onClick={() => requestPlayCard(card)}
                         className={`group flex justify-center border p-2 transition ${
                           canPlay
                             ? "border-suit-green/60 bg-suit-purple/35 hover:border-suit-orange hover:bg-suit-orange/20"
@@ -1038,6 +1090,77 @@ export function WizardGameClient({
           </aside>
         </div>
       )}
+      {playDecisionPrompt ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-md border border-white/12 bg-suit-black p-5 shadow-glow">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-suit-green">
+                  {playDecisionPrompt.card.label}
+                </p>
+                <h2 className="mt-2 text-2xl font-black text-white">
+                  {playDecisionPrompt.type === "shapeshifter"
+                    ? "Gestalt wählen"
+                    : playDecisionPrompt.type === "werewolf"
+                      ? "Trumpffarbe wählen"
+                      : "Farbe wählen"}
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPlayDecisionPrompt(null)}
+                className="border border-white/12 px-3 py-2 text-sm font-bold text-white/72 transition hover:text-white"
+              >
+                Schließen
+              </button>
+            </div>
+            <div className="mt-5">
+              <WizardCardFrame card={playDecisionPrompt.card} variant="compact" />
+            </div>
+            {playDecisionPrompt.type === "shapeshifter" ? (
+              <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={() => choosePlayDecision({ shapeshifterMode: "wizard" })}
+                  className="bg-suit-purple px-4 py-3 text-sm font-black text-white transition hover:bg-suit-orange hover:text-suit-black"
+                >
+                  Wizard
+                </button>
+                <button
+                  type="button"
+                  onClick={() => choosePlayDecision({ shapeshifterMode: "jester" })}
+                  className="bg-suit-purple px-4 py-3 text-sm font-black text-white transition hover:bg-suit-orange hover:text-suit-black"
+                >
+                  Narr
+                </button>
+              </div>
+            ) : (
+              <div className="mt-5 grid grid-cols-2 gap-3">
+                {suitOptions.map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() =>
+                      choosePlayDecision(
+                        playDecisionPrompt.type === "werewolf"
+                          ? { chosenTrumpSuit: value }
+                          : { chosenSuit: value }
+                      )
+                    }
+                    className="border px-4 py-3 text-sm font-black transition hover:bg-suit-orange hover:text-suit-black"
+                    style={{
+                      borderColor: suitVisuals[value].color,
+                      color: suitVisuals[value].color
+                    }}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }

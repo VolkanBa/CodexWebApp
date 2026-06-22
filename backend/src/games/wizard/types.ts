@@ -45,6 +45,7 @@ export type PlayedWizardCard = {
   card: WizardCard;
   shapeshifterMode?: ShapeshifterMode;
   chosenTrumpSuit?: WizardSuit;
+  chosenSuit?: WizardSuit;
   effectSuppressed?: boolean;
 };
 
@@ -188,4 +189,5 @@ export type WizardPlayCardInput = {
   playerUsername?: string;
   shapeshifterMode?: ShapeshifterMode;
   chosenTrumpSuit?: WizardSuit;
+  chosenSuit?: WizardSuit;
 };

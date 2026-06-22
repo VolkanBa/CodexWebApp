@@ -37,23 +37,21 @@ const createNumberCard = (suit: WizardSuit, value: number): WizardCard => ({
   value
 });
 
-const createJugglerCard = (suit: WizardSuit): WizardCard => ({
-  id: `${suit}-7-5`,
+const createJugglerCard = (): WizardCard => ({
+  id: "juggler",
   kind: "juggler",
-  label: `${suitLabels[suit]} Jongleur 7 1/2`,
-  designKey: `${suit}-juggler-7-5`,
-  imagePath: getCardImagePath(`${suit}-juggler-7-5`),
-  suit,
+  label: "Jongleur 7 1/2",
+  designKey: "juggler-7-5",
+  imagePath: getCardImagePath("juggler-7-5"),
   value: 7.5
 });
 
-const createCloudCard = (suit: WizardSuit): WizardCard => ({
-  id: `${suit}-9-75`,
+const createCloudCard = (): WizardCard => ({
+  id: "cloud",
   kind: "cloud",
-  label: `${suitLabels[suit]} Wolke 9 3/4`,
-  designKey: `${suit}-cloud-9-75`,
-  imagePath: getCardImagePath(`${suit}-cloud-9-75`),
-  suit,
+  label: "Wolke 9 3/4",
+  designKey: "cloud-9-75",
+  imagePath: getCardImagePath("cloud-9-75"),
   value: 9.75
 });
 
@@ -94,13 +92,14 @@ export const createWizardDeck = (settings: Pick<WizardGameSettings, "enabledOpti
       cards.push(createNumberCard(suit, value));
     }
 
-    if (enabled.has("juggler")) {
-      cards.push(createJugglerCard(suit));
-    }
+  }
 
-    if (enabled.has("cloud")) {
-      cards.push(createCloudCard(suit));
-    }
+  if (enabled.has("juggler")) {
+    cards.push(createJugglerCard());
+  }
+
+  if (enabled.has("cloud")) {
+    cards.push(createCloudCard());
   }
 
   for (let index = 1; index <= 4; index += 1) {

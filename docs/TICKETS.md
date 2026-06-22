@@ -136,3 +136,11 @@ Linear-Team: `CodexWebApp`
     - [x] COD-55 / WEB-033-BE: Automatische Wizard-Folgerunden und Asset-Auslieferung
     - [x] COD-56 / WEB-033-FE: Wizard-Karten als Bildkarten rendern
     - [x] COD-57 / WEB-033-DOCS: Wizard-Bildassets und Tests dokumentieren
+- [x] COD-58 / WEB-034: Wizard Popup-Entscheidungen und flexible Wolke/Jongleur-Regeln
+  - Branch: `codex/wizard-popup-card-decisions`
+  - Linear: `https://linear.app/codexwebapp/issue/COD-58/web-034-wizard-popup-entscheidungen-und-flexible-wolkejongleur-regeln`
+  - Ergebnis: Werwolf, Gestaltwandler, Wolke und Jongleur fragen Entscheidungen erst beim Ausspielen ab. Wolke und Jongleur kommen je nur einmal vor, sind farblos auf der Hand und erhalten ihre Farbe per Popup. Wolke erhöht nur noch um `+1`.
+  - Untertickets:
+    - [x] COD-59 / WEB-034-BE: Flexible Wizard-Karten serverseitig validieren
+    - [x] COD-60 / WEB-034-FE: Wizard-Auswahl-Popups beim Kartenspiel
+    - [x] COD-61 / WEB-034-TESTS-DOCS: Wizard Popup-Regeln testen und dokumentieren

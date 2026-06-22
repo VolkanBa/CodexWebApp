@@ -67,11 +67,12 @@ type WizardClientMessage =
       playerUsername?: string;
       shapeshifterMode?: "wizard" | "jester";
       chosenTrumpSuit?: WizardSuit;
+      chosenSuit?: WizardSuit;
     }
   | {
       type: "resolveCloud";
       gameId: string;
-      delta: 1 | -1;
+      delta: 1;
     }
   | {
       type: "resolveJuggler";
@@ -308,7 +309,8 @@ export const registerWizardSocketServer = (server: Server) => {
               cardId: message.cardId,
               playerUsername: message.playerUsername,
               shapeshifterMode: message.shapeshifterMode,
-              chosenTrumpSuit: message.chosenTrumpSuit
+              chosenTrumpSuit: message.chosenTrumpSuit,
+              chosenSuit: message.chosenSuit
             });
             broadcastGameState(game.id);
             broadcastGamesList();

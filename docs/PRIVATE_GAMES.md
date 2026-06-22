@@ -61,12 +61,12 @@ Erweiterungen:
 - `Drache`: sehr hohe Sonderkarte.
 - `Fee`: absoluter Verlierer, außer ein Drache liegt im Stich; dann gewinnt die Fee.
 - `Bombe`: annulliert den Stich. Niemand bekommt einen Stichpunkt. Die Person, die ohne Bombe gewonnen hätte, eröffnet den nächsten Stich.
-- `Werwolf`: ändert die Trumpffarbe sofort und bis zum Ende der Runde.
-- `Gestaltwandler`: wird beim Ausspielen als Wizard oder Narr gewählt.
+- `Werwolf`: ändert die Trumpffarbe sofort und bis zum Ende der Runde. Wird der Werwolf als Trumpfkarte aufgedeckt, bestimmt der Geber direkt die Trumpffarbe.
+- `Gestaltwandler`: wird erst beim Ausspielen per Popup als Wizard oder Narr gewählt.
 - `Vampir`: kopiert die Karte, die bei der Trumpfbestimmung aufgedeckt wurde.
 - `Hexe`: sehr niedrige Sonderkarte. Nach der Stichauflösung tauscht die spielende Person eine Handkarte gegen eine Karte aus dem Stich; die neu gelegte Karte hat keinen Effekt.
-- `Jongleur 7 1/2`: numerische Karte mit Wert `7.5`; nach Stichauflösung geben alle ihre letzte Handkarte nach links weiter.
-- `Wolke 9 3/4`: numerische Karte mit Wert `9.75`; der Stichgewinner muss die eigene Vorhersage um `+1` oder `-1` ändern.
+- `Jongleur 7 1/2`: kommt nur einmal im Deck vor. Die Karte ist auf der Hand farblos; beim Ausspielen wird per Popup eine Farbe gewählt. Nach Stichauflösung geben alle ihre letzte Handkarte nach links weiter.
+- `Wolke 9 3/4`: kommt nur einmal im Deck vor. Die Karte ist auf der Hand farblos; beim Ausspielen wird per Popup eine Farbe gewählt. Der Stichgewinner erhöht die eigene Vorhersage um `+1`.
 
 Sonderkarten können vor dem Spiel in der Lobby ein- oder ausgeschaltet werden.
 
@@ -86,6 +86,8 @@ Abgedeckt sind unter anderem:
 - Fee gegen Drache
 - Bombe
 - Vampir-Kopie
+- flexible Farbwahl für Wolke und Jongleur
+- Werwolf-Trumpfwahl
 - parallele Spiel-IDs
 - Admin-Debugspiel mit zwei kontrollierten Seats
 
