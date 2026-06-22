@@ -160,3 +160,11 @@ Linear-Team: `CodexWebApp`
     - [x] COD-67 / WEB-036-BE: Hexen-Effekt nach Tausch abschließen
     - [x] COD-68 / WEB-036-FE: Hexen-Tauschmenü nur berechtigtem Spieler zeigen
     - [x] COD-69 / WEB-036-TESTS-DOCS: Hexen-Regression dokumentieren und testen
+- [x] COD-70 / WEB-037: Wizard Runden- und Effekt-Bugfixes
+  - Branch: `codex/wizard-round-effect-bugfixes`
+  - Linear: `https://linear.app/codexwebapp/issue/COD-70/web-037-wizard-runden-und-effekt-bugfixes`
+  - Ergebnis: Jongleur-Auswahl erfolgt pro Spieler, führende Bombe zählt als Narr, Werwolf/Flex-Trumpfkarten blockieren korrekt vor Vorhersagen, Reload öffnet die letzte Lobby wieder und Rundenpunkte werden im Log angezeigt.
+  - Untertickets:
+    - [x] COD-71 / WEB-037-BE: Wizard Effekt- und Trumpfregeln korrigieren
+    - [x] COD-72 / WEB-037-FE: Wizard UI für Jongleur, Trumpf und Lobby-Rejoin verbessern
+    - [x] COD-73 / WEB-037-TESTS-DOCS: Wizard Bugfixes testen und dokumentieren

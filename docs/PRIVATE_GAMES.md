@@ -25,13 +25,16 @@ Die WebSocket-Verbindung authentifiziert sich über das bestehende `httpOnly` Se
 - Eine Lobby kann per Join-Link geteilt werden.
 - Der Join-Link hat das Format `/private/games/wizard/join/[gameId]`.
 - Der Backend-Store ist aktuell in-memory. Nach Backend-Neustart sind laufende Spiele weg.
+- Der Client merkt sich die zuletzt geöffnete Wizard-Lobby lokal im Browser und öffnet sie nach einem Seiten-Reload automatisch wieder, solange das Spiel im Backend noch existiert.
 - Admins sehen zusätzlich einen Debugmodus-Button.
 - Im Debugmodus erstellt das Backend zwei virtuelle Spieler: `Volle 1` und `Volle 2`.
 - Beide Debug-Spieler werden vom Admin-Account gesteuert.
 - In der UI wird farbig angezeigt, welcher Debug-Spieler gerade am Zug ist.
 - Nach dem letzten Stich einer Runde wertet das Backend automatisch und startet direkt die nächste Runde, solange das Spiel noch nicht beendet ist.
 - Die Trumpfwahl bei aufgedecktem Wizard, Gestaltwandler, Vampir oder Werwolf ist intern an den Geber der Runde gebunden. Der Geber rotiert pro Runde über `dealerIndex = (roundNumber - 1) % players.length` im Spielerarray und damit im Uhrzeigersinn.
+- Wird Wolke oder Jongleur als Trumpfkarte aufgedeckt, bestimmt die Person, die den ersten Stich der Runde eröffnen würde, die Trumpffarbe.
 - Das Spiel-Log wird strukturiert übertragen. Gespielte Karten werden im Log als kleine Karten angezeigt; Gewinnernamen werden im Frontend hervorgehoben.
+- Rundenwertungen werden im Log mit Punkteänderung und Gesamtstand pro Person angezeigt.
 
 Für produktive Online-Nutzung sollte später ein persistenter Store ergänzt werden, zum Beispiel PostgreSQL oder Redis.
 
@@ -62,12 +65,12 @@ Erweiterungen:
 
 - `Drache`: sehr hohe Sonderkarte.
 - `Fee`: absoluter Verlierer, außer ein Drache liegt im Stich; dann gewinnt die Fee.
-- `Bombe`: annulliert den Stich. Niemand bekommt einen Stichpunkt. Die Person, die ohne Bombe gewonnen hätte, eröffnet den nächsten Stich.
-- `Werwolf`: ändert die Trumpffarbe sofort und bis zum Ende der Runde. Wird der Werwolf als Trumpfkarte aufgedeckt, bestimmt der Geber direkt die Trumpffarbe.
+- `Bombe`: annulliert den Stich. Niemand bekommt einen Stichpunkt. Die Person, die ohne Bombe gewonnen hätte, eröffnet den nächsten Stich. Wird die Bombe als erste Karte eines Stichs gespielt, zählt sie als Narr und annulliert den Stich nicht.
+- `Werwolf`: ändert die Trumpffarbe sofort und bis zum Ende der Runde. Wird der Werwolf als Trumpfkarte aufgedeckt, wird er zu Rundenbeginn automatisch aktiviert; der Geber bestimmt die Trumpffarbe vor den Stichvorhersagen.
 - `Gestaltwandler`: wird erst beim Ausspielen per Popup als Wizard oder Narr gewählt.
 - `Vampir`: kopiert die Karte, die bei der Trumpfbestimmung aufgedeckt wurde.
 - `Hexe`: sehr niedrige Sonderkarte. Nach der Stichauflösung tauscht nur die Person, die die Hexe gespielt hat, eine eigene Handkarte gegen eine Karte aus dem Stich; die neu gelegte Karte hat keinen Effekt. Nach dem Tausch wird der Effekt serverseitig geschlossen, damit das Tauschmenü nicht erneut erscheint.
-- `Jongleur 7 1/2`: kommt nur einmal im Deck vor. Die Karte ist auf der Hand farblos; beim Ausspielen wird per Popup eine Farbe gewählt. Nach Stichauflösung geben alle ihre letzte Handkarte nach links weiter.
+- `Jongleur 7 1/2`: kommt nur einmal im Deck vor. Die Karte ist auf der Hand farblos; beim Ausspielen wird per Popup eine Farbe gewählt. Nach Stichauflösung wählt jede Person selbst eine eigene Handkarte aus; diese Karten werden gleichzeitig nach links weitergegeben.
 - `Wolke 9 3/4`: kommt nur einmal im Deck vor. Die Karte ist auf der Hand farblos; beim Ausspielen wird per Popup eine Farbe gewählt. Der Stichgewinner verändert die eigene Vorhersage um `+1` oder `-1`; die Vorhersage darf nicht unter `0` fallen.
 
 Sonderkarten können vor dem Spiel in der Lobby ein- oder ausgeschaltet werden.
@@ -89,7 +92,10 @@ Abgedeckt sind unter anderem:
 - Bombe
 - Vampir-Kopie
 - flexible Farbwahl für Wolke und Jongleur
+- freie Jongleur-Auswahl pro Spieler
 - Werwolf-Trumpfwahl
+- Bombe als erste Stichkarte zählt als Narr
+- Punkteänderungen im Rundenlog
 - Wolke `+1` und `-1`
 - rotierende Trumpfwahlberechtigung über den Geber
 - Hexen-Tausch nur durch die Hexen-Person und nur einmal pro Effekt

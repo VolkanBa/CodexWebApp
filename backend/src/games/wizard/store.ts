@@ -144,6 +144,11 @@ const addMessage = (
     winnerUsername?: string;
     card?: WizardCard;
     chosenSuit?: WizardSuit;
+    scoreChanges?: Array<{
+      username: string;
+      delta: number;
+      total: number;
+    }>;
   } = {}
 ) => {
   game.messages = [
@@ -156,6 +161,7 @@ const addMessage = (
       winnerUsername: details.winnerUsername,
       card: details.card,
       chosenSuit: details.chosenSuit,
+      scoreChanges: details.scoreChanges,
       createdAt: now()
     },
     ...game.messages
@@ -163,6 +169,11 @@ const addMessage = (
 };
 
 const getJoinPath = (gameId: string) => `/private/games/wizard/join/${gameId}`;
+
+const formatScoreDelta = (delta: number) => (delta >= 0 ? `+${delta}` : String(delta));
+
+const hasActiveBomb = (game: WizardGame, trick: PlayedWizardCard[]) =>
+  trick.some((playedCard, index) => index > 0 && !playedCard.effectSuppressed && getEffectiveCard(game, playedCard).kind === "bomb");
 
 const resetRoundPlayers = (players: WizardPlayer[]) => {
   for (const player of players) {
@@ -172,9 +183,14 @@ const resetRoundPlayers = (players: WizardPlayer[]) => {
   }
 };
 
-const setTrumpFromCard = (game: WizardGame, card: WizardCard | null, chooserUsername: string) => {
-    game.trumpCard = card;
-    game.vampireCopyCard = card;
+const setTrumpFromCard = (
+  game: WizardGame,
+  card: WizardCard | null,
+  chooserUsername: string,
+  flexibleCardChooserUsername = chooserUsername
+) => {
+  game.trumpCard = card;
+  game.vampireCopyCard = card;
   game.trumpChoicePendingFor = null;
 
   if (!card) {
@@ -196,10 +212,22 @@ const setTrumpFromCard = (game: WizardGame, card: WizardCard | null, chooserUser
   if (card.kind === "werewolf") {
     game.trumpSuit = null;
     game.trumpChoicePendingFor = chooserUsername;
-    addMessage(game, `Werwolf wurde als Trumpfkarte aufgedeckt. ${chooserUsername} bestimmt die Trumpffarbe.`, {
+    addMessage(game, `Werwolf wurde zu Rundenbeginn automatisch aktiviert. ${chooserUsername} bestimmt die Trumpffarbe vor der Vorhersage.`, {
       type: "trump",
       emoji: "🐺",
       playerUsername: chooserUsername,
+      card
+    });
+    return;
+  }
+
+  if (card.kind === "juggler" || card.kind === "cloud") {
+    game.trumpSuit = null;
+    game.trumpChoicePendingFor = flexibleCardChooserUsername;
+    addMessage(game, `${getCardLabel(card)} wurde aufgedeckt. ${flexibleCardChooserUsername} bestimmt die Trumpffarbe.`, {
+      type: "trump",
+      emoji: card.kind === "juggler" ? "🔁" : "☁️",
+      playerUsername: flexibleCardChooserUsername,
       card
     });
     return;
@@ -259,7 +287,12 @@ const beginRound = (game: WizardGame) => {
   game.dealerIndex = (game.roundNumber - 1) % game.players.length;
   game.leaderIndex = getNextPlayerIndex(game, game.dealerIndex);
   game.activePlayerIndex = game.leaderIndex;
-  setTrumpFromCard(game, game.deck.shift() ?? null, game.players[game.dealerIndex]?.username ?? game.ownerUsername);
+  setTrumpFromCard(
+    game,
+    game.deck.shift() ?? null,
+    game.players[game.dealerIndex]?.username ?? game.ownerUsername,
+    game.players[game.activePlayerIndex]?.username ?? game.ownerUsername
+  );
   game.status = game.trumpChoicePendingFor ? "trumpSelection" : "prediction";
   addMessage(game, `Runde ${game.roundNumber} beginnt. Jede Person erhält ${cardsPerPlayer} Karte(n).`, {
     type: "round",
@@ -282,26 +315,57 @@ const startPlayingIfReady = (game: WizardGame) => {
 };
 
 const finishRound = (game: WizardGame) => {
-  for (const player of game.players) {
-    player.score += calculateRoundScore(player.prediction ?? 0, player.tricksWon);
-  }
+  const scoreChanges = game.players.map((player) => {
+    const delta = calculateRoundScore(player.prediction ?? 0, player.tricksWon);
+    player.score += delta;
+
+    return {
+      username: player.username,
+      delta,
+      total: player.score
+    };
+  });
+  const scoreSummary = scoreChanges
+    .map((change) => `${change.username}: ${formatScoreDelta(change.delta)} Punkte (${change.total} gesamt)`)
+    .join(" · ");
 
   if (game.roundNumber >= game.maxRounds) {
     game.status = "finished";
-    addMessage(game, "Das Spiel ist beendet. Der finale Punktestand steht fest.", { type: "round", emoji: "🏁" });
+    addMessage(game, `Das Spiel ist beendet. Punkte in Runde ${game.roundNumber}: ${scoreSummary}.`, {
+      type: "round",
+      emoji: "🏁",
+      scoreChanges
+    });
     return;
   }
 
-  addMessage(game, `Runde ${game.roundNumber} ist beendet. Der Punktestand wurde aktualisiert.`, {
+  addMessage(game, `Runde ${game.roundNumber} ist beendet. Punkte: ${scoreSummary}.`, {
     type: "round",
-    emoji: "📊"
+    emoji: "📊",
+    scoreChanges
   });
   game.roundNumber += 1;
   beginRound(game);
 };
 
-const applyJugglerEffect = (game: WizardGame) => {
-  const outgoingCards = game.players.map((player) => player.hand.pop() ?? null);
+const getJugglerPlayersNeedingChoice = (game: WizardGame) => game.players.filter((player) => player.hand.length > 0);
+
+const applyJugglerEffect = (game: WizardGame, selectedCardIds: Record<string, string>) => {
+  const outgoingCards = game.players.map((player) => {
+    const selectedCardId = selectedCardIds[player.username];
+
+    if (!selectedCardId) {
+      return null;
+    }
+
+    const cardIndex = player.hand.findIndex((card) => card.id === selectedCardId);
+
+    if (cardIndex < 0) {
+      throw new Error(`${player.username} hat keine gültige Jongleur-Karte gewählt.`);
+    }
+
+    return player.hand.splice(cardIndex, 1)[0] ?? null;
+  });
 
   outgoingCards.forEach((card, index) => {
     if (!card) {
@@ -312,7 +376,7 @@ const applyJugglerEffect = (game: WizardGame) => {
     receiver?.hand.push(card);
   });
 
-  addMessage(game, "Jongleur: Alle Personen geben ihre letzte Handkarte nach links weiter.", {
+  addMessage(game, "Jongleur: Alle gewählten Handkarten wurden nach links weitergegeben.", {
     type: "effect",
     emoji: "🔁"
   });
@@ -327,11 +391,12 @@ const continueAfterEffects = (
   const hasJuggler = trick.some((playedCard) => playedCard.card.kind === "juggler");
   const witchCard = trick.find((playedCard) => playedCard.card.kind === "witch");
 
-  if (hasJuggler && !resolvedEffects.juggler) {
+  if (hasJuggler && !resolvedEffects.juggler && getJugglerPlayersNeedingChoice(game).length > 0) {
     game.pendingEffect = {
       type: "juggler",
       nextLeaderUsername,
-      trick
+      trick,
+      selectedCardIds: {}
     };
     game.status = "effect";
     return;
@@ -378,7 +443,7 @@ const resolveCompletedTrick = (game: WizardGame) => {
   const actualWinner = determineTrickWinner(game, trick);
   const fallbackWinner = determineTrickWinner(game, trick, { ignoreBomb: true });
   const nextLeaderUsername = (actualWinner ?? fallbackWinner)?.playerUsername ?? game.players[game.leaderIndex]?.username;
-  const hasBomb = trick.some((playedCard) => getEffectiveCard(game, playedCard).kind === "bomb");
+  const hasBomb = hasActiveBomb(game, trick);
   const hasCloud = trick.some((playedCard) => playedCard.card.kind === "cloud");
 
   if (actualWinner && !hasBomb) {
@@ -538,16 +603,19 @@ export const joinWizardGame = (gameId: string, username: string) => {
     throw new Error("Wizard-Lobby wurde nicht gefunden.");
   }
 
-  if (game.status !== "lobby") {
-    throw new Error("Dieses Wizard-Spiel wurde bereits gestartet.");
+  if (
+    getPlayer(game, username) ||
+    game.debugMode?.controllerUsername.toLowerCase() === username.toLowerCase()
+  ) {
+    return game;
   }
 
   if (game.debugMode?.enabled) {
     throw new Error("Debug-Lobbys können nicht von weiteren Accounts betreten werden.");
   }
 
-  if (getPlayer(game, username)) {
-    return game;
+  if (game.status !== "lobby") {
+    throw new Error("Dieses Wizard-Spiel wurde bereits gestartet.");
   }
 
   if (game.players.length >= game.settings.maxPlayers) {
@@ -621,7 +689,9 @@ export const chooseWizardTrump = (gameId: string, username: string, suit: Wizard
   addMessage(game, `${actingPlayer.username} bestimmt ${suitLabels[suit]} als Trumpf.`, {
     type: "trump",
     emoji: "🎨",
-    playerUsername: actingPlayer.username
+    playerUsername: actingPlayer.username,
+    card: game.trumpCard ?? undefined,
+    chosenSuit: suit
   });
   setUpdated(game);
   return game;
@@ -778,19 +848,52 @@ export const resolveWizardCloud = (gameId: string, username: string, delta: 1 | 
   return game;
 };
 
-export const resolveWizardJuggler = (gameId: string, username: string) => {
+export const resolveWizardJuggler = (
+  gameId: string,
+  username: string,
+  input: { playerUsername?: string; cardId: string }
+) => {
   const game = games.get(gameId);
 
   if (!game || game.pendingEffect?.type !== "juggler") {
     throw new Error("Es wartet aktuell kein Jongleur-Effekt.");
   }
 
-  if (getControlledPlayers(game, username).length === 0) {
+  const pendingEffect = game.pendingEffect;
+  const player = resolveControlledPlayer(game, username, input.playerUsername);
+
+  if (!player) {
     throw new Error("Du bist nicht in diesem Wizard-Spiel.");
   }
 
-  const { nextLeaderUsername, trick } = game.pendingEffect;
-  applyJugglerEffect(game);
+  if (player.hand.length === 0) {
+    throw new Error("Du hast keine Handkarte für den Jongleur-Effekt.");
+  }
+
+  if (pendingEffect.selectedCardIds[player.username]) {
+    throw new Error("Du hast für den Jongleur-Effekt bereits eine Karte gewählt.");
+  }
+
+  if (!player.hand.some((card) => card.id === input.cardId)) {
+    throw new Error("Diese Jongleur-Karte liegt nicht auf deiner Hand.");
+  }
+
+  pendingEffect.selectedCardIds[player.username] = input.cardId;
+  addMessage(game, `Jongleur: ${player.username} hat eine Karte zum Weitergeben gewählt.`, {
+    type: "effect",
+    emoji: "🔁",
+    playerUsername: player.username
+  });
+
+  const playersNeedingChoice = getJugglerPlayersNeedingChoice(game);
+
+  if (playersNeedingChoice.some((candidate) => !pendingEffect.selectedCardIds[candidate.username])) {
+    setUpdated(game);
+    return game;
+  }
+
+  const { nextLeaderUsername, trick } = pendingEffect;
+  applyJugglerEffect(game, pendingEffect.selectedCardIds);
   game.pendingEffect = null;
   continueAfterEffects(game, nextLeaderUsername, trick, { juggler: true });
   setUpdated(game);

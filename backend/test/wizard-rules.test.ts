@@ -9,6 +9,7 @@ import {
   makeWizardPrediction,
   playWizardCard,
   resolveWizardCloud,
+  resolveWizardJuggler,
   resolveWizardWitchExchange,
   startWizardGame
 } from "../src/games/wizard/store.js";
@@ -151,6 +152,18 @@ test("bomb cancels the trick, but ignoreBomb returns the normal would-have-won p
 
   assert.equal(actualWinner, null);
   assert.equal(nextLeader?.playerUsername, "Arya");
+});
+
+test("leading bomb counts as jester and does not cancel the trick", () => {
+  const winner = determineTrickWinner(
+    {
+      trumpSuit: null,
+      vampireCopyCard: null
+    },
+    [played("Arya", special("bomb")), played("Goku", suited("red-4", "red", 4))]
+  );
+
+  assert.equal(winner?.playerUsername, "Goku");
 });
 
 test("vampire copies the revealed trump card for trick logic", () => {
@@ -302,6 +315,58 @@ test("cloud effect can increase or decrease prediction without going below zero"
   resolveWizardCloud(game.id, "Volle", 1);
 
   assert.equal(game.players[0]?.prediction, 1);
+});
+
+test("juggler lets every player choose the card passed left", () => {
+  const game = createWizardGame("Volle");
+  joinWizardGame(game.id, "Neo");
+  const volleKept = suited("blue-2", "blue", 2);
+  const vollePassed = suited("red-1", "red", 1);
+  const neoKept = suited("green-3", "green", 3);
+  const neoPassed = suited("yellow-4", "yellow", 4);
+
+  game.status = "effect";
+  game.roundNumber = 2;
+  game.maxRounds = 10;
+  game.players[0]!.hand = [vollePassed, volleKept];
+  game.players[1]!.hand = [neoKept, neoPassed];
+  game.pendingEffect = {
+    type: "juggler",
+    nextLeaderUsername: "Volle",
+    trick: [played("Volle", special("juggler"), "juggler-play", { chosenSuit: "red" })],
+    selectedCardIds: {}
+  };
+
+  assert.throws(
+    () =>
+      resolveWizardJuggler(game.id, "Neo", {
+        playerUsername: "Volle",
+        cardId: vollePassed.id
+      }),
+    /nicht in diesem Wizard-Spiel/
+  );
+
+  resolveWizardJuggler(game.id, "Volle", {
+    cardId: vollePassed.id
+  });
+
+  assert.equal(game.pendingEffect?.type, "juggler");
+  assert.equal(game.pendingEffect?.selectedCardIds.Volle, vollePassed.id);
+
+  resolveWizardJuggler(game.id, "Neo", {
+    cardId: neoPassed.id
+  });
+
+  assert.equal(game.pendingEffect, null);
+  assert.equal(game.status, "playing");
+  assert.deepEqual(
+    game.players[0]?.hand.map((card) => card.id),
+    [volleKept.id, neoPassed.id]
+  );
+  assert.deepEqual(
+    game.players[1]?.hand.map((card) => card.id),
+    [neoKept.id, vollePassed.id]
+  );
 });
 
 test("trump choice is restricted to the pending chooser", () => {
@@ -464,4 +529,9 @@ test("wizard automatically starts the next round after a completed round", () =>
   assert.equal(game.roundNumber, 2);
   assert.notEqual(game.status, "roundEnded");
   assert.equal(game.players.every((player) => player.hand.length === 2), true);
+  const scoreLogEntry = game.messages.find((message) => message.scoreChanges?.length);
+
+  assert.ok(scoreLogEntry);
+  assert.match(scoreLogEntry.message, /Punkte:/);
+  assert.equal(scoreLogEntry.scoreChanges?.length, 2);
 });

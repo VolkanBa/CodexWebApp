@@ -60,6 +60,11 @@ export type WizardLogEntry = {
   winnerUsername?: string;
   card?: WizardCard;
   chosenSuit?: WizardSuit;
+  scoreChanges?: Array<{
+    username: string;
+    delta: number;
+    total: number;
+  }>;
   createdAt: string;
 };
 
@@ -93,6 +98,7 @@ export type WizardPendingEffect =
       type: "juggler";
       nextLeaderUsername: string;
       trick: PlayedWizardCard[];
+      selectedCardIds: Record<string, string>;
     }
   | {
       type: "witch";

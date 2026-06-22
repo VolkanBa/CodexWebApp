@@ -6,6 +6,7 @@ import { PrivateTabs } from "../../PrivateTabs";
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000";
 const webSocketBaseUrl = apiBaseUrl.replace(/^http/, "ws");
+const lastWizardGameStorageKey = "codexwebapp:lastWizardGameId";
 
 const optionalCards = [
   ["juggler", "Jongleur 7 1/2"],
@@ -57,6 +58,11 @@ type WizardLogEntry = {
   winnerUsername?: string;
   card?: WizardCard;
   chosenSuit?: WizardSuit;
+  scoreChanges?: Array<{
+    username: string;
+    delta: number;
+    total: number;
+  }>;
   createdAt: string;
 };
 
@@ -82,6 +88,7 @@ type WizardPendingEffect =
       type: "juggler";
       nextLeaderUsername: string;
       trick: PlayedWizardCard[];
+      selectedCardIds: Record<string, string>;
     }
   | {
       type: "witch";
@@ -305,6 +312,27 @@ const getCardVisual = (card: WizardCard, chosenSuit?: WizardSuit) => {
   };
 };
 
+function SuitBadge({ suit }: { suit: WizardSuit | null }) {
+  if (!suit) {
+    return <span className="inline-flex border border-white/15 px-2 py-1 text-xs font-black text-white/60">Keine</span>;
+  }
+
+  const visual = suitVisuals[suit];
+
+  return (
+    <span
+      className="inline-flex items-center gap-1 border bg-black/30 px-2 py-1 text-xs font-black"
+      style={{
+        borderColor: visual.color,
+        color: visual.color
+      }}
+    >
+      <span aria-hidden="true">{visual.symbol}</span>
+      {getSuitLabel(suit)}
+    </span>
+  );
+}
+
 function WizardCardFrame({
   card,
   chosenSuit,
@@ -441,6 +469,7 @@ export function WizardGameClient({
   const [prediction, setPrediction] = useState(0);
   const [witchHandCardId, setWitchHandCardId] = useState("");
   const [witchTrickPlayId, setWitchTrickPlayId] = useState("");
+  const [jugglerCardChoices, setJugglerCardChoices] = useState<Record<string, string>>({});
   const [selectedControlledUsername, setSelectedControlledUsername] = useState<string | null>(null);
   const [playDecisionPrompt, setPlayDecisionPrompt] = useState<PlayDecisionPrompt | null>(null);
 
@@ -466,6 +495,8 @@ export function WizardGameClient({
   const pendingEffectControlledHand =
     pendingEffectUsername ? controlledHands.find((entry) => entry.username === pendingEffectUsername) : null;
   const canResolvePendingEffect = Boolean(pendingEffectControlledHand);
+  const jugglerPendingEffect = game?.pendingEffect?.type === "juggler" ? game.pendingEffect : null;
+  const jugglerControlledHands = jugglerPendingEffect ? controlledHands.filter((entry) => entry.hand.length > 0) : [];
   const joinUrl = useMemo(() => {
     if (!game || typeof window === "undefined") {
       return "";
@@ -504,6 +535,7 @@ export function WizardGameClient({
       }
 
       if (message.type === "gameState") {
+        window.localStorage.setItem(lastWizardGameStorageKey, message.game.id);
         setGame((currentGame) => {
           if (!currentGame || currentGame.id !== message.game.id) {
             setScoreboardVisible(message.game.settings.scoreboardVisibleDefault);
@@ -555,11 +587,18 @@ export function WizardGameClient({
   }, []);
 
   useEffect(() => {
-    if (socketStatus === "open" && initialJoinGameId && !didAutoJoinRef.current) {
+    if (socketStatus !== "open" || didAutoJoinRef.current) {
+      return;
+    }
+
+    const storedGameId = window.localStorage.getItem(lastWizardGameStorageKey);
+    const gameIdToOpen = initialJoinGameId ?? storedGameId;
+
+    if (gameIdToOpen) {
       didAutoJoinRef.current = true;
       send({
-        type: "joinGame",
-        gameId: initialJoinGameId
+        type: initialJoinGameId ? "joinGame" : "viewGame",
+        gameId: gameIdToOpen
       });
     }
   }, [initialJoinGameId, send, socketStatus]);
@@ -568,6 +607,12 @@ export function WizardGameClient({
     if (game?.pendingEffect?.type !== "witch") {
       setWitchHandCardId("");
       setWitchTrickPlayId("");
+    }
+  }, [game?.pendingEffect?.type]);
+
+  useEffect(() => {
+    if (game?.pendingEffect?.type !== "juggler") {
+      setJugglerCardChoices({});
     }
   }, [game?.pendingEffect?.type]);
 
@@ -592,6 +637,11 @@ export function WizardGameClient({
         scoreboardVisibleDefault: scoreboardVisible
       }
     });
+  };
+
+  const closeCurrentGameView = () => {
+    window.localStorage.removeItem(lastWizardGameStorageKey);
+    setGame(null);
   };
 
   const playCard = (
@@ -803,13 +853,13 @@ export function WizardGameClient({
                 <h2 className="text-3xl font-black text-white">Lobby {game.id}</h2>
                 <p className="mt-2 text-sm text-white/64">
                   Status: {getStatusLabel(game.status)} · Runde {game.roundNumber || 0}/{game.maxRounds || "-"} · Trumpf:{" "}
-                  {getSuitLabel(game.trumpSuit)}
+                  <SuitBadge suit={game.trumpSuit} />
                 </p>
                 <p className="mt-2 text-sm text-white/64">Join-Link: {joinUrl}</p>
               </div>
               <button
                 type="button"
-                onClick={() => setGame(null)}
+                onClick={closeCurrentGameView}
                 className="border border-white/12 px-4 py-3 text-sm font-bold text-white/72 transition hover:text-white"
               >
                 Zur Lobbyliste
@@ -957,10 +1007,13 @@ export function WizardGameClient({
                 <h3 className="text-xl font-black text-white">Trumpfkarte</h3>
                 <div className="mt-3">
                   {game.trumpCard ? (
-                    <WizardCardFrame card={game.trumpCard} variant="compact" />
+                    <WizardCardFrame card={game.trumpCard} chosenSuit={game.trumpSuit ?? undefined} variant="compact" />
                   ) : (
                     <p className="text-sm text-white/72">Keine</p>
                   )}
+                </div>
+                <div className="mt-3">
+                  <SuitBadge suit={game.trumpSuit} />
                 </div>
                 <p className="mt-2 text-sm text-white/60">Vampir kopiert: {game.vampireCopyCard?.label ?? "Keine Karte"}</p>
               </div>
@@ -994,14 +1047,60 @@ export function WizardGameClient({
                 ) : null}
                 {game.pendingEffect.type === "juggler" ? (
                   <div className="mt-3">
-                    <p className="text-sm text-white/72">Jongleur: Alle geben ihre letzte Handkarte nach links weiter.</p>
-                    <button
-                      type="button"
-                      onClick={() => send({ type: "resolveJuggler", gameId: game.id })}
-                      className="mt-3 bg-suit-purple px-4 py-2 text-sm font-bold text-white"
-                    >
-                      Effekt ausführen
-                    </button>
+                    <p className="text-sm text-white/72">
+                      Jongleur: Jede Person wählt selbst eine Handkarte, die nach links weitergegeben wird.
+                    </p>
+                    <div className="mt-3 grid gap-3">
+                      {jugglerControlledHands.length ? (
+                        jugglerControlledHands.map((entry) => {
+                          const alreadySelected = Boolean(jugglerPendingEffect?.selectedCardIds[entry.username]);
+                          const selectedCardId = jugglerCardChoices[entry.username] ?? "";
+
+                          return (
+                            <div key={entry.username} className="grid gap-2 border border-white/10 bg-suit-black/35 p-3 sm:grid-cols-[1fr_auto]">
+                              <label className="text-sm font-bold text-white/78">
+                                {entry.username}
+                                <select
+                                  value={selectedCardId}
+                                  disabled={alreadySelected}
+                                  onChange={(event) =>
+                                    setJugglerCardChoices((current) => ({
+                                      ...current,
+                                      [entry.username]: event.target.value
+                                    }))
+                                  }
+                                  className="mt-2 w-full border border-white/12 bg-suit-black px-3 py-3 text-white disabled:opacity-50"
+                                >
+                                  <option value="">{alreadySelected ? "Karte gewählt" : "Karte wählen"}</option>
+                                  {entry.hand.map((card) => (
+                                    <option key={card.id} value={card.id}>
+                                      {card.label}
+                                    </option>
+                                  ))}
+                                </select>
+                              </label>
+                              <button
+                                type="button"
+                                disabled={alreadySelected || !selectedCardId}
+                                onClick={() =>
+                                  send({
+                                    type: "resolveJuggler",
+                                    gameId: game.id,
+                                    playerUsername: entry.username,
+                                    cardId: selectedCardId
+                                  })
+                                }
+                                className="self-end bg-suit-purple px-4 py-3 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-45"
+                              >
+                                {alreadySelected ? "Gewählt" : "Weitergeben"}
+                              </button>
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <p className="text-sm text-white/60">Warte auf die Kartenauswahl der anderen Personen.</p>
+                      )}
+                    </div>
                   </div>
                 ) : null}
                 {game.pendingEffect.type === "witch" ? (
@@ -1139,9 +1238,24 @@ export function WizardGameClient({
                           <WizardCardFrame card={entry.card} chosenSuit={entry.chosenSuit} variant="mini" />
                         </div>
                       ) : null}
-                      <p className="text-sm leading-6 text-white/76">
-                        <WizardLogText entry={entry} />
-                      </p>
+                      <div>
+                        <p className="text-sm leading-6 text-white/76">
+                          <WizardLogText entry={entry} />
+                        </p>
+                        {entry.scoreChanges?.length ? (
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {entry.scoreChanges.map((change) => (
+                              <span
+                                key={change.username}
+                                className="border border-white/10 bg-black/25 px-2 py-1 text-xs font-black text-white/72"
+                              >
+                                {change.username}: {change.delta >= 0 ? "+" : ""}
+                                {change.delta} / {change.total}
+                              </span>
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
                     </div>
                   </article>
                 ))}

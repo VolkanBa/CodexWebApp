@@ -77,6 +77,8 @@ type WizardClientMessage =
   | {
       type: "resolveJuggler";
       gameId: string;
+      playerUsername?: string;
+      cardId: string;
     }
   | {
       type: "resolveWitch";
@@ -323,7 +325,10 @@ export const registerWizardSocketServer = (server: Server) => {
             break;
           }
           case "resolveJuggler": {
-            const game = resolveWizardJuggler(message.gameId, user.username);
+            const game = resolveWizardJuggler(message.gameId, user.username, {
+              playerUsername: message.playerUsername,
+              cardId: message.cardId
+            });
             broadcastGameState(game.id);
             broadcastGamesList();
             break;

@@ -235,6 +235,23 @@ const getFirstByKind = (
   kind: WizardCard["kind"]
 ) => trick.find((playedCard) => getEffectiveCard(game, playedCard).kind === kind);
 
+const normalizeLeadingBomb = (trick: PlayedWizardCard[]) =>
+  trick.map((playedCard, index) => {
+    if (index !== 0 || playedCard.card.kind !== "bomb" || playedCard.effectSuppressed) {
+      return playedCard;
+    }
+
+    return {
+      ...playedCard,
+      card: {
+        ...playedCard.card,
+        id: `${playedCard.card.id}-lead-as-jester`,
+        kind: "jester" as const,
+        label: "Bombe als Narr"
+      }
+    };
+  });
+
 const getHighestSuitedCard = (
   game: Pick<WizardGame, "vampireCopyCard">,
   trick: PlayedWizardCard[],
@@ -261,8 +278,9 @@ export const determineTrickWinner = (
   trick: PlayedWizardCard[],
   options: { ignoreBomb: boolean } = { ignoreBomb: false }
 ) => {
+  const trickWithLeadingBombRule = normalizeLeadingBomb(trick);
   const consideredTrick = options.ignoreBomb
-    ? trick.map((playedCard, index) => {
+    ? trickWithLeadingBombRule.map((playedCard, index) => {
         if (playedCard.card.kind !== "bomb") {
           return playedCard;
         }
@@ -276,7 +294,7 @@ export const determineTrickWinner = (
           }
         };
       })
-    : trick;
+    : trickWithLeadingBombRule;
 
   const hasBomb = consideredTrick.some((playedCard) => getEffectiveCard(game, playedCard).kind === "bomb");
 
