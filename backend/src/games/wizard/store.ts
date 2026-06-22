@@ -47,10 +47,12 @@ const normalizeSettings = (input: WizardCreateGameInput | undefined): WizardGame
   const enabledOptionalCards = input?.enabledOptionalCards?.filter((kind): kind is OptionalWizardCardKind =>
     optionalWizardCards.includes(kind as OptionalWizardCardKind)
   );
+  const normalizedOptionalCards =
+    enabledOptionalCards === undefined ? defaultSettings.enabledOptionalCards : [...new Set(enabledOptionalCards)];
 
   return {
     maxPlayers: clamp(input?.maxPlayers ?? defaultSettings.maxPlayers, 2, 6),
-    enabledOptionalCards: enabledOptionalCards?.length ? [...new Set(enabledOptionalCards)] : defaultSettings.enabledOptionalCards,
+    enabledOptionalCards: normalizedOptionalCards,
     timeLimitSeconds:
       typeof input?.timeLimitSeconds === "number" && input.timeLimitSeconds > 0
         ? clamp(Math.round(input.timeLimitSeconds), 15, 3600)
@@ -316,11 +318,16 @@ const applyJugglerEffect = (game: WizardGame) => {
   });
 };
 
-const continueAfterEffects = (game: WizardGame, nextLeaderUsername: string, trick: PlayedWizardCard[]) => {
+const continueAfterEffects = (
+  game: WizardGame,
+  nextLeaderUsername: string,
+  trick: PlayedWizardCard[],
+  resolvedEffects: { juggler?: boolean; witch?: boolean } = {}
+) => {
   const hasJuggler = trick.some((playedCard) => playedCard.card.kind === "juggler");
   const witchCard = trick.find((playedCard) => playedCard.card.kind === "witch");
 
-  if (hasJuggler && game.pendingEffect?.type !== "juggler") {
+  if (hasJuggler && !resolvedEffects.juggler) {
     game.pendingEffect = {
       type: "juggler",
       nextLeaderUsername,
@@ -330,7 +337,7 @@ const continueAfterEffects = (game: WizardGame, nextLeaderUsername: string, tric
     return;
   }
 
-  if (witchCard) {
+  if (witchCard && !resolvedEffects.witch) {
     const witchPlayer = getPlayer(game, witchCard.playerUsername);
     const exchangeTargets = trick.filter((playedCard) => playedCard.playId !== witchCard.playId);
 
@@ -785,7 +792,7 @@ export const resolveWizardJuggler = (gameId: string, username: string) => {
   const { nextLeaderUsername, trick } = game.pendingEffect;
   applyJugglerEffect(game);
   game.pendingEffect = null;
-  continueAfterEffects(game, nextLeaderUsername, trick);
+  continueAfterEffects(game, nextLeaderUsername, trick, { juggler: true });
   setUpdated(game);
   return game;
 };
@@ -844,7 +851,7 @@ export const resolveWizardWitchExchange = (
 
   const { nextLeaderUsername, trick } = game.pendingEffect;
   game.pendingEffect = null;
-  continueAfterEffects(game, nextLeaderUsername, trick);
+  continueAfterEffects(game, nextLeaderUsername, trick, { witch: true });
   setUpdated(game);
   return game;
 };

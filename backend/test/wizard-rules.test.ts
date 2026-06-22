@@ -9,6 +9,7 @@ import {
   makeWizardPrediction,
   playWizardCard,
   resolveWizardCloud,
+  resolveWizardWitchExchange,
   startWizardGame
 } from "../src/games/wizard/store.js";
 import { createWizardDeck } from "../src/games/wizard/cards.js";
@@ -328,6 +329,48 @@ test("trump chooser follows the rotating dealer order clockwise", () => {
   });
 
   assert.deepEqual(dealerOrder, ["Volle", "Neo", "Leia", "Volle"]);
+});
+
+test("witch exchange can only be resolved once by the witch player", () => {
+  const game = createWizardGame("Volle");
+  joinWizardGame(game.id, "Neo");
+  const witch = special("witch");
+  const trickTarget = suited("red-9", "red", 9);
+  const replacement = suited("blue-2", "blue", 2);
+
+  game.status = "effect";
+  game.roundNumber = 1;
+  game.maxRounds = 10;
+  game.leaderIndex = 0;
+  game.activePlayerIndex = 0;
+  game.players[0]!.hand = [replacement, suited("green-3", "green", 3)];
+  game.players[1]!.hand = [suited("yellow-4", "yellow", 4)];
+  game.pendingEffect = {
+    type: "witch",
+    username: "Volle",
+    nextLeaderUsername: "Volle",
+    trick: [played("Volle", witch, "witch-play"), played("Neo", trickTarget, "target-play")]
+  };
+
+  assert.throws(
+    () =>
+      resolveWizardWitchExchange(game.id, "Neo", {
+        handCardId: game.players[1]!.hand[0]!.id,
+        trickPlayId: "target-play"
+      }),
+    /Nur die Person mit der Hexe/
+  );
+
+  resolveWizardWitchExchange(game.id, "Volle", {
+    handCardId: replacement.id,
+    trickPlayId: "target-play"
+  });
+
+  assert.equal(game.pendingEffect, null);
+  assert.equal(game.status, "playing");
+  assert.equal(game.activePlayerIndex, 0);
+  assert.equal(game.players[0]?.hand.some((card) => card.id === trickTarget.id), true);
+  assert.equal(game.lastTrick.some((playedCard) => playedCard.card.id === replacement.id), true);
 });
 
 test("parallel wizard games receive separate ids", () => {

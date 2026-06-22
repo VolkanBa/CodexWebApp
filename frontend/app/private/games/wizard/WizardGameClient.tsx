@@ -465,6 +465,7 @@ export function WizardGameClient({
     game?.pendingEffect?.type === "cloud" || game?.pendingEffect?.type === "witch" ? game.pendingEffect.username : null;
   const pendingEffectControlledHand =
     pendingEffectUsername ? controlledHands.find((entry) => entry.username === pendingEffectUsername) : null;
+  const canResolvePendingEffect = Boolean(pendingEffectControlledHand);
   const joinUrl = useMemo(() => {
     if (!game || typeof window === "undefined") {
       return "";
@@ -562,6 +563,13 @@ export function WizardGameClient({
       });
     }
   }, [initialJoinGameId, send, socketStatus]);
+
+  useEffect(() => {
+    if (game?.pendingEffect?.type !== "witch") {
+      setWitchHandCardId("");
+      setWitchTrickPlayId("");
+    }
+  }, [game?.pendingEffect?.type]);
 
   const createGame = () => {
     send({
@@ -964,8 +972,7 @@ export function WizardGameClient({
                 {game.pendingEffect.type === "cloud" ? (
                   <div className="mt-3">
                     <p className="text-sm text-white/72">Wolke: {pendingEffectUsername} muss die Vorhersage ändern.</p>
-                    {pendingEffectUsername?.toLowerCase() === username?.toLowerCase() ||
-                    controlledHands.some((entry) => entry.username === pendingEffectUsername) ? (
+                    {canResolvePendingEffect ? (
                       <div className="mt-3 flex gap-2">
                         <button
                           type="button"
@@ -1000,8 +1007,7 @@ export function WizardGameClient({
                 {game.pendingEffect.type === "witch" ? (
                   <div className="mt-3">
                     <p className="text-sm text-white/72">Hexe: {pendingEffectUsername} darf eine Karte tauschen.</p>
-                    {pendingEffectUsername?.toLowerCase() === username?.toLowerCase() ||
-                    controlledHands.some((entry) => entry.username === pendingEffectUsername) ? (
+                    {canResolvePendingEffect ? (
                       <div className="mt-3 grid gap-3 sm:grid-cols-2">
                         <select
                           value={witchHandCardId}
@@ -1031,6 +1037,7 @@ export function WizardGameClient({
                         </select>
                         <button
                           type="button"
+                          disabled={!witchHandCardId || !witchTrickPlayId}
                           onClick={() =>
                             send({
                               type: "resolveWitch",
@@ -1039,7 +1046,7 @@ export function WizardGameClient({
                               trickPlayId: witchTrickPlayId
                             })
                           }
-                          className="bg-suit-purple px-4 py-2 text-sm font-bold text-white"
+                          className="bg-suit-purple px-4 py-2 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-45"
                         >
                           Tauschen
                         </button>

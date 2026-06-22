@@ -66,7 +66,7 @@ Erweiterungen:
 - `Werwolf`: ändert die Trumpffarbe sofort und bis zum Ende der Runde. Wird der Werwolf als Trumpfkarte aufgedeckt, bestimmt der Geber direkt die Trumpffarbe.
 - `Gestaltwandler`: wird erst beim Ausspielen per Popup als Wizard oder Narr gewählt.
 - `Vampir`: kopiert die Karte, die bei der Trumpfbestimmung aufgedeckt wurde.
-- `Hexe`: sehr niedrige Sonderkarte. Nach der Stichauflösung tauscht die spielende Person eine Handkarte gegen eine Karte aus dem Stich; die neu gelegte Karte hat keinen Effekt.
+- `Hexe`: sehr niedrige Sonderkarte. Nach der Stichauflösung tauscht nur die Person, die die Hexe gespielt hat, eine eigene Handkarte gegen eine Karte aus dem Stich; die neu gelegte Karte hat keinen Effekt. Nach dem Tausch wird der Effekt serverseitig geschlossen, damit das Tauschmenü nicht erneut erscheint.
 - `Jongleur 7 1/2`: kommt nur einmal im Deck vor. Die Karte ist auf der Hand farblos; beim Ausspielen wird per Popup eine Farbe gewählt. Nach Stichauflösung geben alle ihre letzte Handkarte nach links weiter.
 - `Wolke 9 3/4`: kommt nur einmal im Deck vor. Die Karte ist auf der Hand farblos; beim Ausspielen wird per Popup eine Farbe gewählt. Der Stichgewinner verändert die eigene Vorhersage um `+1` oder `-1`; die Vorhersage darf nicht unter `0` fallen.
 
@@ -92,6 +92,7 @@ Abgedeckt sind unter anderem:
 - Werwolf-Trumpfwahl
 - Wolke `+1` und `-1`
 - rotierende Trumpfwahlberechtigung über den Geber
+- Hexen-Tausch nur durch die Hexen-Person und nur einmal pro Effekt
 - parallele Spiel-IDs
 - Admin-Debugspiel mit zwei kontrollierten Seats
 

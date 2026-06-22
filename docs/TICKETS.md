@@ -152,3 +152,11 @@ Linear-Team: `CodexWebApp`
     - [x] COD-63 / WEB-035-BE: Wolke-Delta und Trumpfwahl-Tracking absichern
     - [x] COD-64 / WEB-035-FE: Wizard-Log mit Karten und Emojis darstellen
     - [x] COD-65 / WEB-035-DOCS: Wizard-Log und Trumpfwahlrotation dokumentieren
+- [x] COD-66 / WEB-036: Wizard Hexen-Tausch beendet Effekt korrekt
+  - Branch: `codex/wizard-fix-witch-effect`
+  - Linear: `https://linear.app/codexwebapp/issue/COD-66/web-036-wizard-hexen-tausch-beendet-effekt-korrekt`
+  - Ergebnis: Nur die Person, die die Hexe gespielt hat, kann eine Karte tauschen. Nach erfolgreichem Tausch wird der Hexen-Effekt serverseitig abgeschlossen, das Tauschmenü verschwindet und das Spiel läuft weiter.
+  - Untertickets:
+    - [x] COD-67 / WEB-036-BE: Hexen-Effekt nach Tausch abschließen
+    - [x] COD-68 / WEB-036-FE: Hexen-Tauschmenü nur berechtigtem Spieler zeigen
+    - [x] COD-69 / WEB-036-TESTS-DOCS: Hexen-Regression dokumentieren und testen
