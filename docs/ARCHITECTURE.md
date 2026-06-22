@@ -31,6 +31,8 @@ Aktuelle Routen:
 - `/private/login`: serverseitig angebundenes Loginformular
 - `/private`: geschützte private Ansicht
 - `/private/games`: geschützter privater Spiele-Bereich
+- `/private/games/wizard`: geschütztes Wizard-Spiel
+- `/private/games/wizard/join/[gameId]`: Wizard-Lobby per Link beitreten
 
 Das Frontend prüft keine Passwörter. Passwortprüfung und Session-Erstellung liegen im Backend.
 
@@ -58,6 +60,7 @@ Technik:
 - Express
 - Helmet
 - CORS
+- ws
 - Argon2
 - Zod
 - express-rate-limit
@@ -96,8 +99,9 @@ Die Admin-Routen verwenden dieselbe serverseitige Session-Prüfung wie der priva
 Private Spiele:
 
 - `GET /private/games`: geschützte Übersicht für geplante Spiele wie Uno, Wizard und 6 nimmt
+- `WS /ws/wizard`: geschützter WebSocket für Wizard-Lobbys und Live-Spielstatus
 
-Die aktuelle Spiele-Route liefert nur Planungsdaten. Spielstände, Lobbys und Regel-Engines werden später serverseitig ergänzt.
+Wizard nutzt eine serverseitige Regel-Engine unter `backend/src/games/wizard/`. Lobbys, Züge, Stichauflösung und Punktewertung werden im Backend validiert. Der aktuelle Store ist in-memory und eignet sich für lokale Entwicklung; für Produktion sollte ein persistenter Store ergänzt werden.
 
 ## Docker
 
@@ -134,6 +138,12 @@ Bekannter Stand der Abhängigkeiten:
 ## Lokale Entwicklung
 
 Die vollständige Anleitung für Windows/VSCode und Linux/Ubuntu steht in `docs/LOCAL_DEVELOPMENT.md`.
+
+Wizard-Regeltests:
+
+```bash
+npm run test:wizard
+```
 
 ## VSCode
 

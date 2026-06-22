@@ -11,6 +11,7 @@
     "dev:backend": "npm --workspace backend run dev",
     "check:sensitive-files": "python scripts/check_sensitive_files.py",
     "build": "npm run check:sensitive-files && npm --workspace frontend run build && npm --workspace backend run build",
+    "test:wizard": "npm --workspace backend run test:wizard",
     "lint": "npm --workspace frontend run lint && npm --workspace backend run lint",
     "docker:build": "docker compose build",
     "docker:up": "docker compose up --build",

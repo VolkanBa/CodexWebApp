@@ -4,6 +4,7 @@ Das Projekt kann mit Docker Compose als zwei getrennte Services gestartet werden
 
 - `frontend`: Next.js auf Port `3000`
 - `backend`: Express API auf Port `4000`
+- Wizard-WebSocket: `ws://localhost:4000/ws/wizard`
 
 Docker ist für lokale Entwicklung optional. Für Zusammenarbeit ist es aber sinnvoll, weil alle Entwickler dieselben Container, Ports und Laufzeitversionen verwenden.
 

@@ -1,3 +1,4 @@
+import { createServer } from "node:http";
 import argon2 from "argon2";
 import cookieParser from "cookie-parser";
 import cors from "cors";
@@ -7,6 +8,7 @@ import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import { z } from "zod";
 import { config } from "./config.js";
+import { registerWizardSocketServer } from "./games/wizard/socket.js";
 import {
   createSession,
   destroySession,
@@ -157,20 +159,23 @@ const privateGames = [
     title: "Uno",
     status: "Geplant",
     summary: "Schnelles Kartenablegen mit Farben, Zahlen und Aktionskarten.",
+    href: null,
     nextSteps: ["Regelmodell festlegen", "Mehrspieler-Runden planen", "Spielstand serverseitig speichern"]
   },
   {
     id: "wizard",
     title: "Wizard",
-    status: "Geplant",
-    summary: "Stichspiel mit Vorhersagen, Sonderkarten und Rundenauswertung.",
-    nextSteps: ["Stichlogik modellieren", "Rundenwertung abbilden", "Scoreboard vorbereiten"]
+    status: "Spielbar",
+    summary: "WebSocket-basiertes Stichspiel mit Lobbys, Vorhersagen, Sonderkarten und automatischer Wertung.",
+    href: "/private/games/wizard",
+    nextSteps: ["Lobby erstellen", "per Link beitreten", "Punktestand ein- oder ausblenden"]
   },
   {
     id: "six-nimmt",
     title: "6 nimmt",
     status: "Geplant",
     summary: "Taktisches Ablegespiel mit Reihen, Hornochsen und Risikomanagement.",
+    href: null,
     nextSteps: ["Reihenlogik definieren", "Kartenwahl synchronisieren", "Punktewertung implementieren"]
   }
 ];
@@ -459,6 +464,10 @@ app.use((_req, res) => {
   });
 });
 
-app.listen(config.port, () => {
+const httpServer = createServer(app);
+
+registerWizardSocketServer(httpServer);
+
+httpServer.listen(config.port, () => {
   console.log(`Backend listening on http://localhost:${config.port}`);
 });

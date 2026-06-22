@@ -159,6 +159,16 @@ Der Build führt aus:
 - Frontend: `next build`
 - Backend: `tsc -p tsconfig.json`
 
+## Wizard-Regeltests
+
+Für die Wizard-Regel-Engine gibt es gezielte Backend-Tests:
+
+```bash
+npm run test:wizard
+```
+
+Diese Tests prüfen unter anderem Scoring, Farbzwang, Sonderkarten und parallele Spiel-IDs.
+
 ## Production-Start lokal
 
 Erst bauen:

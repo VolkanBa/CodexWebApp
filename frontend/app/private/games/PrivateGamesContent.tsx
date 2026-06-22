@@ -11,6 +11,7 @@ type PrivateGame = {
   title: string;
   status: string;
   summary: string;
+  href: string | null;
   nextSteps: string[];
 };
 
@@ -131,6 +132,14 @@ export function PrivateGamesContent() {
                 </li>
               ))}
             </ul>
+            {game.href ? (
+              <Link
+                href={game.href}
+                className="mt-5 inline-flex bg-suit-purple px-4 py-3 text-sm font-bold text-white transition hover:bg-suit-orange hover:text-suit-black"
+              >
+                Öffnen
+              </Link>
+            ) : null}
           </article>
         ))}
       </div>

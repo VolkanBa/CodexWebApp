@@ -113,3 +113,14 @@ Linear-Team: `CodexWebApp`
   - Branch: `codex/private-games-tab`
   - Linear: `https://linear.app/codexwebapp/issue/COD-45/web-030-privaten-spiele-bereich-vorbereiten`
   - Ergebnis: Der private Bereich enthält einen geschützten Tab `Spiele` mit eigener Route `/private/games` und geschütztem Backend-Endpunkt `GET /private/games`.
+- [x] COD-46 / WEB-031: Wizard Multiplayer implementieren
+  - Branch: `codex/wizard-game`
+  - Linear: `https://linear.app/codexwebapp/issue/COD-46/web-031-wizard-multiplayer-implementieren`
+  - Ergebnis: Wizard ist als geschütztes WebSocket-Spiel mit Lobbys, Join-Link, parallelen Spielen, serverseitiger Regel-Engine, automatischer Wertung und Scoreboard-Toggle umgesetzt.
+  - Untertickets:
+    - [x] COD-47 / WEB-031-BE: Wizard Regel-Engine und Spielsessions
+    - [x] COD-48 / WEB-031-WS: Wizard WebSocket-Live-Status
+    - [x] COD-49 / WEB-031-FE: Wizard Lobby und Spieloberfläche
+    - [x] COD-50 / WEB-031-TESTS: Wizard Regeltests
+    - [x] COD-51 / WEB-031-ASSETS: Wizard Kartendesign-Mapping vorbereiten
+    - [x] COD-52 / WEB-031-DOCS: Wizard Dokumentation ergänzen
