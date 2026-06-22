@@ -106,5 +106,7 @@ export const config = {
   loginRateLimitWindowMs: minutesToMs(parsePositiveInt(process.env.AUTH_RATE_LIMIT_WINDOW_MINUTES, 15)),
   loginRateLimitMax: parsePositiveInt(process.env.AUTH_RATE_LIMIT_MAX, 5),
   subjectDataFilePath: process.env.SUBJECT_DATA_FILE_PATH ?? resolve(projectRoot, "backend/data/subjects.json"),
-  uploadRoot: process.env.UPLOAD_ROOT ?? resolve(projectRoot, "uploads")
+  uploadRoot: process.env.UPLOAD_ROOT ?? resolve(projectRoot, "uploads"),
+  wizardCardImageRoot:
+    process.env.WIZARD_CARD_IMAGE_ROOT ?? resolve(projectRoot, "private-data/BIlder für Wizard")
 };

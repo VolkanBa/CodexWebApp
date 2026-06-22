@@ -151,6 +151,8 @@ Docker Compose nutzt Volumes:
 - `subject-data`: speichert `subjects.json`
 - `subject-uploads`: speichert hochgeladene Fachbilder
 
+Zusätzlich bindet Compose den lokalen Ordner `./private-data` read-only in den Backend-Container ein. Dadurch kann Wizard lokale Kartenbilder aus `private-data/BIlder für Wizard` anzeigen, ohne diese Bilder ins Image oder nach GitHub zu kopieren.
+
 Diese Daten sind nicht Teil des Git-Repositories und werden nicht nach GitHub gepusht.
 
 Volumes löschen, wenn du lokal wirklich neu anfangen willst:
@@ -220,6 +222,7 @@ Prüfe `backend/.env`:
 - `FRONTEND_ORIGIN` muss `http://localhost:3000` sein.
 - `SESSION_COOKIE_SECURE` muss lokal und in Docker `false` sein, weil `http://localhost` kein HTTPS ist.
 - `SESSION_TTL_MINUTES` ist lokal auf `60` gesetzt; das entspricht 1 Stunde Inaktivitäts-Logout.
+- `WIZARD_CARD_IMAGE_ROOT` muss auf den lokalen Wizard-Bildordner zeigen. Im Container ist das standardmäßig `/app/private-data/BIlder für Wizard`.
 - Nach Änderungen Container neu starten:
 
 ```bash

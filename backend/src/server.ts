@@ -8,6 +8,7 @@ import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import { z } from "zod";
 import { config } from "./config.js";
+import { getWizardCardImagePath } from "./games/wizard/cardImages.js";
 import { registerWizardSocketServer } from "./games/wizard/socket.js";
 import {
   createSession,
@@ -449,6 +450,36 @@ app.get("/private/games", requireAuth, (_req, res) => {
       "Hier entsteht der geschützte Spiele-Bereich für Kartenspiele und spätere private Spielrunden.",
     games: privateGames
   });
+});
+
+app.get("/private/wizard/cards/:designKey/image", requireAuth, async (req, res, next) => {
+  const designKey = getRouteParam(req.params.designKey);
+
+  if (!designKey) {
+    res.status(400).json({
+      error: "Wizard card design key is required."
+    });
+    return;
+  }
+
+  try {
+    const imagePath = await getWizardCardImagePath(config.wizardCardImageRoot, designKey);
+
+    if (!imagePath) {
+      res.status(404).json({
+        error: "Wizard card image not found."
+      });
+      return;
+    }
+
+    res.sendFile(imagePath, {
+      headers: {
+        "Cache-Control": "private, max-age=3600"
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
 });
 
 app.use((error: unknown, _req: Request, res: Response, _next: NextFunction) => {

@@ -29,6 +29,7 @@ Die WebSocket-Verbindung authentifiziert sich über das bestehende `httpOnly` Se
 - Im Debugmodus erstellt das Backend zwei virtuelle Spieler: `Volle 1` und `Volle 2`.
 - Beide Debug-Spieler werden vom Admin-Account gesteuert.
 - In der UI wird farbig angezeigt, welcher Debug-Spieler gerade am Zug ist.
+- Nach dem letzten Stich einer Runde wertet das Backend automatisch und startet direkt die nächste Runde, solange das Spiel noch nicht beendet ist.
 
 Für produktive Online-Nutzung sollte später ein persistenter Store ergänzt werden, zum Beispiel PostgreSQL oder Redis.
 
@@ -93,16 +94,28 @@ Abgedeckt sind unter anderem:
 Lokale private Kartendesigns liegen unter:
 
 ```text
-private-data/Bilder für Wizard
+private-data/BIlder für Wizard
 ```
 
-Dieser Ordner wird nicht nach GitHub gepusht. Für spätere austauschbare Designs soll ein geschütztes Asset-Mapping ergänzt werden. Joseph Joestar ist als gewünschte Design-Zuordnung für die Gestaltwandler/Wizard-Narr-Karte vorgemerkt, aber nicht als Regel hart verdrahtet.
+Dieser Ordner wird nicht nach GitHub gepusht. Das Backend liefert die Bilder nach Login über `GET /private/wizard/cards/:designKey/image` aus. Der Ordner wird nicht in `frontend/public/` kopiert und bleibt dadurch vom öffentlichen Frontend getrennt.
 
-Jede Karte enthält bereits einen `designKey`, damit Designs später einzeln ausgetauscht werden können. Der Gestaltwandler nutzt den Schlüssel `joseph-joestar-wizard-jester`.
+Jede Karte enthält einen `designKey` und einen relativen `imagePath`, damit Designs später einzeln ausgetauscht werden können. Wenn kein exakt passendes Bild gefunden wird, nutzt das Backend deterministisch ein vorhandenes Bild als Fallback. Der Gestaltwandler nutzt den Schlüssel `joseph-joestar-wizard-jester` und ist auf `Joseph Joestar` gemappt.
+
+Der lokale Asset-Pfad ist konfigurierbar:
+
+```env
+WIZARD_CARD_IMAGE_ROOT=../private-data/BIlder für Wizard
+```
+
+Docker nutzt:
+
+```env
+WIZARD_CARD_IMAGE_ROOT=/app/private-data/BIlder für Wizard
+```
 
 ## Grenzen der aktuellen Version
 
 - Der Spielstatus ist in-memory und noch nicht persistent.
 - WebSocket-Status wird live übertragen, aber es gibt noch keine Wiederaufnahme nach Backend-Neustart.
 - Es gibt noch keine KI-Spieler.
-- Kartendesigns sind noch nicht als geschützter Asset-Store eingebunden.
+- Kartendesigns werden lokal geschützt ausgeliefert, aber noch nicht in einer Datenbank verwaltet.

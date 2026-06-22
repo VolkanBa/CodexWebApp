@@ -15,11 +15,13 @@ services:
       SESSION_COOKIE_SECURE: false
       SUBJECT_DATA_FILE_PATH: /app/backend/data/subjects.json
       UPLOAD_ROOT: /app/uploads
+      WIZARD_CARD_IMAGE_ROOT: /app/private-data/BIlder für Wizard
     ports:
       - "4000:4000"
     volumes:
       - subject-data:/app/backend/data
       - subject-uploads:/app/uploads
+      - ./private-data:/app/private-data:ro
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4000/health').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"]
       interval: 30s

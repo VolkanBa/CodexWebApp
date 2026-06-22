@@ -241,6 +241,7 @@ SESSION_COOKIE_SECURE=false
 SESSION_TTL_MINUTES=60
 AUTH_RATE_LIMIT_WINDOW_MINUTES=15
 AUTH_RATE_LIMIT_MAX=5
+WIZARD_CARD_IMAGE_ROOT=../private-data/BIlder für Wizard
 ```
 
 Passwort-Hash für lokale Entwicklung erzeugen:
@@ -250,6 +251,16 @@ node -e "import('argon2').then(async (argon2) => console.log(await argon2.hash(p
 ```
 
 Mehr Details stehen in `docs/AUTHENTICATION.md`.
+
+## Lokale Wizard-Kartenbilder
+
+Wizard lädt Kartenbilder zur Laufzeit aus einem privaten lokalen Ordner:
+
+```text
+private-data/BIlder für Wizard
+```
+
+Der Pfad wird im Backend über `WIZARD_CARD_IMAGE_ROOT` konfiguriert. Der Ordner ist durch `.gitignore` blockiert und darf nicht nach GitHub gepusht werden. Die Bilder werden nicht in `frontend/public/` kopiert, sondern nur nach Login über einen geschützten Backend-Endpunkt ausgeliefert.
 
 ## Troubleshooting
 

@@ -34,6 +34,7 @@ export type WizardCard = {
   kind: WizardCardKind;
   label: string;
   designKey?: string;
+  imagePath?: string;
   suit?: WizardSuit;
   value?: number;
 };

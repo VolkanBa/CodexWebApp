@@ -25,11 +25,14 @@ export const optionalWizardCards: OptionalWizardCardKind[] = [
   "vampire"
 ];
 
+const getCardImagePath = (designKey: string) => `/private/wizard/cards/${encodeURIComponent(designKey)}/image`;
+
 const createNumberCard = (suit: WizardSuit, value: number): WizardCard => ({
   id: `${suit}-${value}`,
   kind: "number",
   label: `${suitLabels[suit]} ${value}`,
   designKey: `${suit}-${value}`,
+  imagePath: getCardImagePath(`${suit}-${value}`),
   suit,
   value
 });
@@ -39,6 +42,7 @@ const createJugglerCard = (suit: WizardSuit): WizardCard => ({
   kind: "juggler",
   label: `${suitLabels[suit]} Jongleur 7 1/2`,
   designKey: `${suit}-juggler-7-5`,
+  imagePath: getCardImagePath(`${suit}-juggler-7-5`),
   suit,
   value: 7.5
 });
@@ -48,6 +52,7 @@ const createCloudCard = (suit: WizardSuit): WizardCard => ({
   kind: "cloud",
   label: `${suitLabels[suit]} Wolke 9 3/4`,
   designKey: `${suit}-cloud-9-75`,
+  imagePath: getCardImagePath(`${suit}-cloud-9-75`),
   suit,
   value: 9.75
 });
@@ -69,11 +74,14 @@ const createSpecialCard = (kind: WizardCard["kind"], index = 1): WizardCard => {
     throw new Error("createSpecialCard only accepts special cards.");
   }
 
+  const designKey = kind === "shapeshifter" ? "joseph-joestar-wizard-jester" : kind;
+
   return {
     id: index > 1 ? `${kind}-${index}` : kind,
     kind,
     label: index > 1 ? `${labels[kind]} ${index}` : labels[kind],
-    designKey: kind === "shapeshifter" ? "joseph-joestar-wizard-jester" : kind
+    designKey,
+    imagePath: getCardImagePath(designKey)
   };
 };
 

@@ -235,8 +235,9 @@ const finishRound = (game: WizardGame) => {
     return;
   }
 
-  game.status = "roundEnded";
   addMessage(game, `Runde ${game.roundNumber} ist beendet. Der Punktestand wurde aktualisiert.`);
+  game.roundNumber += 1;
+  beginRound(game);
 };
 
 const applyJugglerEffect = (game: WizardGame) => {
@@ -569,7 +570,7 @@ export const makeWizardPrediction = (
   }
 
   player.prediction = prediction;
-  addMessage(game, `${username} sagt ${prediction} Stich(e) voraus.`);
+  addMessage(game, `${player.username} sagt ${prediction} Stich(e) voraus.`);
   startPlayingIfReady(game);
   setUpdated(game);
   return game;
@@ -605,7 +606,7 @@ export const playWizardCard = (gameId: string, username: string, input: WizardPl
 
   const playedCard: PlayedWizardCard = {
     playId: createPlayId(),
-    playerUsername: username,
+    playerUsername: player.username,
     card,
     shapeshifterMode: input.shapeshifterMode,
     chosenTrumpSuit: input.chosenTrumpSuit
@@ -616,9 +617,9 @@ export const playWizardCard = (gameId: string, username: string, input: WizardPl
 
   if (effectiveCard.kind === "werewolf" && input.chosenTrumpSuit) {
     game.trumpSuit = input.chosenTrumpSuit;
-    addMessage(game, `${username} spielt ${card.label}. ${suitLabels[input.chosenTrumpSuit]} ist ab sofort bis Rundenende Trumpf.`);
+    addMessage(game, `${player.username} spielt ${card.label}. ${suitLabels[input.chosenTrumpSuit]} ist ab sofort bis Rundenende Trumpf.`);
   } else {
-    addMessage(game, `${username} spielt ${card.label}.`);
+    addMessage(game, `${player.username} spielt ${card.label}.`);
   }
 
   if (game.currentTrick.length === game.players.length) {
@@ -724,11 +725,11 @@ export const resolveWizardWitchExchange = (
   player.hand.push(trickCard.card);
   game.pendingEffect.trick[trickCardIndex] = {
     playId: createPlayId(),
-    playerUsername: username,
+    playerUsername: player.username,
     card: handCard,
     effectSuppressed: true
   };
-  addMessage(game, `Hexe: ${username} tauscht eine Handkarte gegen ${trickCard.card.label}.`);
+  addMessage(game, `Hexe: ${player.username} tauscht eine Handkarte gegen ${trickCard.card.label}.`);
 
   const { nextLeaderUsername, trick } = game.pendingEffect;
   game.pendingEffect = null;

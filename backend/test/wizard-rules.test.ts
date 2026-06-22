@@ -4,7 +4,9 @@ import {
   createWizardDebugGame,
   createWizardGame,
   getWizardGameView,
-  makeWizardPrediction
+  makeWizardPrediction,
+  playWizardCard,
+  startWizardGame
 } from "../src/games/wizard/store.js";
 import { calculateRoundScore, determineTrickWinner, getEffectiveCard, validateCardPlay } from "../src/games/wizard/rules.js";
 import type { PlayedWizardCard, WizardCard, WizardGame, WizardPlayer } from "../src/games/wizard/types.js";
@@ -186,4 +188,64 @@ test("admin can make predictions for both debug seats", () => {
 
   assert.equal(game.players[0]?.prediction, 0);
   assert.equal(game.players[1]?.prediction, 1);
+});
+
+test("admin debug card plays are attributed to the controlled seat", () => {
+  const game = createWizardDebugGame("Volle", {
+    enabledOptionalCards: [],
+    scoreboardVisibleDefault: true
+  });
+  const firstCard = suited("red-10", "red", 10);
+
+  game.status = "playing";
+  game.roundNumber = 1;
+  game.maxRounds = 10;
+  game.players[0]!.hand = [firstCard];
+  game.players[1]!.hand = [suited("blue-1", "blue", 1)];
+  game.players[0]!.prediction = 1;
+  game.players[1]!.prediction = 0;
+
+  playWizardCard(game.id, "Volle", {
+    cardId: firstCard.id,
+    playerUsername: "Volle 1"
+  });
+
+  assert.equal(game.currentTrick[0]?.playerUsername, "Volle 1");
+  assert.match(game.messages[0] ?? "", /Volle 1 spielt/);
+});
+
+test("wizard automatically starts the next round after a completed round", () => {
+  const game = createWizardDebugGame("Volle", {
+    enabledOptionalCards: [],
+    scoreboardVisibleDefault: true
+  });
+
+  startWizardGame(game.id, "Volle");
+
+  if (game.status === "trumpSelection") {
+    game.trumpSuit = "red";
+    game.trumpChoicePendingFor = null;
+    game.status = "prediction";
+  }
+
+  makeWizardPrediction(game.id, "Volle", 0, "Volle 1");
+  makeWizardPrediction(game.id, "Volle", 0, "Volle 2");
+
+  for (let playCount = 0; playCount < 2; playCount += 1) {
+    const view = getWizardGameView(game, "Volle");
+    const activeHand = view.controlledHands.find((hand) => hand.username === view.activeUsername);
+    const validCardId = activeHand?.validCardIds[0];
+
+    assert.ok(activeHand);
+    assert.ok(validCardId);
+
+    playWizardCard(game.id, "Volle", {
+      cardId: validCardId,
+      playerUsername: activeHand.username
+    });
+  }
+
+  assert.equal(game.roundNumber, 2);
+  assert.notEqual(game.status, "roundEnded");
+  assert.equal(game.players.every((player) => player.hand.length === 2), true);
 });

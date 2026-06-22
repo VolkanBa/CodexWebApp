@@ -128,3 +128,11 @@ Linear-Team: `CodexWebApp`
   - Branch: `codex/wizard-admin-debug-mode`
   - Linear: `https://linear.app/codexwebapp/issue/COD-53/web-032-admin-debugmodus-fur-wizard-hinzufugen`
   - Ergebnis: Admins sehen einen Debugmodus-Button und können ein Wizard-Testspiel mit `Volle 1` und `Volle 2` starten. Beide virtuellen Spieler werden vom Admin gesteuert; der aktive Spieler wird farbig angezeigt.
+- [x] COD-54 / WEB-033: Wizard Folgerunden und Kartenbilder verbessern
+  - Branch: `codex/wizard-round-card-images`
+  - Linear: `https://linear.app/codexwebapp/issue/COD-54/web-033-wizard-folgerunden-und-kartenbilder-verbessern`
+  - Ergebnis: Wizard startet nach einer abgeschlossenen Runde automatisch die nächste Runde. Handkarten, Stichkarten und Trumpfkarte werden als visuelle Karten mit lokalen Bildassets und farbigen Zahlen/Symbolen dargestellt.
+  - Untertickets:
+    - [x] COD-55 / WEB-033-BE: Automatische Wizard-Folgerunden und Asset-Auslieferung
+    - [x] COD-56 / WEB-033-FE: Wizard-Karten als Bildkarten rendern
+    - [x] COD-57 / WEB-033-DOCS: Wizard-Bildassets und Tests dokumentieren

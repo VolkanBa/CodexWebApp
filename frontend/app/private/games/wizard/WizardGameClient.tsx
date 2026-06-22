@@ -33,6 +33,7 @@ type WizardCard = {
   kind: string;
   label: string;
   designKey?: string;
+  imagePath?: string;
   suit?: WizardSuit;
   value?: number;
 };
@@ -178,6 +179,195 @@ const getDebugPlayerClassName = (username: string, isActive: boolean) => {
       : "border-suit-green/45 bg-suit-green/10 text-suit-green"
   }`;
 };
+
+const suitVisuals: Record<WizardSuit, { color: string; symbol: string }> = {
+  red: {
+    color: "#ff4f35",
+    symbol: "Φ"
+  },
+  blue: {
+    color: "#57a8ff",
+    symbol: "Ψ"
+  },
+  green: {
+    color: "#32d45d",
+    symbol: "ϝ"
+  },
+  yellow: {
+    color: "#ffd84d",
+    symbol: "Ϟ"
+  }
+};
+
+const specialVisuals: Record<string, { color: string; rank: string; symbol: string }> = {
+  wizard: {
+    color: "#f7f4ff",
+    rank: "W",
+    symbol: "✦"
+  },
+  jester: {
+    color: "#ff7a1a",
+    rank: "N",
+    symbol: "◇"
+  },
+  dragon: {
+    color: "#ff4f35",
+    rank: "D",
+    symbol: "△"
+  },
+  fairy: {
+    color: "#32d45d",
+    rank: "F",
+    symbol: "✧"
+  },
+  bomb: {
+    color: "#f7f4ff",
+    rank: "B",
+    symbol: "●"
+  },
+  werewolf: {
+    color: "#57a8ff",
+    rank: "WW",
+    symbol: "☾"
+  },
+  witch: {
+    color: "#9c7cff",
+    rank: "H",
+    symbol: "✣"
+  },
+  shapeshifter: {
+    color: "#ff7a1a",
+    rank: "W/N",
+    symbol: "◈"
+  },
+  vampire: {
+    color: "#ff4f35",
+    rank: "V",
+    symbol: "◆"
+  }
+};
+
+const getCardRank = (card: WizardCard) => {
+  if (card.kind === "juggler") {
+    return "7½";
+  }
+
+  if (card.kind === "cloud") {
+    return "9¾";
+  }
+
+  if (typeof card.value === "number") {
+    return String(card.value);
+  }
+
+  return specialVisuals[card.kind]?.rank ?? card.label.slice(0, 2).toUpperCase();
+};
+
+const getCardVisual = (card: WizardCard) => {
+  if (card.suit) {
+    return suitVisuals[card.suit];
+  }
+
+  return specialVisuals[card.kind] ?? {
+    color: "#ff7a1a",
+    symbol: "✦"
+  };
+};
+
+function WizardCardFrame({
+  card,
+  muted = false,
+  statusLabel,
+  variant = "hand"
+}: {
+  card: WizardCard;
+  muted?: boolean;
+  statusLabel?: string;
+  variant?: "hand" | "compact";
+}) {
+  const [imageFailed, setImageFailed] = useState(false);
+  const visual = getCardVisual(card);
+  const imageSrc = card.imagePath ? `${apiBaseUrl}${card.imagePath}` : null;
+  const rank = getCardRank(card);
+  const isCompact = variant === "compact";
+
+  useEffect(() => {
+    setImageFailed(false);
+  }, [card.imagePath]);
+
+  return (
+    <div
+      className={`relative mx-auto aspect-[5/7] w-full overflow-hidden border bg-[#17121f] shadow-lg transition ${
+        isCompact ? "max-w-[7.25rem]" : "max-w-[12rem]"
+      } ${muted ? "opacity-55 grayscale" : "opacity-100"}`}
+      style={{
+        borderColor: muted ? "rgba(255,255,255,0.16)" : visual.color
+      }}
+    >
+      {imageSrc && !imageFailed ? (
+        <img
+          src={imageSrc}
+          alt=""
+          onError={() => setImageFailed(true)}
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+      ) : (
+        <div className="absolute inset-0 flex items-center justify-center bg-[radial-gradient(circle_at_top,#2d1848,transparent_55%),linear-gradient(160deg,#17121f,#08070d)] px-4 text-center">
+          <span className="text-sm font-black text-white/72">{card.label}</span>
+        </div>
+      )}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/50" />
+      <div
+        className={`absolute left-2 top-2 flex min-w-7 flex-col items-center bg-black/70 px-1 py-1 font-black leading-none shadow ${
+          isCompact ? "text-sm" : "text-xl"
+        }`}
+        style={{ color: visual.color }}
+      >
+        <span>{rank}</span>
+        <span className={isCompact ? "text-[10px]" : "text-sm"}>{visual.symbol}</span>
+      </div>
+      <div
+        className={`absolute right-2 top-2 flex min-w-7 flex-col items-center bg-black/70 px-1 py-1 font-black leading-none shadow ${
+          isCompact ? "text-sm" : "text-xl"
+        }`}
+        style={{ color: visual.color }}
+      >
+        <span>{rank}</span>
+        <span className={isCompact ? "text-[10px]" : "text-sm"}>{visual.symbol}</span>
+      </div>
+      <p
+        className={`absolute left-10 right-10 top-3 truncate text-center font-black text-white drop-shadow ${
+          isCompact ? "text-[10px]" : "text-xs"
+        }`}
+      >
+        {card.label}
+      </p>
+      <div
+        className={`absolute bottom-2 left-2 flex min-w-7 rotate-180 flex-col items-center bg-black/70 px-1 py-1 font-black leading-none shadow ${
+          isCompact ? "text-sm" : "text-xl"
+        }`}
+        style={{ color: visual.color }}
+      >
+        <span>{rank}</span>
+        <span className={isCompact ? "text-[10px]" : "text-sm"}>{visual.symbol}</span>
+      </div>
+      <div
+        className={`absolute bottom-2 right-2 flex min-w-7 rotate-180 flex-col items-center bg-black/70 px-1 py-1 font-black leading-none shadow ${
+          isCompact ? "text-sm" : "text-xl"
+        }`}
+        style={{ color: visual.color }}
+      >
+        <span>{rank}</span>
+        <span className={isCompact ? "text-[10px]" : "text-sm"}>{visual.symbol}</span>
+      </div>
+      {statusLabel ? (
+        <span className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-black/75 px-2 py-1 text-[11px] font-bold text-white">
+          {statusLabel}
+        </span>
+      ) : null}
+    </div>
+  );
+}
 
 export function WizardGameClient({
   initialJoinGameId = null
@@ -631,11 +821,12 @@ export function WizardGameClient({
             <div className="mt-6 grid gap-4 lg:grid-cols-2">
               <div className="border border-white/10 bg-suit-black/40 p-4">
                 <h3 className="text-xl font-black text-white">Aktueller Stich</h3>
-                <div className="mt-3 grid gap-2">
+                <div className="mt-3 grid grid-cols-[repeat(auto-fit,minmax(6.75rem,1fr))] gap-3">
                   {game.currentTrick.length ? (
                     game.currentTrick.map((played) => (
-                      <div key={played.playId} className="border border-white/10 p-3 text-sm text-white/72">
-                        {played.playerUsername}: {played.card.label}
+                      <div key={played.playId} className="border border-white/10 bg-black/20 p-2">
+                        <WizardCardFrame card={played.card} variant="compact" />
+                        <p className="mt-2 truncate text-center text-xs font-bold text-white/72">{played.playerUsername}</p>
                       </div>
                     ))
                   ) : (
@@ -645,7 +836,13 @@ export function WizardGameClient({
               </div>
               <div className="border border-white/10 bg-suit-black/40 p-4">
                 <h3 className="text-xl font-black text-white">Trumpfkarte</h3>
-                <p className="mt-3 text-sm text-white/72">{game.trumpCard?.label ?? "Keine"}</p>
+                <div className="mt-3">
+                  {game.trumpCard ? (
+                    <WizardCardFrame card={game.trumpCard} variant="compact" />
+                  ) : (
+                    <p className="text-sm text-white/72">Keine</p>
+                  )}
+                </div>
                 <p className="mt-2 text-sm text-white/60">Vampir kopiert: {game.vampireCopyCard?.label ?? "Keine Karte"}</p>
               </div>
             </div>
@@ -769,29 +966,32 @@ export function WizardGameClient({
                   </select>
                 </div>
               </div>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {displayedHand.map((card) => {
-                  const isValid = displayedValidCardIds.includes(card.id);
-                  const isActive = game.debugMode?.enabled ? isDisplayedHandActive : game.activeUsername?.toLowerCase() === username?.toLowerCase();
+              <div className="grid grid-cols-[repeat(auto-fit,minmax(9.5rem,1fr))] gap-4">
+                {displayedHand.length ? (
+                  displayedHand.map((card) => {
+                    const isValid = displayedValidCardIds.includes(card.id);
+                    const isActive = game.debugMode?.enabled ? isDisplayedHandActive : game.activeUsername?.toLowerCase() === username?.toLowerCase();
+                    const canPlay = isActive && isValid && game.status === "playing";
 
-                  return (
-                    <button
-                      key={card.id}
-                      type="button"
-                      disabled={!isActive || !isValid || game.status !== "playing"}
-                      onClick={() => playCard(card)}
-                      className={`min-h-24 border p-4 text-left transition ${
-                        isActive && isValid && game.status === "playing"
-                          ? "border-suit-green/60 bg-suit-purple/50 text-white hover:bg-suit-orange hover:text-suit-black"
-                          : "border-white/10 bg-suit-black/40 text-white/42"
-                      }`}
-                    >
-                      <span className="block text-sm font-black">{card.label}</span>
-                      {card.designKey ? <span className="mt-1 block text-[11px] uppercase text-white/48">{card.designKey}</span> : null}
-                      <span className="mt-2 block text-xs">{isValid ? "spielbar" : "gesperrt"}</span>
-                    </button>
-                  );
-                })}
+                    return (
+                      <button
+                        key={card.id}
+                        type="button"
+                        disabled={!canPlay}
+                        onClick={() => playCard(card)}
+                        className={`group flex justify-center border p-2 transition ${
+                          canPlay
+                            ? "border-suit-green/60 bg-suit-purple/35 hover:border-suit-orange hover:bg-suit-orange/20"
+                            : "border-white/10 bg-suit-black/40"
+                        }`}
+                      >
+                        <WizardCardFrame card={card} muted={!canPlay} statusLabel={isValid ? "spielbar" : "gesperrt"} />
+                      </button>
+                    );
+                  })
+                ) : (
+                  <p className="text-sm text-white/60">Keine Handkarten sichtbar.</p>
+                )}
               </div>
             </div>
           </section>
