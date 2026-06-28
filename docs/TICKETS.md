@@ -230,3 +230,10 @@ Linear-Team: `CodexWebApp`
     - [x] COD-102 / WEB-045-RULES: Führende Gewinner-Sonderkarten ohne Farbzwang
     - [x] COD-103 / WEB-045-FE: Vampir-Auswahl und Log-Toggle
     - [x] COD-104 / WEB-045-TESTS-DOCS: Regressionen testen und dokumentieren
+- [x] COD-105 / WEB-046: Wizard Spielbereich als dreispaltiges Tischlayout anordnen
+  - Branch: `codex/wizard-three-column-table-layout`
+  - Linear: `https://linear.app/codexwebapp/issue/COD-105/web-046-wizard-spielbereich-als-dreispaltiges-tischlayout-anordnen`
+  - Ergebnis: Der kompakte Punktestand steht links, das Spielbrett mittig und das breitere Log rechts. Beide Seitenbereiche entsprechen auf großen Bildschirmen der Brett-Höhe; ältere Logeinträge scrollen innerhalb des Logbereichs.
+  - Untertickets:
+    - [x] COD-106 / WEB-046-FE: Punkte, Spielbrett und Log dreispaltig ausrichten
+    - [x] COD-107 / WEB-046-VERIFY-DOCS: Wizard Layout prüfen und dokumentieren

@@ -38,6 +38,7 @@ Die WebSocket-Verbindung authentifiziert sich über das bestehende `httpOnly` Se
 - Wird Wolke oder Jongleur als Trumpfkarte aufgedeckt, bestimmt die Person, die den ersten Stich der Runde eröffnen würde, die Trumpffarbe.
 - Das Spiel-Log wird strukturiert übertragen. Gespielte Karten werden im Log als kleine Karten angezeigt; Gewinnernamen werden im Frontend hervorgehoben.
 - Das Spiel-Log kann vollständig ausgeblendet und über den kompakten `Log`-Button wieder eingeblendet werden.
+- Die laufende Partie nutzt auf großen Bildschirmen ein dreispaltiges Tischlayout: ein schmaler, kompakter Punktestand links, das Spielbrett mittig und ein breiter Logbereich rechts. Punktestand und Log werden auf die Höhe des Spielbretts gestreckt. Der Log-Kopf bleibt sichtbar; ältere Einträge sind innerhalb des Logbereichs nach unten scrollbar. Auf kleineren Viewports werden die Bereiche untereinander angeordnet.
 - Rundenwertungen werden im Log mit Punkteänderung und Gesamtstand pro Person angezeigt.
 
 Für produktive Online-Nutzung sollte später ein persistenter Store ergänzt werden, zum Beispiel PostgreSQL oder Redis.

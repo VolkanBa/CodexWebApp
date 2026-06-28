@@ -957,7 +957,7 @@ export function WizardGameClient({
           </section>
         </div>
       ) : (
-        <div className="mt-8 grid gap-6 xl:grid-cols-[1.3fr_0.8fr]">
+        <div className="mt-8">
           <section className="border border-white/12 bg-white/[0.045] p-5">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div>
@@ -1109,13 +1109,56 @@ export function WizardGameClient({
               </div>
             ) : null}
 
-            <div
-              className="relative mt-6 h-[30rem] overflow-hidden border border-suit-purple/60 bg-suit-black bg-cover shadow-glow sm:aspect-[16/10] sm:h-auto"
-              style={{
-                backgroundImage: `url("${wizardBoardImageUrl}")`,
-                backgroundPosition: "center 32%"
-              }}
-            >
+            <div className="mt-6 flex flex-col gap-4 xl:flex-row xl:items-stretch">
+              <aside className={`min-h-0 shrink-0 ${scoreboardVisible ? "xl:w-56" : "xl:w-auto"}`}>
+                {scoreboardVisible ? (
+                  <section className="flex h-full min-h-0 flex-col overflow-hidden border border-white/12 bg-white/[0.045] p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <h2 className="text-lg font-black text-white">Punktestand</h2>
+                      <button
+                        type="button"
+                        onClick={() => setScoreboardVisible(false)}
+                        className="border border-white/12 px-2 py-1 text-[10px] font-bold text-white/72"
+                      >
+                        Ausblenden
+                      </button>
+                    </div>
+                    <div className="mt-3 grid min-h-0 flex-1 content-start gap-1.5 overflow-y-auto pr-1">
+                      {game.players.map((player) => (
+                        <div
+                          key={player.username}
+                          className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 border border-white/10 bg-suit-black/40 p-1.5 text-xs"
+                        >
+                          <div className="min-w-0">
+                            <p className="truncate font-bold text-white">{player.username}</p>
+                            <p className="mt-0.5 whitespace-nowrap text-[10px] leading-4 text-white/58">
+                              Tipp {player.prediction ?? "-"} · Stiche {player.tricksWon} · Hand {player.handCount}
+                            </p>
+                          </div>
+                          <p className="font-black text-suit-green">{player.score}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setScoreboardVisible(true)}
+                    className="h-7 border border-white/12 px-2 text-[11px] font-bold text-white/60 transition hover:text-white"
+                    aria-label="Punktestand einblenden"
+                  >
+                    Punkte
+                  </button>
+                )}
+              </aside>
+
+              <div
+                className="relative h-[30rem] min-w-0 flex-1 overflow-hidden border border-suit-purple/60 bg-suit-black bg-cover shadow-glow sm:aspect-[16/10] sm:h-auto"
+                style={{
+                  backgroundImage: `url("${wizardBoardImageUrl}")`,
+                  backgroundPosition: "center 32%"
+                }}
+              >
               <div className="absolute inset-0 bg-black/20" aria-hidden="true" />
 
               {tablePlayers.map((player, index) => {
@@ -1158,6 +1201,70 @@ export function WizardGameClient({
                   </p>
                 )}
               </div>
+              </div>
+
+              <aside className={`min-h-0 shrink-0 ${logVisible ? "xl:w-[28rem]" : "xl:w-auto"}`}>
+                {logVisible ? (
+                  <section className="flex h-[30rem] min-h-0 flex-col overflow-hidden border border-white/12 bg-white/[0.045] p-4 xl:h-full">
+                    <div className="flex shrink-0 items-center justify-between gap-3">
+                      <h2 className="text-xl font-black text-white">Log</h2>
+                      <button
+                        type="button"
+                        onClick={() => setLogVisible(false)}
+                        className="border border-white/12 px-2 py-1 text-[10px] font-bold text-white/72"
+                      >
+                        Ausblenden
+                      </button>
+                    </div>
+                    <div className="mt-3 grid min-h-0 flex-1 content-start gap-2 overflow-y-auto overscroll-contain pr-2">
+                      {game.messages.map((entry) => (
+                        <article
+                          key={entry.id}
+                          className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3 border border-white/10 bg-suit-black/45 p-3"
+                        >
+                          <span className="flex h-9 w-9 items-center justify-center bg-white/[0.08] text-lg" aria-hidden="true">
+                            {entry.emoji}
+                          </span>
+                          <div className="flex min-w-0 items-center gap-3">
+                            {entry.card ? (
+                              <div className="w-12 shrink-0">
+                                <WizardCardFrame card={entry.card} chosenSuit={entry.chosenSuit} variant="mini" />
+                              </div>
+                            ) : null}
+                            <div className="min-w-0">
+                              <p className="break-words text-sm leading-6 text-white/76">
+                                <WizardLogText entry={entry} />
+                              </p>
+                              {entry.scoreChanges?.length ? (
+                                <div className="mt-2 flex flex-wrap gap-2">
+                                  {entry.scoreChanges.map((change) => (
+                                    <span
+                                      key={change.username}
+                                      className="border border-white/10 bg-black/25 px-2 py-1 text-xs font-black text-white/72"
+                                    >
+                                      {change.username}: {change.delta >= 0 ? "+" : ""}
+                                      {change.delta} / {change.total}
+                                    </span>
+                                  ))}
+                                </div>
+                              ) : null}
+                            </div>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  </section>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setLogVisible(true)}
+                    className="h-7 border border-white/12 px-2 text-[11px] font-bold text-white/60 transition hover:text-white"
+                    aria-label="Log einblenden"
+                  >
+                    Log
+                  </button>
+                )}
+              </aside>
             </div>
 
             {game.pendingEffect ? (
@@ -1368,105 +1475,6 @@ export function WizardGameClient({
             ) : null}
           </section>
 
-          <aside className="grid gap-6">
-            {scoreboardVisible ? (
-              <section className="border border-white/12 bg-white/[0.045] p-5">
-                <div className="flex items-center justify-between gap-3">
-                  <h2 className="text-2xl font-black text-white">Punktestand</h2>
-                  <button
-                    type="button"
-                    onClick={() => setScoreboardVisible(false)}
-                    className="border border-white/12 px-3 py-2 text-xs font-bold text-white/72"
-                  >
-                    Ausblenden
-                  </button>
-                </div>
-                <div className="mt-4 grid gap-2">
-                  {game.players.map((player) => (
-                    <div key={player.username} className="grid grid-cols-[1fr_auto] gap-3 border border-white/10 bg-suit-black/40 p-3 text-sm">
-                      <div>
-                        <p className="font-bold text-white">{player.username}</p>
-                        <p className="text-white/58">
-                          Vorhersage {player.prediction ?? "-"} · Stiche {player.tricksWon} · Hand {player.handCount}
-                        </p>
-                      </div>
-                      <p className="font-black text-suit-green">{player.score}</p>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setScoreboardVisible(true)}
-                className="h-7 justify-self-end border border-white/12 px-2 text-[11px] font-bold text-white/60 transition hover:text-white"
-                aria-label="Punktestand einblenden"
-              >
-                Punkte
-              </button>
-            )}
-
-            {logVisible ? (
-              <section className="border border-white/12 bg-white/[0.045] p-5">
-                <div className="flex items-center justify-between gap-3">
-                  <h2 className="text-2xl font-black text-white">Log</h2>
-                  <button
-                    type="button"
-                    onClick={() => setLogVisible(false)}
-                    className="border border-white/12 px-3 py-2 text-xs font-bold text-white/72"
-                  >
-                    Ausblenden
-                  </button>
-                </div>
-                <div className="mt-4 grid gap-3">
-                  {game.messages.map((entry) => (
-                    <article
-                      key={entry.id}
-                      className="grid grid-cols-[auto_1fr] items-center gap-3 border border-white/10 bg-suit-black/45 p-3"
-                    >
-                      <span className="flex h-9 w-9 items-center justify-center bg-white/[0.08] text-lg" aria-hidden="true">
-                        {entry.emoji}
-                      </span>
-                      <div className="flex items-center gap-3">
-                        {entry.card ? (
-                          <div className="w-12 shrink-0">
-                            <WizardCardFrame card={entry.card} chosenSuit={entry.chosenSuit} variant="mini" />
-                          </div>
-                        ) : null}
-                        <div>
-                          <p className="text-sm leading-6 text-white/76">
-                            <WizardLogText entry={entry} />
-                          </p>
-                          {entry.scoreChanges?.length ? (
-                            <div className="mt-2 flex flex-wrap gap-2">
-                              {entry.scoreChanges.map((change) => (
-                                <span
-                                  key={change.username}
-                                  className="border border-white/10 bg-black/25 px-2 py-1 text-xs font-black text-white/72"
-                                >
-                                  {change.username}: {change.delta >= 0 ? "+" : ""}
-                                  {change.delta} / {change.total}
-                                </span>
-                              ))}
-                            </div>
-                          ) : null}
-                        </div>
-                      </div>
-                    </article>
-                  ))}
-                </div>
-              </section>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setLogVisible(true)}
-                className="h-7 justify-self-end border border-white/12 px-2 text-[11px] font-bold text-white/60 transition hover:text-white"
-                aria-label="Log einblenden"
-              >
-                Log
-              </button>
-            )}
-          </aside>
         </div>
       )}
       {vampirePendingEffect && canResolvePendingEffect ? (
