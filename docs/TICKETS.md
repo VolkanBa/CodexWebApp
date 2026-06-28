@@ -245,3 +245,10 @@ Linear-Team: `CodexWebApp`
   - Branch: `codex/wizard-taller-board`
   - Linear: `https://linear.app/codexwebapp/issue/COD-109/web-048-wizard-spielfeld-kontrolliert-nach-unten-vergrossern`
   - Ergebnis: Die viewportabhängige Tischhöhe wächst moderat auf maximal `32rem`; das Spielfeld erhält nach unten mehr Platz, ohne dass das Log die gemeinsame Höhe vergrößern kann.
+- [x] COD-110 / WEB-049: Wizard Spielfeldhöhe pro Benutzer per Maus anpassbar machen
+  - Branch: `codex/wizard-user-resizable-board`
+  - Linear: `https://linear.app/codexwebapp/issue/COD-110/web-049-wizard-spielfeldhohe-pro-benutzer-per-maus-anpassbar-machen`
+  - Ergebnis: Ein Ziehgriff an der unteren Spielfeldkante ändert die gemeinsame Höhe von Spielfeld, Punkten und Log. Die Einstellung wird nur lokal und getrennt nach Benutzername gespeichert; andere Spieler werden nicht beeinflusst.
+  - Untertickets:
+    - [x] COD-111 / WEB-049-FE: Pointer-Resize und benutzerbezogene Speicherung
+    - [x] COD-112 / WEB-049-VERIFY-DOCS: Resize-Verhalten prüfen und dokumentieren

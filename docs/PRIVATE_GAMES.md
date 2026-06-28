@@ -40,6 +40,8 @@ Die WebSocket-Verbindung authentifiziert sich über das bestehende `httpOnly` Se
 - Das Spiel-Log kann vollständig ausgeblendet und über den kompakten `Log`-Button wieder eingeblendet werden.
 - Die laufende Partie nutzt auf großen Bildschirmen ein dreispaltiges Tischlayout: ein schmaler, kompakter Punktestand links, das Spielbrett mittig und ein breiter Logbereich rechts. Punktestand und Log werden auf die Höhe des Spielbretts gestreckt. Der Log-Kopf bleibt sichtbar; ältere Einträge sind innerhalb des Logbereichs nach unten scrollbar. Auf kleineren Viewports werden die Bereiche untereinander angeordnet.
 - Die Höhe der dreispaltigen Tischzeile ist auf großen Bildschirmen mit `clamp(22rem, calc(100dvh - 19rem), 32rem)` explizit an den sichtbaren Viewport gebunden. Logeinträge dürfen diese Höhe nicht vergrößern; dadurch bleibt das vollständige Spielfeld auf einen Blick sichtbar. Die zusätzliche Höhe erweitert das Spielfeld kontrolliert nach unten.
+- Auf großen Bildschirmen kann jede angemeldete Person die Tischhöhe am Ziehgriff über die untere Spielfeldkante mit Maus oder Pointer verändern. Die Höhe ist zwischen `352px` und dem kleineren Wert aus `720px` beziehungsweise `Viewport-Höhe - 160px` begrenzt. Pfeiltasten verändern die Höhe am fokussierten Griff in `16px`-Schritten.
+- Die persönliche Tischhöhe liegt ausschließlich im Browser unter `codexwebapp:wizard:table-height:<benutzername>`. Sie wird nicht an das Backend oder per WebSocket übertragen. Deshalb besitzen unterschiedliche Accounts unabhängig voneinander eigene Ansichten.
 - Rundenwertungen werden im Log mit Punkteänderung und Gesamtstand pro Person angezeigt.
 
 Für produktive Online-Nutzung sollte später ein persistenter Store ergänzt werden, zum Beispiel PostgreSQL oder Redis.

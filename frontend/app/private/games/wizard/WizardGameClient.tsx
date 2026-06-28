@@ -1,13 +1,32 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  type CSSProperties,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type PointerEvent as ReactPointerEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState
+} from "react";
 import { PrivateTabs } from "../../PrivateTabs";
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000";
 const webSocketBaseUrl = apiBaseUrl.replace(/^http/, "ws");
 const wizardBoardImageUrl = `${apiBaseUrl}/private/wizard/board/image`;
 const lastWizardGameStorageKey = "codexwebapp:lastWizardGameId";
+const wizardTableHeightStoragePrefix = "codexwebapp:wizard:table-height";
+const wizardTableMinHeight = 352;
+const wizardTableAbsoluteMaxHeight = 720;
+
+const clampWizardTableHeight = (height: number) => {
+  const viewportMaxHeight = Math.max(wizardTableMinHeight, window.innerHeight - 160);
+  const maxHeight = Math.min(wizardTableAbsoluteMaxHeight, viewportMaxHeight);
+
+  return Math.min(Math.max(Math.round(height), wizardTableMinHeight), maxHeight);
+};
 
 const optionalCards = [
   ["juggler", "Jongleur 7 1/2"],
@@ -501,6 +520,13 @@ export function WizardGameClient({
 }) {
   const socketRef = useRef<WebSocket | null>(null);
   const didAutoJoinRef = useRef(false);
+  const tableLayoutRef = useRef<HTMLDivElement | null>(null);
+  const tableResizeRef = useRef<{
+    pointerId: number;
+    startY: number;
+    startHeight: number;
+    currentHeight: number;
+  } | null>(null);
   const [socketStatus, setSocketStatus] = useState<"connecting" | "open" | "closed">("connecting");
   const [username, setUsername] = useState<string | null>(null);
   const [role, setRole] = useState<"admin" | "user" | null>(null);
@@ -520,6 +546,8 @@ export function WizardGameClient({
   const [selectedControlledUsername, setSelectedControlledUsername] = useState<string | null>(null);
   const [playDecisionPrompt, setPlayDecisionPrompt] = useState<PlayDecisionPrompt | null>(null);
   const [vampireShapeshifterMode, setVampireShapeshifterMode] = useState<"wizard" | "jester" | null>(null);
+  const [tableHeight, setTableHeight] = useState<number | null>(null);
+  const [isTableResizing, setIsTableResizing] = useState(false);
 
   const isSelfOwner = username && game?.ownerUsername.toLowerCase() === username.toLowerCase();
   const isAdmin = role === "admin";
@@ -706,6 +734,87 @@ export function WizardGameClient({
   useEffect(() => {
     setTrumpCardVisible(true);
   }, [game?.id]);
+
+  useEffect(() => {
+    if (!username) {
+      setTableHeight(null);
+      return;
+    }
+
+    const storageKey = `${wizardTableHeightStoragePrefix}:${username.toLowerCase()}`;
+    const storedHeight = Number(window.localStorage.getItem(storageKey));
+
+    setTableHeight(Number.isFinite(storedHeight) && storedHeight > 0 ? clampWizardTableHeight(storedHeight) : null);
+  }, [username]);
+
+  const persistTableHeight = (height: number) => {
+    if (!username) {
+      return;
+    }
+
+    window.localStorage.setItem(`${wizardTableHeightStoragePrefix}:${username.toLowerCase()}`, String(height));
+  };
+
+  const startTableResize = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    const tableLayout = tableLayoutRef.current;
+
+    if (!tableLayout || !username) {
+      return;
+    }
+
+    event.preventDefault();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    const currentHeight = tableLayout.getBoundingClientRect().height;
+    tableResizeRef.current = {
+      pointerId: event.pointerId,
+      startY: event.clientY,
+      startHeight: currentHeight,
+      currentHeight
+    };
+    setIsTableResizing(true);
+  };
+
+  const updateTableResize = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    const resizeState = tableResizeRef.current;
+
+    if (!resizeState || resizeState.pointerId !== event.pointerId) {
+      return;
+    }
+
+    event.preventDefault();
+    const nextHeight = clampWizardTableHeight(resizeState.startHeight + event.clientY - resizeState.startY);
+    resizeState.currentHeight = nextHeight;
+    setTableHeight(nextHeight);
+  };
+
+  const finishTableResize = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    const resizeState = tableResizeRef.current;
+
+    if (!resizeState || resizeState.pointerId !== event.pointerId) {
+      return;
+    }
+
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+
+    persistTableHeight(resizeState.currentHeight);
+    tableResizeRef.current = null;
+    setIsTableResizing(false);
+  };
+
+  const resizeTableWithKeyboard = (event: ReactKeyboardEvent<HTMLButtonElement>) => {
+    if (event.key !== "ArrowUp" && event.key !== "ArrowDown") {
+      return;
+    }
+
+    event.preventDefault();
+    const currentHeight = tableHeight ?? tableLayoutRef.current?.getBoundingClientRect().height ?? wizardTableMinHeight;
+    const direction = event.key === "ArrowDown" ? 1 : -1;
+    const nextHeight = clampWizardTableHeight(currentHeight + direction * 16);
+    setTableHeight(nextHeight);
+    persistTableHeight(nextHeight);
+  };
 
   const createGame = () => {
     send({
@@ -1109,7 +1218,17 @@ export function WizardGameClient({
               </div>
             ) : null}
 
-            <div className="mt-6 flex flex-col gap-4 xl:h-[clamp(22rem,calc(100dvh-19rem),32rem)] xl:min-h-0 xl:flex-row xl:items-stretch xl:overflow-hidden">
+            <div
+              ref={tableLayoutRef}
+              className="mt-6 flex flex-col gap-4 xl:h-[var(--wizard-table-height)] xl:min-h-0 xl:flex-row xl:items-stretch xl:overflow-hidden"
+              style={
+                {
+                  "--wizard-table-height": tableHeight
+                    ? `${tableHeight}px`
+                    : "clamp(22rem, calc(100dvh - 19rem), 32rem)"
+                } as CSSProperties
+              }
+            >
               <aside
                 className={`min-h-0 shrink-0 xl:h-full xl:overflow-hidden ${scoreboardVisible ? "xl:w-56" : "xl:w-auto"}`}
               >
@@ -1203,6 +1322,26 @@ export function WizardGameClient({
                   </p>
                 )}
               </div>
+              <button
+                type="button"
+                onPointerDown={startTableResize}
+                onPointerMove={updateTableResize}
+                onPointerUp={finishTableResize}
+                onPointerCancel={finishTableResize}
+                onKeyDown={resizeTableWithKeyboard}
+                className={`group absolute inset-x-0 bottom-0 z-30 hidden h-4 touch-none cursor-ns-resize items-end justify-center bg-transparent xl:flex ${
+                  isTableResizing ? "bg-suit-orange/10" : ""
+                }`}
+                aria-label="Spielfeldhöhe ändern"
+                title="Spielfeldhöhe ziehen"
+              >
+                <span
+                  className={`mb-1 h-1 w-20 transition ${
+                    isTableResizing ? "bg-suit-orange" : "bg-white/35 group-hover:bg-suit-orange group-focus:bg-suit-orange"
+                  }`}
+                  aria-hidden="true"
+                />
+              </button>
               </div>
 
               <aside
