@@ -27,6 +27,31 @@ export const optionalWizardCards: OptionalWizardCardKind[] = [
 
 const getCardImagePath = (designKey: string) => `/private/wizard/cards/${encodeURIComponent(designKey)}/image`;
 
+const repeatedSpecialDesignKeys = [
+  "wizard",
+  "jester",
+  "wizard-2",
+  "jester-2",
+  "wizard-3",
+  "jester-3",
+  "wizard-4",
+  "jester-4"
+];
+
+export const wizardCardDesignKeys = [
+  ...wizardSuits.flatMap((suit) => Array.from({ length: 13 }, (_, index) => `${suit}-${index + 1}`)),
+  "juggler-7-5",
+  "cloud-9-75",
+  ...repeatedSpecialDesignKeys,
+  "dragon",
+  "fairy",
+  "bomb",
+  "werewolf",
+  "witch",
+  "joseph-joestar-wizard-jester",
+  "vampire"
+] as const;
+
 const createNumberCard = (suit: WizardSuit, value: number): WizardCard => ({
   id: `${suit}-${value}`,
   kind: "number",
@@ -72,7 +97,8 @@ const createSpecialCard = (kind: WizardCard["kind"], index = 1): WizardCard => {
     throw new Error("createSpecialCard only accepts special cards.");
   }
 
-  const designKey = kind === "shapeshifter" ? "joseph-joestar-wizard-jester" : kind;
+  const designKey =
+    kind === "shapeshifter" ? "joseph-joestar-wizard-jester" : index > 1 ? `${kind}-${index}` : kind;
 
   return {
     id: index > 1 ? `${kind}-${index}` : kind,

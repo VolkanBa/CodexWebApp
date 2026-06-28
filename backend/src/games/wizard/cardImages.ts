@@ -1,5 +1,6 @@
 import { readdir, stat } from "node:fs/promises";
 import { extname, join, normalize, resolve } from "node:path";
+import { wizardCardDesignKeys } from "./cards.js";
 
 const imageExtensions = new Set([".gif", ".jpeg", ".jpg", ".png", ".webp"]);
 
@@ -12,7 +13,7 @@ const aliasesByDesignKey: Record<string, string[]> = {
   bomb: ["batman"],
   werewolf: ["thorfinn"],
   witch: ["re-zero"],
-  vampire: ["dio-brando"],
+  vampire: ["bloodvampp", "dio-brando"],
   juggler: ["zorro"],
   cloud: ["morales"]
 };
@@ -102,6 +103,34 @@ const findByAlias = (images: WizardCardImage[], aliases: string[]) => {
   return null;
 };
 
+const createUniqueImageAssignments = (images: WizardCardImage[]) => {
+  const availableImages = [...images];
+  const assignments = new Map<string, WizardCardImage>();
+
+  for (const designKey of wizardCardDesignKeys) {
+    if (!availableImages.length) {
+      break;
+    }
+
+    const normalizedDesignKey = normalizeDesignName(designKey);
+    const designAliases = aliasesByDesignKey[normalizedDesignKey] ?? [];
+    const kindAliasKey = normalizedDesignKey.split("-").find((part) => aliasesByDesignKey[part]);
+    const kindAliases = kindAliasKey ? aliasesByDesignKey[kindAliasKey] ?? [] : [];
+    const matchedImage =
+      findByAlias(availableImages, [normalizedDesignKey, ...designAliases, ...kindAliases]) ??
+      availableImages[getStableIndex(normalizedDesignKey, availableImages.length)];
+
+    if (!matchedImage) {
+      continue;
+    }
+
+    assignments.set(normalizedDesignKey, matchedImage);
+    availableImages.splice(availableImages.indexOf(matchedImage), 1);
+  }
+
+  return assignments;
+};
+
 export const getWizardCardImagePath = async (root: string, designKey: string) => {
   const normalizedDesignKey = normalizeDesignName(designKey);
 
@@ -116,12 +145,7 @@ export const getWizardCardImagePath = async (root: string, designKey: string) =>
     return null;
   }
 
-  const designAliases = aliasesByDesignKey[normalizedDesignKey] ?? [];
-  const kindAliasKey = normalizedDesignKey.split("-").find((part) => aliasesByDesignKey[part]);
-  const kindAliases = kindAliasKey ? aliasesByDesignKey[kindAliasKey] ?? [] : [];
-  const matchedImage =
-    findByAlias(images, [normalizedDesignKey, ...designAliases, ...kindAliases]) ??
-    images[getStableIndex(normalizedDesignKey, images.length)];
+  const matchedImage = createUniqueImageAssignments(images).get(normalizedDesignKey);
 
   if (!matchedImage) {
     return null;

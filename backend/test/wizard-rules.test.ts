@@ -1,4 +1,7 @@
 import assert from "node:assert/strict";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import test from "node:test";
 import {
   chooseWizardTrump,
@@ -16,7 +19,8 @@ import {
   resolveWizardWitchExchange,
   startWizardGame
 } from "../src/games/wizard/store.js";
-import { createWizardDeck } from "../src/games/wizard/cards.js";
+import { createWizardDeck, optionalWizardCards, wizardCardDesignKeys } from "../src/games/wizard/cards.js";
+import { getWizardCardImagePath } from "../src/games/wizard/cardImages.js";
 import { calculateRoundScore, determineTrickWinner, getEffectiveCard, validateCardPlay } from "../src/games/wizard/rules.js";
 import type { OptionalWizardCardKind, PlayedWizardCard, WizardCard, WizardGame, WizardPlayer } from "../src/games/wizard/types.js";
 
@@ -195,6 +199,31 @@ test("wizard deck contains one flexible cloud and one flexible juggler", () => {
   assert.equal(jugglers.length, 1);
   assert.equal(clouds[0]?.suit, undefined);
   assert.equal(jugglers[0]?.suit, undefined);
+});
+
+test("every card design receives a unique image when enough files exist", async () => {
+  const imageRoot = await mkdtemp(join(tmpdir(), "wizard-card-images-"));
+
+  try {
+    await Promise.all(
+      wizardCardDesignKeys.map((_, index) =>
+        writeFile(join(imageRoot, `asset-${String(index).padStart(2, "0")}.jpg`), "image")
+      )
+    );
+
+    const deck = createWizardDeck({ enabledOptionalCards: optionalWizardCards });
+    const designKeys = deck.map((card) => card.designKey);
+    const imagePaths = await Promise.all(
+      deck.map((card) => getWizardCardImagePath(imageRoot, card.designKey ?? ""))
+    );
+
+    assert.equal(deck.length, wizardCardDesignKeys.length);
+    assert.equal(new Set(designKeys).size, deck.length);
+    assert.equal(imagePaths.every(Boolean), true);
+    assert.equal(new Set(imagePaths).size, deck.length);
+  } finally {
+    await rm(imageRoot, { recursive: true, force: true });
+  }
 });
 
 test("flexible cloud and juggler require a chosen suit but ignore follow suit", () => {

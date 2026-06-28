@@ -51,7 +51,7 @@ Aktueller Regelstand:
 - Farbzwang gilt für angespielte Farben.
 - Sonderkarten können vom Farbzwang ausgenommen sein.
 - Handkarten werden serverseitig nach Farbe `Rot`, `Grün`, `Blau`, `Gelb` und danach nach Wert aufsteigend sortiert.
-- Die feste Handanzeige rendert ausschließlich die Karten. Sie besitzt keinen sichtbaren Hintergrund, keinen Titel, keinen Zähler und keine sichtbare Scrollleiste.
+- Die feste Handanzeige rendert ausschließlich die Karten. Sie besitzt keinen sichtbaren Hintergrund, keinen Titel, keinen Zähler und keine sichtbare Scrollleiste. Kleine Hände werden mittig ausgerichtet und größer dargestellt; bei vielen Karten bleibt die Reihe horizontal scrollbar.
 - Nur serverseitig gültige Züge werden angenommen.
 - Punkte:
 
@@ -125,7 +125,9 @@ private-data/BIlder für Wizard
 
 Dieser Ordner wird nicht nach GitHub gepusht. Das Backend liefert die Bilder nach Login über `GET /private/wizard/cards/:designKey/image` aus. Der Ordner wird nicht in `frontend/public/` kopiert und bleibt dadurch vom öffentlichen Frontend getrennt.
 
-Jede Karte enthält einen `designKey` und einen relativen `imagePath`, damit Designs später einzeln ausgetauscht werden können. Wenn kein exakt passendes Bild gefunden wird, nutzt das Backend deterministisch ein vorhandenes Bild als Fallback. Der Gestaltwandler nutzt den Schlüssel `joseph-joestar-wizard-jester` und ist auf `Joseph Joestar` gemappt.
+Jede Karte enthält einen eindeutigen `designKey` und einen relativen `imagePath`, damit Designs später einzeln ausgetauscht werden können. Das Backend berechnet für alle 69 möglichen Karten eine globale, deterministische Zuordnung: Eine private Bilddatei wird höchstens einer Karte zugewiesen. Der Gestaltwandler nutzt den Schlüssel `joseph-joestar-wizard-jester` und ist auf `Joseph Joestar` gemappt.
+
+Aktuell liegen 65 private Bilddateien für maximal 69 Karten vor. Bei vollständig aktiviertem Deck zeigen deshalb vier Karten den integrierten grafischen Karten-Fallback, statt ein bereits verwendetes Bild zu duplizieren. Vier zusätzliche Dateien im Bildordner reichen aus, damit jede Karte ein eigenes Bild erhält.
 
 Der lokale Asset-Pfad ist konfigurierbar:
 

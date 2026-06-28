@@ -188,3 +188,11 @@ Linear-Team: `CodexWebApp`
     - [x] COD-80 / WEB-040-TESTS-DOCS: Löschfunktion testen und dokumentieren
     - [x] COD-81 / WEB-040-BE: Admin-autorisierte Wizard-Spielauflösung
     - [x] COD-82 / WEB-040-FE: Reines Handkarten-Overlay und Admin-Aktionen
+- [x] COD-83 / WEB-041: Wizard Handkarten zentrieren und Bildzuordnung eindeutig machen
+  - Branch: `codex/wizard-centered-unique-card-images`
+  - Linear: `https://linear.app/codexwebapp/issue/COD-83/web-041-wizard-handkarten-zentrieren-und-bildzuordnung-eindeutig`
+  - Ergebnis: Kleine Hände werden größer und mittig dargestellt. Alle Karten besitzen eindeutige Design-Keys; private Bilddateien werden global kollisionsfrei vergeben. Bei 65 Bildern und 69 möglichen Karten nutzen vier Karten den grafischen Fallback statt eines doppelten Bildes.
+  - Untertickets:
+    - [x] COD-84 / WEB-041-TESTS-DOCS: Bildzuordnung testen und dokumentieren
+    - [x] COD-85 / WEB-041-FE: Handkarten größer und mittig darstellen
+    - [x] COD-86 / WEB-041-BE: Eindeutige Wizard-Kartenbildzuordnung

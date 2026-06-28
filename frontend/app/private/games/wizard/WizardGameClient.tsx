@@ -491,6 +491,8 @@ export function WizardGameClient({
   const displayedHandOwnerUsername = game?.debugMode?.enabled
     ? activeControlledHand?.username ?? null
     : game?.selfHandOwnerUsername ?? username;
+  const handCardWidthClass = displayedHand.length <= 5 ? "w-32" : displayedHand.length <= 10 ? "w-28" : "w-24";
+  const handCardVariant = displayedHand.length <= 5 ? "hand" : "compact";
   const debugPlayers = game?.debugMode?.enabled ? game.players.filter((player) => player.controlledBySelf) : [];
   const isDisplayedHandActive =
     Boolean(displayedHandOwnerUsername) && game?.activeUsername?.toLowerCase() === displayedHandOwnerUsername?.toLowerCase();
@@ -1207,28 +1209,30 @@ export function WizardGameClient({
 
             {displayedHand.length ? (
               <div className="pointer-events-none fixed bottom-0 left-0 right-0 z-40 px-4">
-                <div className="pointer-events-auto mx-auto flex min-h-72 max-w-7xl items-end gap-2 overflow-x-auto overflow-y-visible pb-12 pt-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                  {displayedHand.map((card) => {
-                    const isValid = displayedValidCardIds.includes(card.id);
-                    const isActive = game.debugMode?.enabled ? isDisplayedHandActive : game.activeUsername?.toLowerCase() === username?.toLowerCase();
-                    const canPlay = isActive && isValid && game.status === "playing";
+                <div className="pointer-events-auto mx-auto min-h-80 max-w-7xl overflow-x-auto overflow-y-visible pb-12 pt-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  <div className="mx-auto flex min-h-64 w-max min-w-full items-end justify-center gap-2">
+                    {displayedHand.map((card) => {
+                      const isValid = displayedValidCardIds.includes(card.id);
+                      const isActive = game.debugMode?.enabled
+                        ? isDisplayedHandActive
+                        : game.activeUsername?.toLowerCase() === username?.toLowerCase();
+                      const canPlay = isActive && isValid && game.status === "playing";
 
-                    return (
-                      <button
-                        key={card.id}
-                        type="button"
-                        disabled={!canPlay}
-                        onClick={() => requestPlayCard(card)}
-                        className={`group relative flex w-24 shrink-0 origin-bottom justify-center border border-transparent bg-transparent p-0 transition duration-150 hover:z-50 hover:-translate-y-20 hover:scale-200 focus:z-50 focus:-translate-y-20 focus:scale-200 ${
-                          canPlay
-                            ? "cursor-pointer"
-                            : "cursor-not-allowed"
-                        }`}
-                      >
-                        <WizardCardFrame card={card} variant="compact" />
-                      </button>
-                    );
-                  })}
+                      return (
+                        <button
+                          key={card.id}
+                          type="button"
+                          disabled={!canPlay}
+                          onClick={() => requestPlayCard(card)}
+                          className={`group relative flex ${handCardWidthClass} shrink-0 origin-bottom justify-center border border-transparent bg-transparent p-0 transition duration-150 hover:z-50 hover:-translate-y-20 hover:scale-200 focus:z-50 focus:-translate-y-20 focus:scale-200 ${
+                            canPlay ? "cursor-pointer" : "cursor-not-allowed"
+                          }`}
+                        >
+                          <WizardCardFrame card={card} variant={handCardVariant} />
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             ) : null}
