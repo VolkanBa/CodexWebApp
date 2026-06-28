@@ -16,6 +16,7 @@ import {
   playWizardCard,
   resolveWizardCloud,
   resolveWizardJuggler,
+  resolveWizardVampire,
   resolveWizardWitchExchange,
   startWizardGame
 } from "../src/games/wizard/store.js";
@@ -118,6 +119,62 @@ test("follow suit blocks a wrong suited card when the player can serve", () => {
 
   assert.match(validateCardPlay(game, player, suited("blue-9", "blue", 9), {}) ?? "", /Farbzwang/);
   assert.equal(validateCardPlay(game, player, suited("red-2", "red", 2), {}), null);
+});
+
+test("leading wizard-like winners keep the entire trick without a led suit", () => {
+  const player: WizardPlayer = {
+    username: "Neo",
+    seat: 2,
+    hand: [suited("red-2", "red", 2), suited("blue-9", "blue", 9)],
+    prediction: 0,
+    tricksWon: 0,
+    score: 0
+  };
+  const leadingCards = [
+    played("Volle", special("wizard")),
+    played("Volle", special("dragon")),
+    played("Volle", special("shapeshifter"), "shapeshifter-wizard", { shapeshifterMode: "wizard" })
+  ];
+
+  for (const leadingCard of leadingCards) {
+    const game = gameForRules({
+      players: [
+        { username: "Volle", seat: 0, hand: [], prediction: 0, tricksWon: 0, score: 0 },
+        { username: "Leia", seat: 1, hand: [], prediction: 0, tricksWon: 0, score: 0 },
+        player
+      ],
+      activePlayerIndex: 2,
+      currentTrick: [leadingCard, played("Leia", suited("red-7", "red", 7))]
+    });
+
+    assert.equal(validateCardPlay(game, player, player.hand[1]!, {}), null);
+  }
+});
+
+test("leading shapeshifter as jester lets the second suited card establish follow suit", () => {
+  const player: WizardPlayer = {
+    username: "Neo",
+    seat: 2,
+    hand: [suited("red-2", "red", 2), suited("blue-9", "blue", 9)],
+    prediction: 0,
+    tricksWon: 0,
+    score: 0
+  };
+  const game = gameForRules({
+    players: [
+      { username: "Volle", seat: 0, hand: [], prediction: 0, tricksWon: 0, score: 0 },
+      { username: "Leia", seat: 1, hand: [], prediction: 0, tricksWon: 0, score: 0 },
+      player
+    ],
+    activePlayerIndex: 2,
+    currentTrick: [
+      played("Volle", special("shapeshifter"), "shapeshifter-jester", { shapeshifterMode: "jester" }),
+      played("Leia", suited("red-7", "red", 7))
+    ]
+  });
+
+  assert.match(validateCardPlay(game, player, player.hand[1]!, {}) ?? "", /Farbzwang/);
+  assert.equal(validateCardPlay(game, player, player.hand[0]!, {}), null);
 });
 
 test("first wizard wins against later wizards", () => {
@@ -387,6 +444,101 @@ test("vampire replaces werewolf trump with a random remaining deck card", () => 
   assert.equal(game.trumpSuit, "yellow");
   assert.equal(game.deck.length, 0);
   assert.equal(getEffectiveCard(game, game.currentTrick[0]!).suit, "yellow");
+});
+
+test("vampire player chooses trump after drawing a decision card", () => {
+  const copiedKinds: WizardCard["kind"][] = ["wizard", "dragon", "werewolf", "juggler", "cloud"];
+
+  for (const copiedKind of copiedKinds) {
+    const game = createWizardDebugGame("Volle", {
+      enabledOptionalCards: ["vampire"],
+      scoreboardVisibleDefault: true
+    });
+    const vampire = special("vampire");
+    const copiedCard = special(copiedKind);
+
+    game.status = "playing";
+    game.roundNumber = 1;
+    game.maxRounds = 10;
+    game.activePlayerIndex = 0;
+    game.deck = [copiedCard];
+    game.players[0]!.hand = [vampire];
+    game.players[1]!.hand = [suited("blue-1", "blue", 1)];
+    game.players[2]!.hand = [suited("green-1", "green", 1)];
+    game.players[3]!.hand = [suited("red-1", "red", 1)];
+    for (const player of game.players) {
+      player.prediction = 0;
+    }
+
+    playWizardCard(game.id, "Volle", {
+      cardId: vampire.id,
+      playerUsername: "Volle 1"
+    });
+
+    assert.equal(game.status, "effect");
+    assert.equal(game.pendingEffect?.type, "vampire");
+    assert.equal(game.trumpChoicePendingFor, "Volle 1");
+    assert.equal(game.activePlayerIndex, 0);
+
+    resolveWizardVampire(game.id, "Volle", {
+      playerUsername: "Volle 1",
+      suit: "green"
+    });
+
+    assert.equal(game.pendingEffect, null);
+    assert.equal(game.trumpChoicePendingFor, null);
+    assert.equal(game.trumpSuit, "green");
+    assert.equal(game.status, "playing");
+    assert.equal(game.activePlayerIndex, 1);
+
+    if (copiedKind === "juggler" || copiedKind === "cloud") {
+      assert.equal(getEffectiveCard(game, game.currentTrick[0]!).suit, "green");
+    }
+  }
+});
+
+test("vampire player chooses wizard or jester when drawing the shapeshifter", () => {
+  const game = createWizardDebugGame("Volle", {
+    enabledOptionalCards: ["vampire", "shapeshifter"],
+    scoreboardVisibleDefault: true
+  });
+  const vampire = special("vampire");
+
+  game.status = "playing";
+  game.roundNumber = 1;
+  game.maxRounds = 10;
+  game.activePlayerIndex = 0;
+  game.deck = [special("shapeshifter")];
+  game.players[0]!.hand = [vampire];
+  game.players[1]!.hand = [suited("blue-1", "blue", 1)];
+  game.players[2]!.hand = [suited("green-1", "green", 1)];
+  game.players[3]!.hand = [suited("red-1", "red", 1)];
+  for (const player of game.players) {
+    player.prediction = 0;
+  }
+
+  playWizardCard(game.id, "Volle", {
+    cardId: vampire.id,
+    playerUsername: "Volle 1"
+  });
+
+  assert.throws(
+    () =>
+      resolveWizardVampire(game.id, "Volle", {
+        playerUsername: "Volle 1",
+        suit: "blue"
+      }),
+    /Wizard oder Narr/
+  );
+
+  resolveWizardVampire(game.id, "Volle", {
+    playerUsername: "Volle 1",
+    suit: "blue",
+    shapeshifterMode: "wizard"
+  });
+
+  assert.equal(game.trumpSuit, "blue");
+  assert.equal(getEffectiveCard(game, game.currentTrick[0]!).kind, "wizard");
 });
 
 test("cloud effect can increase or decrease prediction without going below zero", () => {

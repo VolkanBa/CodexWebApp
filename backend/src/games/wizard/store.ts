@@ -178,7 +178,11 @@ const resolveControlledPlayer = (
   }
 
   if (game.status === "effect" && game.pendingEffect) {
-    if (game.pendingEffect.type === "cloud" || game.pendingEffect.type === "witch") {
+    if (
+      game.pendingEffect.type === "vampire" ||
+      game.pendingEffect.type === "cloud" ||
+      game.pendingEffect.type === "witch"
+    ) {
       return getPlayer(game, game.pendingEffect.username);
     }
   }
@@ -262,6 +266,15 @@ const applyTrumpCard = (game: WizardGame, card: WizardCard | null) => {
   game.vampireCopyCard = card;
   game.trumpSuit = card?.suit ?? null;
 };
+
+const vampireCardsRequiringChoice = new Set<WizardCard["kind"]>([
+  "wizard",
+  "shapeshifter",
+  "dragon",
+  "werewolf",
+  "juggler",
+  "cloud"
+]);
 
 const activateStartingWerewolf = (game: WizardGame, revealedTrumpCard: WizardCard | null) => {
   for (const player of game.players) {
@@ -523,8 +536,12 @@ const continueAfterEffects = (
   resolvedEffects: { juggler?: boolean; witch?: boolean } = {},
   winningPlay: PlayedWizardCard | null = null
 ) => {
-  const hasWinningJuggler = winningPlay?.card.kind === "juggler" && !winningPlay.effectSuppressed;
-  const witchCard = trick.find((playedCard) => playedCard.card.kind === "witch");
+  const hasWinningJuggler = winningPlay
+    ? !winningPlay.effectSuppressed && getEffectiveCard(game, winningPlay).kind === "juggler"
+    : false;
+  const witchCard = trick.find(
+    (playedCard) => !playedCard.effectSuppressed && getEffectiveCard(game, playedCard).kind === "witch"
+  );
 
   if (hasWinningJuggler && !resolvedEffects.juggler && getJugglerPlayersNeedingChoice(game).length > 0) {
     game.pendingEffect = {
@@ -579,7 +596,9 @@ const resolveCompletedTrick = (game: WizardGame) => {
   const fallbackWinner = determineTrickWinner(game, trick, { ignoreBomb: true });
   const nextLeaderUsername = (actualWinner ?? fallbackWinner)?.playerUsername ?? game.players[game.leaderIndex]?.username;
   const hasBomb = hasActiveBomb(game, trick);
-  const hasWinningCloud = actualWinner?.card.kind === "cloud" && !actualWinner.effectSuppressed;
+  const hasWinningCloud = actualWinner
+    ? !actualWinner.effectSuppressed && getEffectiveCard(game, actualWinner).kind === "cloud"
+    : false;
 
   if (actualWinner && !hasBomb) {
     const player = getPlayer(game, actualWinner.playerUsername);
@@ -960,10 +979,102 @@ export const playWizardCard = (gameId: string, username: string, input: WizardPl
     });
   }
 
+  if (card.kind === "vampire" && game.vampireCopyCard && vampireCardsRequiringChoice.has(game.vampireCopyCard.kind)) {
+    game.pendingEffect = {
+      type: "vampire",
+      username: player.username,
+      playId: playedCard.playId,
+      copiedCard: game.vampireCopyCard
+    };
+    game.trumpChoicePendingFor = player.username;
+    game.status = "effect";
+    addMessage(game, `Vampir: ${player.username} muss die neue Trumpffarbe bestimmen.`, {
+      type: "effect",
+      emoji: "🧛",
+      playerUsername: player.username,
+      card: game.vampireCopyCard
+    });
+    setUpdated(game);
+    return game;
+  }
+
   if (game.currentTrick.length === game.players.length) {
     resolveCompletedTrick(game);
   } else {
     game.activePlayerIndex = getNextPlayerIndex(game, game.activePlayerIndex);
+  }
+
+  setUpdated(game);
+  return game;
+};
+
+export const resolveWizardVampire = (
+  gameId: string,
+  username: string,
+  input: { playerUsername?: string; suit: WizardSuit; shapeshifterMode?: "wizard" | "jester" }
+) => {
+  const game = getStoredGame(gameId);
+
+  if (!game || game.pendingEffect?.type !== "vampire") {
+    throw new Error("Es wartet aktuell keine Vampir-Entscheidung.");
+  }
+
+  const pendingEffect = game.pendingEffect;
+  const actingPlayer = resolveControlledPlayer(game, username, input.playerUsername);
+
+  if (!actingPlayer || pendingEffect.username.toLowerCase() !== actingPlayer.username.toLowerCase()) {
+    throw new Error("Nur die Person mit dem Vampir darf diese Entscheidung treffen.");
+  }
+
+  if (!wizardSuits.includes(input.suit)) {
+    throw new Error("Ungültige Trumpffarbe.");
+  }
+
+  if (
+    pendingEffect.copiedCard.kind === "shapeshifter" &&
+    input.shapeshifterMode !== "wizard" &&
+    input.shapeshifterMode !== "jester"
+  ) {
+    throw new Error("Der kopierte Gestaltwandler muss als Wizard oder Narr gespielt werden.");
+  }
+
+  const playedCard = game.currentTrick.find((candidate) => candidate.playId === pendingEffect.playId);
+
+  if (!playedCard || playedCard.card.kind !== "vampire") {
+    throw new Error("Der Vampir-Zug konnte nicht mehr gefunden werden.");
+  }
+
+  playedCard.chosenTrumpSuit = input.suit;
+  playedCard.shapeshifterMode = input.shapeshifterMode;
+
+  if (pendingEffect.copiedCard.kind === "juggler" || pendingEffect.copiedCard.kind === "cloud") {
+    playedCard.chosenSuit = input.suit;
+  }
+
+  game.trumpSuit = input.suit;
+  game.trumpChoicePendingFor = null;
+  game.pendingEffect = null;
+  addMessage(
+    game,
+    `Vampir: ${actingPlayer.username} bestimmt ${suitLabels[input.suit]} als neuen Trumpf${
+      input.shapeshifterMode
+        ? ` und nutzt den Gestaltwandler als ${input.shapeshifterMode === "wizard" ? "Wizard" : "Narr"}`
+        : ""
+    }.`,
+    {
+      type: "trump",
+      emoji: "🎨",
+      playerUsername: actingPlayer.username,
+      card: pendingEffect.copiedCard,
+      chosenSuit: input.suit
+    }
+  );
+
+  if (game.currentTrick.length === game.players.length) {
+    resolveCompletedTrick(game);
+  } else {
+    game.activePlayerIndex = getNextPlayerIndex(game, game.activePlayerIndex);
+    game.status = "playing";
   }
 
   setUpdated(game);

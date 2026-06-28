@@ -221,3 +221,12 @@ Linear-Team: `CodexWebApp`
     - [x] COD-97 / WEB-044-FE: Responsive Tischansicht und Sitzplätze
     - [x] COD-98 / WEB-044-TESTS-DOCS: Spielbrett testen und dokumentieren
     - [x] COD-99 / WEB-044-FE-ANIM: Stichkarten- und Overlay-Animationen
+- [x] COD-100 / WEB-045: Vampir-Trumpfentscheidung, offenen Stich und Log-Toggle korrigieren
+  - Branch: `codex/wizard-vampire-choice-led-suit-log`
+  - Linear: `https://linear.app/codexwebapp/issue/COD-100/web-045-vampir-trumpfentscheidung-offenen-stich-und-log-toggle`
+  - Ergebnis: Bei entscheidungspflichtigen Vampir-Kopien bestimmt ausschließlich die Person mit dem Vampir die neue Trumpffarbe und beim Gestaltwandler zusätzlich Wizard oder Narr. Führende Wizard-artige Gewinnerkarten etablieren keinen Farbzwang; das Spiel-Log ist kompakt ein- und ausblendbar.
+  - Untertickets:
+    - [x] COD-101 / WEB-045-BE: Vampir-Zwischenentscheidung implementieren
+    - [x] COD-102 / WEB-045-RULES: Führende Gewinner-Sonderkarten ohne Farbzwang
+    - [x] COD-103 / WEB-045-FE: Vampir-Auswahl und Log-Toggle
+    - [x] COD-104 / WEB-045-TESTS-DOCS: Regressionen testen und dokumentieren

@@ -88,6 +88,28 @@ export const getEffectiveCard = (
       };
     }
 
+    if (copiedCard.kind === "shapeshifter") {
+      const mode: ShapeshifterMode = playedCard.shapeshifterMode ?? "jester";
+
+      return {
+        kind: mode === "wizard" ? "wizard" : "jester",
+        label: mode === "wizard" ? "Vampir als Wizard" : "Vampir als Narr",
+        isSpecial: true
+      };
+    }
+
+    if (isFlexibleSuitCard(copiedCard)) {
+      return {
+        kind: copiedCard.kind,
+        suit: playedCard.chosenSuit,
+        value: copiedCard.value,
+        label: playedCard.chosenSuit
+          ? `Vampir als ${copiedCard.label} in ${suitLabels[playedCard.chosenSuit]}`
+          : `Vampir als ${copiedCard.label}`,
+        isSpecial: false
+      };
+    }
+
     return {
       kind: copiedCard.kind,
       suit: copiedCard.suit,
@@ -110,8 +132,12 @@ export const getLedSuit = (
   game: Pick<WizardGame, "currentTrick" | "vampireCopyCard">,
   trick: PlayedWizardCard[] = game.currentTrick
 ) => {
-  for (const playedCard of trick) {
+  for (const [index, playedCard] of trick.entries()) {
     const effectiveCard = getEffectiveCard(game, playedCard);
+
+    if (index === 0 && (effectiveCard.kind === "wizard" || effectiveCard.kind === "dragon")) {
+      return null;
+    }
 
     if (!effectiveCard.isSpecial && effectiveCard.suit) {
       return effectiveCard.suit;

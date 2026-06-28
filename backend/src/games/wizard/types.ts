@@ -89,6 +89,12 @@ export type WizardGameStatus =
 
 export type WizardPendingEffect =
   | {
+      type: "vampire";
+      username: string;
+      playId: string;
+      copiedCard: WizardCard;
+    }
+  | {
       type: "cloud";
       username: string;
       nextLeaderUsername: string;

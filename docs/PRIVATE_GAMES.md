@@ -34,9 +34,10 @@ Die WebSocket-Verbindung authentifiziert sich über das bestehende `httpOnly` Se
 - Alle Debug-Spieler werden vom Admin-Account gesteuert.
 - In der UI wird farbig angezeigt, welcher Debug-Spieler gerade am Zug ist.
 - Nach dem letzten Stich einer Runde wertet das Backend automatisch und startet direkt die nächste Runde, solange das Spiel noch nicht beendet ist.
-- Die Trumpfwahl bei aufgedecktem Wizard, Gestaltwandler, Vampir oder Werwolf ist intern an den Geber der Runde gebunden. Der Geber rotiert pro Runde über `dealerIndex = (roundNumber - 1) % players.length` im Spielerarray und damit im Uhrzeigersinn.
+- Die normale Trumpfwahl bei zu Rundenbeginn aufgedecktem Wizard, Gestaltwandler, Vampir oder Werwolf ist intern an den Geber der Runde gebunden. Der Geber rotiert pro Runde über `dealerIndex = (roundNumber - 1) % players.length` im Spielerarray und damit im Uhrzeigersinn. Eine durch einen ausgespielten Vampir ausgelöste Wahl gehört dagegen ausschließlich der Person, die den Vampir gespielt hat.
 - Wird Wolke oder Jongleur als Trumpfkarte aufgedeckt, bestimmt die Person, die den ersten Stich der Runde eröffnen würde, die Trumpffarbe.
 - Das Spiel-Log wird strukturiert übertragen. Gespielte Karten werden im Log als kleine Karten angezeigt; Gewinnernamen werden im Frontend hervorgehoben.
+- Das Spiel-Log kann vollständig ausgeblendet und über den kompakten `Log`-Button wieder eingeblendet werden.
 - Rundenwertungen werden im Log mit Punkteänderung und Gesamtstand pro Person angezeigt.
 
 Für produktive Online-Nutzung sollte später ein persistenter Store ergänzt werden, zum Beispiel PostgreSQL oder Redis.
@@ -51,6 +52,7 @@ Aktueller Regelstand:
 - Eine abgegebene Stichvorhersage kann nicht manuell geändert werden.
 - Farbzwang gilt für angespielte Farben.
 - Sonderkarten können vom Farbzwang ausgenommen sein.
+- Eröffnet ein Wizard, Drache oder ein als Wizard gewählter Gestaltwandler den Stich, wird für den gesamten Stich keine Farbe angespielt. Alle folgenden Personen dürfen unabhängig von der zweiten Karte frei spielen. Ein als Narr gewählter Gestaltwandler verhält sich dagegen wie ein Narr; die erste danach gespielte farbige Karte legt den Farbzwang fest.
 - Handkarten werden serverseitig nach Farbe `Rot`, `Grün`, `Blau`, `Gelb` und danach nach Wert aufsteigend sortiert.
 - Die feste Handanzeige rendert ausschließlich die Karten. Sie besitzt keinen sichtbaren Hintergrund, keinen Titel, keinen Zähler und keine sichtbare Scrollleiste. Kleine Hände werden mittig ausgerichtet und größer dargestellt; bei vielen Karten bleibt die Reihe horizontal scrollbar. Die unsichtbare Bedienfläche ist auf die tatsächliche Breite der Kartenreihe begrenzt, sodass Bedienelemente links und rechts daneben anklickbar bleiben.
 - Die aktuelle Trumpfkarte klebt unabhängig vom Scrollen oben rechts am Bildschirm. Sie kann ausgeblendet werden; im eingeklappten Zustand bleibt nur ein kleiner `Trumpf`-Button sichtbar.
@@ -80,7 +82,7 @@ Erweiterungen:
 - `Bombe`: annulliert den Stich. Niemand bekommt einen Stichpunkt. Die Person, die ohne Bombe gewonnen hätte, eröffnet den nächsten Stich. Wird die Bombe als erste Karte eines Stichs gespielt, zählt sie als Narr und annulliert den Stich nicht.
 - `Werwolf`: Wenn der Werwolf zu Rundenbeginn auf einer Hand liegt, zieht ihn das System vor jeder Vorhersage automatisch auf den Trumpfplatz. Die ursprünglich aufgedeckte Trumpfkarte wird mit dem Werwolf getauscht und auf diese Hand gelegt. Die Person, die den Werwolf hatte, bestimmt die Trumpffarbe.
 - `Gestaltwandler`: wird erst beim Ausspielen per Popup als Wizard oder Narr gewählt.
-- `Vampir`: Beim Ausspielen deckt der Vampir eine zufällige Karte aus dem Restdeck auf. Diese Karte wird sofort zur neuen Trumpfkarte und wird vom Vampir für den aktuellen Stich kopiert. Liegt vorher der Werwolf auf dem Trumpfplatz, kopiert der Vampir nicht den Werwolf, sondern ersetzt ihn durch die gezogene Restdeckkarte.
+- `Vampir`: Beim Ausspielen deckt der Vampir eine zufällige Karte aus dem Restdeck auf. Diese Karte wird sofort zur neuen Trumpfkarte und wird vom Vampir für den aktuellen Stich kopiert. Liegt vorher der Werwolf auf dem Trumpfplatz, kopiert der Vampir nicht den Werwolf, sondern ersetzt ihn durch die gezogene Restdeckkarte. Wird dabei Wizard, Gestaltwandler, Drache, Werwolf, Jongleur oder Wolke gezogen, hält das Backend den Spielzug an und nur die Person mit dem Vampir bestimmt die neue Trumpffarbe. Beim Gestaltwandler wählt diese Person zusätzlich verbindlich zwischen Wizard und Narr. Bei Jongleur und Wolke gilt die gewählte Trumpffarbe zugleich als Farbe der kopierten Karte.
 - `Hexe`: sehr niedrige Sonderkarte. Nach der Stichauflösung tauscht nur die Person, die die Hexe gespielt hat, eine eigene Handkarte gegen eine Karte aus dem Stich; die neu gelegte Karte hat keinen Effekt. Nach dem Tausch wird der Effekt serverseitig geschlossen, damit das Tauschmenü nicht erneut erscheint.
 - `Jongleur 7 1/2`: kommt nur einmal im Deck vor. Die Karte ist auf der Hand farblos, kann immer gespielt werden und wird beim Ausspielen per Popup frei eingefärbt. Farbzwang gilt für diese Karte nicht. Der Weitergabe-Effekt tritt nur ein, wenn der Jongleur den Stich gewinnt. Dann wählt jede Person geheim eine eigene Handkarte aus; diese Karten werden gleichzeitig nach links weitergegeben.
 - `Wolke 9 3/4`: kommt nur einmal im Deck vor. Die Karte ist auf der Hand farblos, kann immer gespielt werden und wird beim Ausspielen per Popup frei eingefärbt. Farbzwang gilt für diese Karte nicht. Der Vorhersage-Effekt tritt nur ein, wenn die Wolke den Stich gewinnt. Der Stichgewinner verändert die eigene Vorhersage um `+1` oder `-1`; die Vorhersage darf nicht unter `0` fallen.
@@ -110,6 +112,9 @@ Abgedeckt sind unter anderem:
 - Werwolf-Trumpfwahl
 - Werwolf-Starttausch aus der Hand
 - Vampir-Restdeck-Trumpfwechsel
+- autorisierte Vampir-Trumpfwahl für Wizard, Gestaltwandler, Drache, Werwolf, Jongleur und Wolke
+- freie Kartenwahl nach führendem Wizard, Drachen und Gestaltwandler als Wizard
+- Farbzwang nach führendem Gestaltwandler als Narr
 - feste Maximalrunden nach Spielerzahl
 - Lobby-Timeout nach 1 Stunde Inaktivität
 - Vorhersagesperre nach Abgabe

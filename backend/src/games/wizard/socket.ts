@@ -15,6 +15,7 @@ import {
   playWizardCard,
   resolveWizardCloud,
   resolveWizardJuggler,
+  resolveWizardVampire,
   resolveWizardWitchExchange,
   startWizardGame
 } from "./store.js";
@@ -73,6 +74,13 @@ type WizardClientMessage =
       shapeshifterMode?: "wizard" | "jester";
       chosenTrumpSuit?: WizardSuit;
       chosenSuit?: WizardSuit;
+    }
+  | {
+      type: "resolveVampire";
+      gameId: string;
+      playerUsername?: string;
+      suit: WizardSuit;
+      shapeshifterMode?: "wizard" | "jester";
     }
   | {
       type: "resolveCloud";
@@ -346,6 +354,20 @@ export const registerWizardSocketServer = (server: Server) => {
           }
           case "resolveCloud": {
             const game = resolveWizardCloud(message.gameId, user.username, message.delta);
+            broadcastGameState(game.id);
+            broadcastGamesList();
+            break;
+          }
+          case "resolveVampire": {
+            if (!wizardSuits.includes(message.suit)) {
+              throw new Error("Ungültige Trumpffarbe.");
+            }
+
+            const game = resolveWizardVampire(message.gameId, user.username, {
+              playerUsername: message.playerUsername,
+              suit: message.suit,
+              shapeshifterMode: message.shapeshifterMode
+            });
             broadcastGameState(game.id);
             broadcastGamesList();
             break;

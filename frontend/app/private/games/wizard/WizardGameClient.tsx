@@ -80,6 +80,12 @@ type WizardPlayer = {
 
 type WizardPendingEffect =
   | {
+      type: "vampire";
+      username: string;
+      playId: string;
+      copiedCard: WizardCard;
+    }
+  | {
       type: "cloud";
       username: string;
       nextLeaderUsername: string;
@@ -505,6 +511,7 @@ export function WizardGameClient({
   const [timeLimitSeconds, setTimeLimitSeconds] = useState("");
   const [enabledOptionalCards, setEnabledOptionalCards] = useState<string[]>(optionalCards.map(([value]) => value));
   const [scoreboardVisible, setScoreboardVisible] = useState(true);
+  const [logVisible, setLogVisible] = useState(true);
   const [trumpCardVisible, setTrumpCardVisible] = useState(true);
   const [prediction, setPrediction] = useState(0);
   const [witchHandCardId, setWitchHandCardId] = useState("");
@@ -512,6 +519,7 @@ export function WizardGameClient({
   const [jugglerCardChoices, setJugglerCardChoices] = useState<Record<string, string>>({});
   const [selectedControlledUsername, setSelectedControlledUsername] = useState<string | null>(null);
   const [playDecisionPrompt, setPlayDecisionPrompt] = useState<PlayDecisionPrompt | null>(null);
+  const [vampireShapeshifterMode, setVampireShapeshifterMode] = useState<"wizard" | "jester" | null>(null);
 
   const isSelfOwner = username && game?.ownerUsername.toLowerCase() === username.toLowerCase();
   const isAdmin = role === "admin";
@@ -547,11 +555,16 @@ export function WizardGameClient({
   const isDisplayedHandActive =
     Boolean(displayedHandOwnerUsername) && game?.activeUsername?.toLowerCase() === displayedHandOwnerUsername?.toLowerCase();
   const pendingEffectUsername =
-    game?.pendingEffect?.type === "cloud" || game?.pendingEffect?.type === "witch" ? game.pendingEffect.username : null;
+    game?.pendingEffect?.type === "vampire" ||
+    game?.pendingEffect?.type === "cloud" ||
+    game?.pendingEffect?.type === "witch"
+      ? game.pendingEffect.username
+      : null;
   const pendingEffectControlledHand =
     pendingEffectUsername ? controlledHands.find((entry) => entry.username === pendingEffectUsername) : null;
   const canResolvePendingEffect = Boolean(pendingEffectControlledHand);
   const jugglerPendingEffect = game?.pendingEffect?.type === "juggler" ? game.pendingEffect : null;
+  const vampirePendingEffect = game?.pendingEffect?.type === "vampire" ? game.pendingEffect : null;
   const jugglerControlledHands = jugglerPendingEffect ? controlledHands.filter((entry) => entry.hand.length > 0) : [];
   const joinUrl = useMemo(() => {
     if (!game || typeof window === "undefined") {
@@ -685,6 +698,10 @@ export function WizardGameClient({
       setJugglerCardChoices({});
     }
   }, [game?.pendingEffect?.type]);
+
+  useEffect(() => {
+    setVampireShapeshifterMode(null);
+  }, [vampirePendingEffect?.playId]);
 
   useEffect(() => {
     setTrumpCardVisible(true);
@@ -1146,6 +1163,12 @@ export function WizardGameClient({
             {game.pendingEffect ? (
               <div className="mt-6 border border-suit-orange/50 bg-suit-orange/10 p-4">
                 <h3 className="text-xl font-black text-white">Sondereffekt</h3>
+                {game.pendingEffect.type === "vampire" ? (
+                  <p className="mt-3 text-sm text-white/72">
+                    Vampir: {pendingEffectUsername} bestimmt den neuen Trumpf
+                    {game.pendingEffect.copiedCard.kind === "shapeshifter" ? " und die Gestalt" : ""}.
+                  </p>
+                ) : null}
                 {game.pendingEffect.type === "cloud" ? (
                   <div className="mt-3">
                     <p className="text-sm text-white/72">Wolke: {pendingEffectUsername} muss die Vorhersage ändern.</p>
@@ -1383,49 +1406,128 @@ export function WizardGameClient({
               </button>
             )}
 
-            <section className="border border-white/12 bg-white/[0.045] p-5">
-              <h2 className="text-2xl font-black text-white">Log</h2>
-              <div className="mt-4 grid gap-3">
-                {game.messages.map((entry) => (
-                  <article
-                    key={entry.id}
-                    className="grid grid-cols-[auto_1fr] items-center gap-3 border border-white/10 bg-suit-black/45 p-3"
+            {logVisible ? (
+              <section className="border border-white/12 bg-white/[0.045] p-5">
+                <div className="flex items-center justify-between gap-3">
+                  <h2 className="text-2xl font-black text-white">Log</h2>
+                  <button
+                    type="button"
+                    onClick={() => setLogVisible(false)}
+                    className="border border-white/12 px-3 py-2 text-xs font-bold text-white/72"
                   >
-                    <span className="flex h-9 w-9 items-center justify-center bg-white/[0.08] text-lg" aria-hidden="true">
-                      {entry.emoji}
-                    </span>
-                    <div className="flex items-center gap-3">
-                      {entry.card ? (
-                        <div className="w-12 shrink-0">
-                          <WizardCardFrame card={entry.card} chosenSuit={entry.chosenSuit} variant="mini" />
-                        </div>
-                      ) : null}
-                      <div>
-                        <p className="text-sm leading-6 text-white/76">
-                          <WizardLogText entry={entry} />
-                        </p>
-                        {entry.scoreChanges?.length ? (
-                          <div className="mt-2 flex flex-wrap gap-2">
-                            {entry.scoreChanges.map((change) => (
-                              <span
-                                key={change.username}
-                                className="border border-white/10 bg-black/25 px-2 py-1 text-xs font-black text-white/72"
-                              >
-                                {change.username}: {change.delta >= 0 ? "+" : ""}
-                                {change.delta} / {change.total}
-                              </span>
-                            ))}
+                    Ausblenden
+                  </button>
+                </div>
+                <div className="mt-4 grid gap-3">
+                  {game.messages.map((entry) => (
+                    <article
+                      key={entry.id}
+                      className="grid grid-cols-[auto_1fr] items-center gap-3 border border-white/10 bg-suit-black/45 p-3"
+                    >
+                      <span className="flex h-9 w-9 items-center justify-center bg-white/[0.08] text-lg" aria-hidden="true">
+                        {entry.emoji}
+                      </span>
+                      <div className="flex items-center gap-3">
+                        {entry.card ? (
+                          <div className="w-12 shrink-0">
+                            <WizardCardFrame card={entry.card} chosenSuit={entry.chosenSuit} variant="mini" />
                           </div>
                         ) : null}
+                        <div>
+                          <p className="text-sm leading-6 text-white/76">
+                            <WizardLogText entry={entry} />
+                          </p>
+                          {entry.scoreChanges?.length ? (
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              {entry.scoreChanges.map((change) => (
+                                <span
+                                  key={change.username}
+                                  className="border border-white/10 bg-black/25 px-2 py-1 text-xs font-black text-white/72"
+                                >
+                                  {change.username}: {change.delta >= 0 ? "+" : ""}
+                                  {change.delta} / {change.total}
+                                </span>
+                              ))}
+                            </div>
+                          ) : null}
+                        </div>
                       </div>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </section>
+                    </article>
+                  ))}
+                </div>
+              </section>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setLogVisible(true)}
+                className="h-7 justify-self-end border border-white/12 px-2 text-[11px] font-bold text-white/60 transition hover:text-white"
+                aria-label="Log einblenden"
+              >
+                Log
+              </button>
+            )}
           </aside>
         </div>
       )}
+      {vampirePendingEffect && canResolvePendingEffect ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-md border border-suit-orange/50 bg-suit-black p-5 shadow-glow">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-suit-orange">Vampir-Effekt</p>
+            <h2 className="mt-2 text-2xl font-black text-white">Neue Trumpfkarte bestimmen</h2>
+            <p className="mt-2 text-sm leading-6 text-white/68">
+              {vampirePendingEffect.copiedCard.label} wurde aufgedeckt. {vampirePendingEffect.username} wählt jetzt den Trumpf.
+            </p>
+            <div className="mt-5 w-28">
+              <WizardCardFrame card={vampirePendingEffect.copiedCard} variant="compact" />
+            </div>
+            {vampirePendingEffect.copiedCard.kind === "shapeshifter" ? (
+              <div className="mt-5">
+                <p className="text-sm font-bold text-white">Vampir zählt als</p>
+                <div className="mt-2 grid grid-cols-2 gap-3">
+                  {(["wizard", "jester"] as const).map((mode) => (
+                    <button
+                      key={mode}
+                      type="button"
+                      onClick={() => setVampireShapeshifterMode(mode)}
+                      className={`border px-4 py-3 text-sm font-black transition ${
+                        vampireShapeshifterMode === mode
+                          ? "border-suit-orange bg-suit-orange text-suit-black"
+                          : "border-white/15 text-white hover:border-suit-orange"
+                      }`}
+                    >
+                      {mode === "wizard" ? "Wizard" : "Narr"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+            <div className="mt-5 grid grid-cols-2 gap-3">
+              {suitOptions.map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  disabled={
+                    vampirePendingEffect.copiedCard.kind === "shapeshifter" && !vampireShapeshifterMode
+                  }
+                  onClick={() =>
+                    send({
+                      type: "resolveVampire",
+                      gameId: game?.id,
+                      playerUsername: vampirePendingEffect.username,
+                      suit: value,
+                      shapeshifterMode: vampireShapeshifterMode ?? undefined
+                    })
+                  }
+                  className="border px-4 py-3 text-sm font-black transition hover:bg-suit-orange hover:text-suit-black disabled:cursor-not-allowed disabled:opacity-40"
+                  style={{ borderColor: suitVisuals[value].color, color: suitVisuals[value].color }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : null}
       {playDecisionPrompt ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
           <div className="w-full max-w-md border border-white/12 bg-suit-black p-5 shadow-glow">
