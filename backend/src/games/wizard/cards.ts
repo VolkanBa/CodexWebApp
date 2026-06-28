@@ -38,18 +38,22 @@ const repeatedSpecialDesignKeys = [
   "jester-4"
 ];
 
-export const wizardCardDesignKeys = [
-  ...wizardSuits.flatMap((suit) => Array.from({ length: 13 }, (_, index) => `${suit}-${index + 1}`)),
-  "juggler-7-5",
-  "cloud-9-75",
-  ...repeatedSpecialDesignKeys,
+export const wizardSpecialCardDesignKeys = [
+  "joseph-joestar-wizard-jester",
+  "witch",
+  "vampire",
+  "werewolf",
   "dragon",
   "fairy",
   "bomb",
-  "werewolf",
-  "witch",
-  "joseph-joestar-wizard-jester",
-  "vampire"
+  "juggler-7-5",
+  "cloud-9-75",
+  ...repeatedSpecialDesignKeys
+] as const;
+
+export const wizardCardDesignKeys = [
+  ...wizardSpecialCardDesignKeys,
+  ...wizardSuits.flatMap((suit) => Array.from({ length: 13 }, (_, index) => `${suit}-${index + 1}`))
 ] as const;
 
 const createNumberCard = (suit: WizardSuit, value: number): WizardCard => ({

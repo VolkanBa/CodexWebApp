@@ -1208,9 +1208,9 @@ export function WizardGameClient({
             ) : null}
 
             {displayedHand.length ? (
-              <div className="pointer-events-none fixed bottom-0 left-0 right-0 z-40 px-4">
-                <div className="pointer-events-auto mx-auto min-h-80 max-w-7xl overflow-x-auto overflow-y-visible pb-12 pt-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                  <div className="mx-auto flex min-h-64 w-max min-w-full items-end justify-center gap-2">
+              <div className="pointer-events-none fixed bottom-0 left-0 right-0 z-40 flex justify-center px-4">
+                <div className="pointer-events-auto min-h-80 w-fit max-w-full overflow-x-auto overflow-y-visible pb-12 pt-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  <div className="flex min-h-64 w-max items-end gap-2">
                     {displayedHand.map((card) => {
                       const isValid = displayedValidCardIds.includes(card.id);
                       const isActive = game.debugMode?.enabled

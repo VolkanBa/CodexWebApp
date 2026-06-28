@@ -19,7 +19,12 @@ import {
   resolveWizardWitchExchange,
   startWizardGame
 } from "../src/games/wizard/store.js";
-import { createWizardDeck, optionalWizardCards, wizardCardDesignKeys } from "../src/games/wizard/cards.js";
+import {
+  createWizardDeck,
+  optionalWizardCards,
+  wizardCardDesignKeys,
+  wizardSpecialCardDesignKeys
+} from "../src/games/wizard/cards.js";
 import { getWizardCardImagePath } from "../src/games/wizard/cardImages.js";
 import { calculateRoundScore, determineTrickWinner, getEffectiveCard, validateCardPlay } from "../src/games/wizard/rules.js";
 import type { OptionalWizardCardKind, PlayedWizardCard, WizardCard, WizardGame, WizardPlayer } from "../src/games/wizard/types.js";
@@ -221,6 +226,30 @@ test("every card design receives a unique image when enough files exist", async 
     assert.equal(new Set(designKeys).size, deck.length);
     assert.equal(imagePaths.every(Boolean), true);
     assert.equal(new Set(imagePaths).size, deck.length);
+  } finally {
+    await rm(imageRoot, { recursive: true, force: true });
+  }
+});
+
+test("special cards receive images before number cards when assets are limited", async () => {
+  const imageRoot = await mkdtemp(join(tmpdir(), "wizard-special-card-images-"));
+
+  try {
+    await Promise.all(
+      wizardSpecialCardDesignKeys.map((_, index) =>
+        writeFile(join(imageRoot, `special-${String(index).padStart(2, "0")}.jpg`), "image")
+      )
+    );
+
+    const specialImagePaths = await Promise.all(
+      wizardSpecialCardDesignKeys.map((designKey) => getWizardCardImagePath(imageRoot, designKey))
+    );
+
+    assert.equal(specialImagePaths.every(Boolean), true);
+    assert.equal(new Set(specialImagePaths).size, wizardSpecialCardDesignKeys.length);
+    assert.ok(await getWizardCardImagePath(imageRoot, "witch"));
+    assert.ok(await getWizardCardImagePath(imageRoot, "joseph-joestar-wizard-jester"));
+    assert.equal(await getWizardCardImagePath(imageRoot, "red-1"), null);
   } finally {
     await rm(imageRoot, { recursive: true, force: true });
   }

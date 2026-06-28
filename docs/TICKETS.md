@@ -196,3 +196,11 @@ Linear-Team: `CodexWebApp`
     - [x] COD-84 / WEB-041-TESTS-DOCS: Bildzuordnung testen und dokumentieren
     - [x] COD-85 / WEB-041-FE: Handkarten größer und mittig darstellen
     - [x] COD-86 / WEB-041-BE: Eindeutige Wizard-Kartenbildzuordnung
+- [x] COD-87 / WEB-042: Sonderkartenbilder priorisieren und Hand-Klickfläche begrenzen
+  - Branch: `codex/wizard-special-images-pointer-area`
+  - Linear: `https://linear.app/codexwebapp/issue/COD-87/web-042-sonderkartenbilder-priorisieren-und-hand-klickflache-begrenzen`
+  - Ergebnis: Alle Sonderkarten erhalten vor Zahlenkarten ein eindeutiges Bild, wodurch Hexe und Gestaltwandler auch bei 65 Assets abgedeckt sind. Die unsichtbare Handfläche ist auf die Kartenreihe begrenzt; seitliche Bedienelemente bleiben anklickbar.
+  - Untertickets:
+    - [x] COD-88 / WEB-042-BE: Sonderkarten bei Bildvergabe priorisieren
+    - [x] COD-89 / WEB-042-TESTS-DOCS: Sonderkartenbilder und Klickfläche absichern
+    - [x] COD-90 / WEB-042-FE: Hand-Klickfläche auf Kartenreihe begrenzen

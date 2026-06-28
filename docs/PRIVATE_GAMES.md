@@ -51,7 +51,7 @@ Aktueller Regelstand:
 - Farbzwang gilt für angespielte Farben.
 - Sonderkarten können vom Farbzwang ausgenommen sein.
 - Handkarten werden serverseitig nach Farbe `Rot`, `Grün`, `Blau`, `Gelb` und danach nach Wert aufsteigend sortiert.
-- Die feste Handanzeige rendert ausschließlich die Karten. Sie besitzt keinen sichtbaren Hintergrund, keinen Titel, keinen Zähler und keine sichtbare Scrollleiste. Kleine Hände werden mittig ausgerichtet und größer dargestellt; bei vielen Karten bleibt die Reihe horizontal scrollbar.
+- Die feste Handanzeige rendert ausschließlich die Karten. Sie besitzt keinen sichtbaren Hintergrund, keinen Titel, keinen Zähler und keine sichtbare Scrollleiste. Kleine Hände werden mittig ausgerichtet und größer dargestellt; bei vielen Karten bleibt die Reihe horizontal scrollbar. Die unsichtbare Bedienfläche ist auf die tatsächliche Breite der Kartenreihe begrenzt, sodass Bedienelemente links und rechts daneben anklickbar bleiben.
 - Nur serverseitig gültige Züge werden angenommen.
 - Punkte:
 
@@ -127,7 +127,7 @@ Dieser Ordner wird nicht nach GitHub gepusht. Das Backend liefert die Bilder nac
 
 Jede Karte enthält einen eindeutigen `designKey` und einen relativen `imagePath`, damit Designs später einzeln ausgetauscht werden können. Das Backend berechnet für alle 69 möglichen Karten eine globale, deterministische Zuordnung: Eine private Bilddatei wird höchstens einer Karte zugewiesen. Der Gestaltwandler nutzt den Schlüssel `joseph-joestar-wizard-jester` und ist auf `Joseph Joestar` gemappt.
 
-Aktuell liegen 65 private Bilddateien für maximal 69 Karten vor. Bei vollständig aktiviertem Deck zeigen deshalb vier Karten den integrierten grafischen Karten-Fallback, statt ein bereits verwendetes Bild zu duplizieren. Vier zusätzliche Dateien im Bildordner reichen aus, damit jede Karte ein eigenes Bild erhält.
+Aktuell liegen 65 private Bilddateien für maximal 69 Karten vor. Sonderkarten werden bei der eindeutigen Bildvergabe zuerst reserviert, damit insbesondere Hexe und Gestaltwandler immer ein Bild erhalten. Bei vollständig aktiviertem Deck zeigen deshalb vier Zahlenkarten den integrierten grafischen Karten-Fallback, statt ein bereits verwendetes Bild zu duplizieren. Vier zusätzliche Dateien im Bildordner reichen aus, damit jede Karte ein eigenes Bild erhält.
 
 Der lokale Asset-Pfad ist konfigurierbar:
 
