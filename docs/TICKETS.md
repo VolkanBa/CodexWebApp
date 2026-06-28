@@ -241,3 +241,7 @@ Linear-Team: `CodexWebApp`
   - Branch: `codex/wizard-viewport-table-height`
   - Linear: `https://linear.app/codexwebapp/issue/COD-108/web-047-wizard-tischhohe-viewport-sicher-begrenzen`
   - Ergebnis: Die gemeinsame Tischzeile besitzt eine explizite viewportabhängige Höhe. Spielfeld, Punkte und Log bleiben gleich hoch; nur die Logeinträge scrollen intern und können die Seite nicht mehr verlängern.
+- [x] COD-109 / WEB-048: Wizard Spielfeld kontrolliert nach unten vergrößern
+  - Branch: `codex/wizard-taller-board`
+  - Linear: `https://linear.app/codexwebapp/issue/COD-109/web-048-wizard-spielfeld-kontrolliert-nach-unten-vergrossern`
+  - Ergebnis: Die viewportabhängige Tischhöhe wächst moderat auf maximal `32rem`; das Spielfeld erhält nach unten mehr Platz, ohne dass das Log die gemeinsame Höhe vergrößern kann.

@@ -1109,7 +1109,7 @@ export function WizardGameClient({
               </div>
             ) : null}
 
-            <div className="mt-6 flex flex-col gap-4 xl:h-[clamp(22rem,calc(100dvh-20rem),30rem)] xl:min-h-0 xl:flex-row xl:items-stretch xl:overflow-hidden">
+            <div className="mt-6 flex flex-col gap-4 xl:h-[clamp(22rem,calc(100dvh-19rem),32rem)] xl:min-h-0 xl:flex-row xl:items-stretch xl:overflow-hidden">
               <aside
                 className={`min-h-0 shrink-0 xl:h-full xl:overflow-hidden ${scoreboardVisible ? "xl:w-56" : "xl:w-auto"}`}
               >
