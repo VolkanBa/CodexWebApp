@@ -4,6 +4,7 @@ import {
   chooseWizardTrump,
   createWizardDebugGame,
   createWizardGame,
+  deleteWizardGame,
   getWizardGame,
   getWizardGameView,
   joinWizardGame,
@@ -443,6 +444,15 @@ test("wizard games expire after one hour without activity", () => {
 
   assert.equal(getWizardGame(game.id), undefined);
   assert.equal(listWizardGames().some((item) => item.id === game.id), false);
+});
+
+test("wizard games can be deleted from the shared store", () => {
+  const game = createWizardGame("Volle");
+
+  assert.equal(deleteWizardGame(game.id), true);
+  assert.equal(getWizardGame(game.id), undefined);
+  assert.equal(listWizardGames().some((item) => item.id === game.id), false);
+  assert.equal(deleteWizardGame(game.id), false);
 });
 
 test("max rounds are fixed by player count", () => {

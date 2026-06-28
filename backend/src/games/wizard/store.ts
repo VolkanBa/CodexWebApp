@@ -724,6 +724,11 @@ export const createWizardDebugGame = (username: string, input?: WizardCreateGame
 
 export const getWizardGame = (gameId: string) => getStoredGame(gameId);
 
+export const deleteWizardGame = (gameId: string) => {
+  pruneInactiveGames();
+  return games.delete(gameId);
+};
+
 export const joinWizardGame = (gameId: string, username: string) => {
   const game = getStoredGame(gameId);
 

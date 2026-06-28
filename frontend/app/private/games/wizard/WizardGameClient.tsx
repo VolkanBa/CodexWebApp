@@ -161,6 +161,10 @@ type WizardSocketMessage =
       game: WizardGame;
     }
   | {
+      type: "gameClosed";
+      gameId: string;
+    }
+  | {
       type: "error";
       message: string;
     };
@@ -572,6 +576,20 @@ export function WizardGameClient({
         setError(null);
       }
 
+      if (message.type === "gameClosed") {
+        if (window.localStorage.getItem(lastWizardGameStorageKey) === message.gameId) {
+          window.localStorage.removeItem(lastWizardGameStorageKey);
+        }
+
+        setGame((currentGame) => {
+          if (currentGame?.id !== message.gameId) {
+            return currentGame;
+          }
+
+          return null;
+        });
+      }
+
       if (message.type === "error") {
         setError(message.message);
       }
@@ -642,6 +660,17 @@ export function WizardGameClient({
   const closeCurrentGameView = () => {
     window.localStorage.removeItem(lastWizardGameStorageKey);
     setGame(null);
+  };
+
+  const deleteGame = (gameId: string) => {
+    if (!window.confirm(`Wizard-Spiel ${gameId} wirklich auflösen?`)) {
+      return;
+    }
+
+    send({
+      type: "deleteGame",
+      gameId
+    });
   };
 
   const playCard = (
@@ -835,6 +864,15 @@ export function WizardGameClient({
                         >
                           Link
                         </Link>
+                        {isAdmin ? (
+                          <button
+                            type="button"
+                            onClick={() => deleteGame(item.id)}
+                            className="border border-red-400/60 px-4 py-2 text-sm font-bold text-red-300 transition hover:bg-red-400 hover:text-suit-black"
+                          >
+                            Auflösen
+                          </button>
+                        ) : null}
                       </div>
                     </div>
                   </div>
@@ -857,13 +895,24 @@ export function WizardGameClient({
                 </p>
                 <p className="mt-2 text-sm text-white/64">Join-Link: {joinUrl}</p>
               </div>
-              <button
-                type="button"
-                onClick={closeCurrentGameView}
-                className="border border-white/12 px-4 py-3 text-sm font-bold text-white/72 transition hover:text-white"
-              >
-                Zur Lobbyliste
-              </button>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={closeCurrentGameView}
+                  className="border border-white/12 px-4 py-3 text-sm font-bold text-white/72 transition hover:text-white"
+                >
+                  Zur Lobbyliste
+                </button>
+                {isAdmin ? (
+                  <button
+                    type="button"
+                    onClick={() => deleteGame(game.id)}
+                    className="border border-red-400/60 px-4 py-3 text-sm font-bold text-red-300 transition hover:bg-red-400 hover:text-suit-black"
+                  >
+                    Spiel auflösen
+                  </button>
+                ) : null}
+              </div>
             </div>
 
             {game.status === "lobby" ? (
@@ -1156,17 +1205,10 @@ export function WizardGameClient({
               </div>
             ) : null}
 
-            <div className="pointer-events-none fixed bottom-0 left-0 right-0 z-40 px-4 pb-3 pt-10">
-              <div className="pointer-events-auto mx-auto max-w-7xl">
-                <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                  <h3 className="text-base font-black text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
-                    {game.debugMode?.enabled ? `Hand von ${displayedHandOwnerUsername ?? "Debug-Spieler"}` : "Deine Hand"}
-                  </h3>
-                  <p className="text-xs font-semibold text-white/72 drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">{displayedHand.length} Karte(n)</p>
-                </div>
-                <div className="flex min-h-72 items-end gap-2 overflow-x-auto overflow-y-visible pb-12 pt-2">
-                {displayedHand.length ? (
-                  displayedHand.map((card) => {
+            {displayedHand.length ? (
+              <div className="pointer-events-none fixed bottom-0 left-0 right-0 z-40 px-4">
+                <div className="pointer-events-auto mx-auto flex min-h-72 max-w-7xl items-end gap-2 overflow-x-auto overflow-y-visible pb-12 pt-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  {displayedHand.map((card) => {
                     const isValid = displayedValidCardIds.includes(card.id);
                     const isActive = game.debugMode?.enabled ? isDisplayedHandActive : game.activeUsername?.toLowerCase() === username?.toLowerCase();
                     const canPlay = isActive && isValid && game.status === "playing";
@@ -1186,13 +1228,10 @@ export function WizardGameClient({
                         <WizardCardFrame card={card} variant="compact" />
                       </button>
                     );
-                  })
-                ) : (
-                  <p className="text-sm text-white/60">Keine Handkarten sichtbar.</p>
-                )}
+                  })}
                 </div>
               </div>
-            </div>
+            ) : null}
           </section>
 
           <aside className="grid gap-6">

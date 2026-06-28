@@ -28,6 +28,7 @@ Die WebSocket-Verbindung authentifiziert sich über das bestehende `httpOnly` Se
 - Der Backend-Store ist aktuell in-memory. Nach Backend-Neustart sind laufende Spiele weg.
 - Der Client merkt sich die zuletzt geöffnete Wizard-Lobby lokal im Browser und öffnet sie nach einem Seiten-Reload automatisch wieder, solange das Spiel im Backend noch existiert.
 - Admins sehen zusätzlich einen Debugmodus-Button.
+- Admins können bestehende Wizard-Lobbys und laufende Spiele über die Lobbyliste oder direkt in der Spielansicht auflösen. Die Berechtigung wird serverseitig am WebSocket anhand der Admin-Rolle geprüft. Verbundene Clients schließen ein aufgelöstes Spiel sofort und entfernen den gespeicherten Lobby-Verweis.
 - Im Debugmodus erstellt das Backend vier virtuelle Spieler: `Volle 1` bis `Volle 4`.
 - Alle Debug-Spieler werden vom Admin-Account gesteuert.
 - In der UI wird farbig angezeigt, welcher Debug-Spieler gerade am Zug ist.
@@ -50,6 +51,7 @@ Aktueller Regelstand:
 - Farbzwang gilt für angespielte Farben.
 - Sonderkarten können vom Farbzwang ausgenommen sein.
 - Handkarten werden serverseitig nach Farbe `Rot`, `Grün`, `Blau`, `Gelb` und danach nach Wert aufsteigend sortiert.
+- Die feste Handanzeige rendert ausschließlich die Karten. Sie besitzt keinen sichtbaren Hintergrund, keinen Titel, keinen Zähler und keine sichtbare Scrollleiste.
 - Nur serverseitig gültige Züge werden angenommen.
 - Punkte:
 

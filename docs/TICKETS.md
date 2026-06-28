@@ -180,3 +180,11 @@ Linear-Team: `CodexWebApp`
   - Branch: `codex/wizard-card-ui-vampire-fix`
   - Linear: `https://linear.app/codexwebapp/issue/COD-78/web-039-wizard-karten-ui-und-vampirwerwolf-bugfixes`
   - Ergebnis: Gesperrte Handkarten bleiben farbig sichtbar und zeigen keinen Status-Text mehr. Die feste Handkartenleiste ist transparent, der Hover vergrößert Karten deutlich und der Vampir ersetzt einen Werwolf-Trumpf durch eine zufällige Restdeckkarte.
+- [x] COD-79 / WEB-040: Wizard Hand-Overlay entfernen und Admin-Lobbyauflösung ergänzen
+  - Branch: `codex/wizard-admin-delete-overlay-fix`
+  - Linear: `https://linear.app/codexwebapp/issue/COD-79/web-040-wizard-hand-overlay-entfernen-und-admin-lobbyauflosung`
+  - Ergebnis: Die feste Handanzeige zeigt nur noch Karten ohne Leiste, Titel, Zähler oder sichtbare Scrollbar. Admins können bestehende Wizard-Spiele serverseitig autorisiert auflösen; verbundene Clients verlassen das entfernte Spiel automatisch.
+  - Untertickets:
+    - [x] COD-80 / WEB-040-TESTS-DOCS: Löschfunktion testen und dokumentieren
+    - [x] COD-81 / WEB-040-BE: Admin-autorisierte Wizard-Spielauflösung
+    - [x] COD-82 / WEB-040-FE: Reines Handkarten-Overlay und Admin-Aktionen

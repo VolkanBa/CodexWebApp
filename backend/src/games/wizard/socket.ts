@@ -6,6 +6,7 @@ import {
   chooseWizardTrump,
   createWizardDebugGame,
   createWizardGame,
+  deleteWizardGame,
   getWizardGame,
   getWizardGameView,
   joinWizardGame,
@@ -43,6 +44,10 @@ type WizardClientMessage =
     }
   | {
       type: "viewGame";
+      gameId: string;
+    }
+  | {
+      type: "deleteGame";
       gameId: string;
     }
   | {
@@ -217,6 +222,15 @@ export const registerWizardSocketServer = (server: Server) => {
     }
   };
 
+  const broadcastGameClosed = (gameId: string) => {
+    for (const connection of connections) {
+      sendJson(connection.socket, {
+        type: "gameClosed",
+        gameId
+      });
+    }
+  };
+
   webSocketServer.on("connection", (socket, request) => {
     const session = getSessionFromRequest(request);
 
@@ -283,6 +297,18 @@ export const registerWizardSocketServer = (server: Server) => {
           }
           case "viewGame":
             sendGameState(connection, message.gameId);
+            break;
+          case "deleteGame":
+            if (user.role !== "admin") {
+              throw new Error("Nur Admins dürfen Wizard-Spiele auflösen.");
+            }
+
+            if (!deleteWizardGame(message.gameId)) {
+              throw new Error("Wizard-Spiel wurde nicht gefunden.");
+            }
+
+            broadcastGameClosed(message.gameId);
+            broadcastGamesList();
             break;
           case "startGame": {
             const game = startWizardGame(message.gameId, user.username);
