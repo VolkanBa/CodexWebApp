@@ -52,6 +52,8 @@ Aktueller Regelstand:
 - Sonderkarten können vom Farbzwang ausgenommen sein.
 - Handkarten werden serverseitig nach Farbe `Rot`, `Grün`, `Blau`, `Gelb` und danach nach Wert aufsteigend sortiert.
 - Die feste Handanzeige rendert ausschließlich die Karten. Sie besitzt keinen sichtbaren Hintergrund, keinen Titel, keinen Zähler und keine sichtbare Scrollleiste. Kleine Hände werden mittig ausgerichtet und größer dargestellt; bei vielen Karten bleibt die Reihe horizontal scrollbar. Die unsichtbare Bedienfläche ist auf die tatsächliche Breite der Kartenreihe begrenzt, sodass Bedienelemente links und rechts daneben anklickbar bleiben.
+- Die aktuelle Trumpfkarte klebt unabhängig vom Scrollen oben rechts am Bildschirm. Sie kann ausgeblendet werden; im eingeklappten Zustand bleibt nur ein kleiner `Trumpf`-Button sichtbar.
+- Der Punktestand kann ausgeblendet werden. Im eingeklappten Zustand ersetzt ein kleiner `Punkte`-Button die vollständige Punktestand-Section.
 - Nur serverseitig gültige Züge werden angenommen.
 - Punkte:
 

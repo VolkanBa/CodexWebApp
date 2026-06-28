@@ -470,6 +470,7 @@ export function WizardGameClient({
   const [timeLimitSeconds, setTimeLimitSeconds] = useState("");
   const [enabledOptionalCards, setEnabledOptionalCards] = useState<string[]>(optionalCards.map(([value]) => value));
   const [scoreboardVisible, setScoreboardVisible] = useState(true);
+  const [trumpCardVisible, setTrumpCardVisible] = useState(true);
   const [prediction, setPrediction] = useState(0);
   const [witchHandCardId, setWitchHandCardId] = useState("");
   const [witchTrickPlayId, setWitchTrickPlayId] = useState("");
@@ -635,6 +636,10 @@ export function WizardGameClient({
       setJugglerCardChoices({});
     }
   }, [game?.pendingEffect?.type]);
+
+  useEffect(() => {
+    setTrumpCardVisible(true);
+  }, [game?.id]);
 
   const createGame = () => {
     send({
@@ -1038,35 +1043,19 @@ export function WizardGameClient({
               </div>
             ) : null}
 
-            <div className="mt-6 grid gap-4 lg:grid-cols-2">
-              <div className="border border-white/10 bg-suit-black/40 p-4">
-                <h3 className="text-xl font-black text-white">Aktueller Stich</h3>
-                <div className="mt-3 grid grid-cols-[repeat(auto-fit,minmax(6.75rem,1fr))] gap-3">
-                  {game.currentTrick.length ? (
-                    game.currentTrick.map((played) => (
-                      <div key={played.playId} className="border border-white/10 bg-black/20 p-2">
-                        <WizardCardFrame card={played.card} chosenSuit={played.chosenSuit} variant="compact" />
-                        <p className="mt-2 truncate text-center text-xs font-bold text-white/72">{played.playerUsername}</p>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-sm text-white/60">Noch keine Karte im Stich.</p>
-                  )}
-                </div>
-              </div>
-              <div className="border border-white/10 bg-suit-black/40 p-4">
-                <h3 className="text-xl font-black text-white">Trumpfkarte</h3>
-                <div className="mt-3">
-                  {game.trumpCard ? (
-                    <WizardCardFrame card={game.trumpCard} chosenSuit={game.trumpSuit ?? undefined} variant="compact" />
-                  ) : (
-                    <p className="text-sm text-white/72">Keine</p>
-                  )}
-                </div>
-                <div className="mt-3">
-                  <SuitBadge suit={game.trumpSuit} />
-                </div>
-                <p className="mt-2 text-sm text-white/60">Vampir kopiert: {game.vampireCopyCard?.label ?? "Keine Karte"}</p>
+            <div className="mt-6 border border-white/10 bg-suit-black/40 p-4">
+              <h3 className="text-xl font-black text-white">Aktueller Stich</h3>
+              <div className="mt-3 grid grid-cols-[repeat(auto-fit,minmax(6.75rem,1fr))] gap-3">
+                {game.currentTrick.length ? (
+                  game.currentTrick.map((played) => (
+                    <div key={played.playId} className="border border-white/10 bg-black/20 p-2">
+                      <WizardCardFrame card={played.card} chosenSuit={played.chosenSuit} variant="compact" />
+                      <p className="mt-2 truncate text-center text-xs font-bold text-white/72">{played.playerUsername}</p>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-white/60">Noch keine Karte im Stich.</p>
+                )}
               </div>
             </div>
 
@@ -1236,21 +1225,55 @@ export function WizardGameClient({
                 </div>
               </div>
             ) : null}
+
+            {game.trumpCard ? (
+              <div className="fixed right-3 top-20 z-40 flex flex-col items-end gap-2 sm:right-5 sm:top-24">
+                {trumpCardVisible ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setTrumpCardVisible(false)}
+                      className="border border-white/16 bg-suit-black/90 px-2 py-1 text-[11px] font-bold text-white/72 shadow-lg transition hover:text-white"
+                      aria-expanded="true"
+                    >
+                      Trumpf ausblenden
+                    </button>
+                    <div className="w-24 sm:w-28">
+                      <WizardCardFrame
+                        card={game.trumpCard}
+                        chosenSuit={game.trumpSuit ?? undefined}
+                        variant="compact"
+                      />
+                    </div>
+                    <SuitBadge suit={game.trumpSuit} />
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setTrumpCardVisible(true)}
+                    className="border border-suit-orange/60 bg-suit-black/90 px-2 py-1 text-[11px] font-black text-suit-orange shadow-lg transition hover:bg-suit-orange hover:text-suit-black"
+                    aria-expanded="false"
+                  >
+                    Trumpf
+                  </button>
+                )}
+              </div>
+            ) : null}
           </section>
 
           <aside className="grid gap-6">
-            <section className="border border-white/12 bg-white/[0.045] p-5">
-              <div className="flex items-center justify-between gap-3">
-                <h2 className="text-2xl font-black text-white">Punktestand</h2>
-                <button
-                  type="button"
-                  onClick={() => setScoreboardVisible((current) => !current)}
-                  className="border border-white/12 px-3 py-2 text-xs font-bold text-white/72"
-                >
-                  {scoreboardVisible ? "Ausblenden" : "Einblenden"}
-                </button>
-              </div>
-              {scoreboardVisible ? (
+            {scoreboardVisible ? (
+              <section className="border border-white/12 bg-white/[0.045] p-5">
+                <div className="flex items-center justify-between gap-3">
+                  <h2 className="text-2xl font-black text-white">Punktestand</h2>
+                  <button
+                    type="button"
+                    onClick={() => setScoreboardVisible(false)}
+                    className="border border-white/12 px-3 py-2 text-xs font-bold text-white/72"
+                  >
+                    Ausblenden
+                  </button>
+                </div>
                 <div className="mt-4 grid gap-2">
                   {game.players.map((player) => (
                     <div key={player.username} className="grid grid-cols-[1fr_auto] gap-3 border border-white/10 bg-suit-black/40 p-3 text-sm">
@@ -1264,8 +1287,17 @@ export function WizardGameClient({
                     </div>
                   ))}
                 </div>
-              ) : null}
-            </section>
+              </section>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setScoreboardVisible(true)}
+                className="h-7 justify-self-end border border-white/12 px-2 text-[11px] font-bold text-white/60 transition hover:text-white"
+                aria-label="Punktestand einblenden"
+              >
+                Punkte
+              </button>
+            )}
 
             <section className="border border-white/12 bg-white/[0.045] p-5">
               <h2 className="text-2xl font-black text-white">Log</h2>

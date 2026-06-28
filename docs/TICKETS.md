@@ -204,3 +204,11 @@ Linear-Team: `CodexWebApp`
     - [x] COD-88 / WEB-042-BE: Sonderkarten bei Bildvergabe priorisieren
     - [x] COD-89 / WEB-042-TESTS-DOCS: Sonderkartenbilder und Klickfläche absichern
     - [x] COD-90 / WEB-042-FE: Hand-Klickfläche auf Kartenreihe begrenzen
+- [x] COD-91 / WEB-043: Fixierte Trumpfkarte und kompakten Punktestand umsetzen
+  - Branch: `codex/wizard-fixed-trump-compact-score`
+  - Linear: `https://linear.app/codexwebapp/issue/COD-91/web-043-fixierte-trumpfkarte-und-kompakten-punktestand-umsetzen`
+  - Ergebnis: Die Trumpfkarte bleibt oben rechts sichtbar und lässt sich auf einen kleinen Button reduzieren. Der ausgeblendete Punktestand belegt nur noch die Fläche eines kleinen `Punkte`-Buttons.
+  - Untertickets:
+    - [x] COD-92 / WEB-043-FE: Fixiertes Trumpfkarten-Overlay
+    - [x] COD-93 / WEB-043-DOCS: Overlay-Zustände dokumentieren und prüfen
+    - [x] COD-94 / WEB-043-FE-SCORE: Eingeklappten Punktestand minimieren
