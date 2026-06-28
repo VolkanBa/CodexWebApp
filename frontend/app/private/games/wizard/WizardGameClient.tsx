@@ -1109,8 +1109,10 @@ export function WizardGameClient({
               </div>
             ) : null}
 
-            <div className="mt-6 flex flex-col gap-4 xl:flex-row xl:items-stretch">
-              <aside className={`min-h-0 shrink-0 ${scoreboardVisible ? "xl:w-56" : "xl:w-auto"}`}>
+            <div className="mt-6 flex flex-col gap-4 xl:h-[clamp(22rem,calc(100dvh-20rem),30rem)] xl:min-h-0 xl:flex-row xl:items-stretch xl:overflow-hidden">
+              <aside
+                className={`min-h-0 shrink-0 xl:h-full xl:overflow-hidden ${scoreboardVisible ? "xl:w-56" : "xl:w-auto"}`}
+              >
                 {scoreboardVisible ? (
                   <section className="flex h-full min-h-0 flex-col overflow-hidden border border-white/12 bg-white/[0.045] p-3">
                     <div className="flex items-center justify-between gap-2">
@@ -1153,7 +1155,7 @@ export function WizardGameClient({
               </aside>
 
               <div
-                className="relative h-[30rem] min-w-0 flex-1 overflow-hidden border border-suit-purple/60 bg-suit-black bg-cover shadow-glow sm:aspect-[16/10] sm:h-auto"
+                className="relative h-[30rem] min-w-0 flex-1 overflow-hidden border border-suit-purple/60 bg-suit-black bg-cover shadow-glow sm:aspect-[16/10] sm:h-auto xl:h-full xl:aspect-auto"
                 style={{
                   backgroundImage: `url("${wizardBoardImageUrl}")`,
                   backgroundPosition: "center 32%"
@@ -1203,7 +1205,9 @@ export function WizardGameClient({
               </div>
               </div>
 
-              <aside className={`min-h-0 shrink-0 ${logVisible ? "xl:w-[28rem]" : "xl:w-auto"}`}>
+              <aside
+                className={`min-h-0 shrink-0 xl:h-full xl:overflow-hidden ${logVisible ? "xl:w-[28rem]" : "xl:w-auto"}`}
+              >
                 {logVisible ? (
                   <section className="flex h-[30rem] min-h-0 flex-col overflow-hidden border border-white/12 bg-white/[0.045] p-4 xl:h-full">
                     <div className="flex shrink-0 items-center justify-between gap-3">

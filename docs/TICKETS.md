@@ -237,3 +237,7 @@ Linear-Team: `CodexWebApp`
   - Untertickets:
     - [x] COD-106 / WEB-046-FE: Punkte, Spielbrett und Log dreispaltig ausrichten
     - [x] COD-107 / WEB-046-VERIFY-DOCS: Wizard Layout prüfen und dokumentieren
+- [x] COD-108 / WEB-047: Wizard Tischhöhe viewport-sicher begrenzen
+  - Branch: `codex/wizard-viewport-table-height`
+  - Linear: `https://linear.app/codexwebapp/issue/COD-108/web-047-wizard-tischhohe-viewport-sicher-begrenzen`
+  - Ergebnis: Die gemeinsame Tischzeile besitzt eine explizite viewportabhängige Höhe. Spielfeld, Punkte und Log bleiben gleich hoch; nur die Logeinträge scrollen intern und können die Seite nicht mehr verlängern.
