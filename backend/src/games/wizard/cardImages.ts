@@ -3,6 +3,7 @@ import { extname, join, normalize, resolve } from "node:path";
 import { wizardCardDesignKeys } from "./cards.js";
 
 const imageExtensions = new Set([".gif", ".jpeg", ".jpg", ".png", ".webp"]);
+const wizardBoardImageFileName = "my best space wallpaper yet.jpg";
 
 const aliasesByDesignKey: Record<string, string[]> = {
   "joseph-joestar-wizard-jester": ["joseph-joestar"],
@@ -30,6 +31,11 @@ const normalizeDesignName = (value: string) =>
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+
+const wizardBoardImageName = normalizeDesignName(wizardBoardImageFileName.replace(extname(wizardBoardImageFileName), ""));
+
+const isPathWithinRoot = (rootPath: string, targetPath: string) =>
+  targetPath === rootPath || targetPath.startsWith(`${rootPath}\\`) || targetPath.startsWith(`${rootPath}/`);
 
 const getStableIndex = (value: string, length: number) => {
   let hash = 0;
@@ -73,9 +79,15 @@ const listImages = async (root: string): Promise<WizardCardImage[]> => {
         continue;
       }
 
+      const normalizedName = normalizeDesignName(entry.name.replace(extname(entry.name), ""));
+
+      if (normalizedName === wizardBoardImageName) {
+        continue;
+      }
+
       results.push({
         absolutePath,
-        normalizedName: normalizeDesignName(entry.name.replace(extname(entry.name), ""))
+        normalizedName
       });
     }
   }
@@ -153,7 +165,24 @@ export const getWizardCardImagePath = async (root: string, designKey: string) =>
 
   const resolvedImagePath = resolve(matchedImage.absolutePath);
 
-  if (resolvedImagePath !== rootPath && !resolvedImagePath.startsWith(`${rootPath}\\`) && !resolvedImagePath.startsWith(`${rootPath}/`)) {
+  if (!isPathWithinRoot(rootPath, resolvedImagePath)) {
+    return null;
+  }
+
+  return resolvedImagePath;
+};
+
+export const getWizardBoardImagePath = async (root: string) => {
+  const rootPath = resolve(root);
+  const resolvedImagePath = resolve(rootPath, wizardBoardImageFileName);
+
+  if (!isPathWithinRoot(rootPath, resolvedImagePath)) {
+    return null;
+  }
+
+  const imageStats = await stat(resolvedImagePath).catch(() => null);
+
+  if (!imageStats?.isFile() || !imageExtensions.has(extname(resolvedImagePath).toLowerCase())) {
     return null;
   }
 

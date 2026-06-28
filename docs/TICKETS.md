@@ -212,3 +212,12 @@ Linear-Team: `CodexWebApp`
     - [x] COD-92 / WEB-043-FE: Fixiertes Trumpfkarten-Overlay
     - [x] COD-93 / WEB-043-DOCS: Overlay-Zustände dokumentieren und prüfen
     - [x] COD-94 / WEB-043-FE-SCORE: Eingeklappten Punktestand minimieren
+- [x] COD-95 / WEB-044: Wizard Spielbrett, Sitzplätze und Kartenanimation umsetzen
+  - Branch: `codex/wizard-space-board-table-ui`
+  - Linear: `https://linear.app/codexwebapp/issue/COD-95/web-044-wizard-spielbrett-sitzplatze-und-kartenanimation-umsetzen`
+  - Ergebnis: Ein geschütztes Weltraum-Spielbrett ordnet 2 bis 6 Spielernamen am Rand an und hebt die aktive Person hervor. Stichkarten fliegen animiert in die Mitte, Trumpf sitzt ganz oben rechts und die Handkarten enden direkt am unteren Bildschirmrand.
+  - Untertickets:
+    - [x] COD-96 / WEB-044-BE: Geschütztes Wizard-Spielbrett-Asset
+    - [x] COD-97 / WEB-044-FE: Responsive Tischansicht und Sitzplätze
+    - [x] COD-98 / WEB-044-TESTS-DOCS: Spielbrett testen und dokumentieren
+    - [x] COD-99 / WEB-044-FE-ANIM: Stichkarten- und Overlay-Animationen

@@ -6,6 +6,7 @@ import { PrivateTabs } from "../../PrivateTabs";
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000";
 const webSocketBaseUrl = apiBaseUrl.replace(/^http/, "ws");
+const wizardBoardImageUrl = `${apiBaseUrl}/private/wizard/board/image`;
 const lastWizardGameStorageKey = "codexwebapp:lastWizardGameId";
 
 const optionalCards = [
@@ -187,6 +188,40 @@ const getStatusLabel = (status: WizardGame["status"]) => {
   };
 
   return labels[status];
+};
+
+const tableSeatLayouts: Record<number, Array<{ left: number; top: number }>> = {
+  1: [{ left: 50, top: 90 }],
+  2: [
+    { left: 50, top: 90 },
+    { left: 50, top: 9 }
+  ],
+  3: [
+    { left: 50, top: 90 },
+    { left: 14, top: 13 },
+    { left: 86, top: 13 }
+  ],
+  4: [
+    { left: 50, top: 90 },
+    { left: 9, top: 50 },
+    { left: 50, top: 9 },
+    { left: 91, top: 50 }
+  ],
+  5: [
+    { left: 50, top: 90 },
+    { left: 10, top: 72 },
+    { left: 15, top: 13 },
+    { left: 85, top: 13 },
+    { left: 90, top: 72 }
+  ],
+  6: [
+    { left: 50, top: 90 },
+    { left: 9, top: 73 },
+    { left: 13, top: 13 },
+    { left: 50, top: 8 },
+    { left: 87, top: 13 },
+    { left: 91, top: 73 }
+  ]
 };
 
 const getSuitLabel = (suit: WizardSuit | null) => suitOptions.find(([value]) => value === suit)?.[1] ?? "Keine";
@@ -495,6 +530,20 @@ export function WizardGameClient({
   const handCardWidthClass = displayedHand.length <= 5 ? "w-32" : displayedHand.length <= 10 ? "w-28" : "w-24";
   const handCardVariant = displayedHand.length <= 5 ? "hand" : "compact";
   const debugPlayers = game?.debugMode?.enabled ? game.players.filter((player) => player.controlledBySelf) : [];
+  const tablePlayers = useMemo(() => {
+    if (!game) {
+      return [];
+    }
+
+    const selfIndex = game.players.findIndex((player) => player.isSelf);
+
+    if (selfIndex <= 0) {
+      return game.players;
+    }
+
+    return [...game.players.slice(selfIndex), ...game.players.slice(0, selfIndex)];
+  }, [game]);
+  const tableSeatPositions = tableSeatLayouts[tablePlayers.length] ?? tableSeatLayouts[6];
   const isDisplayedHandActive =
     Boolean(displayedHandOwnerUsername) && game?.activeUsername?.toLowerCase() === displayedHandOwnerUsername?.toLowerCase();
   const pendingEffectUsername =
@@ -1043,18 +1092,53 @@ export function WizardGameClient({
               </div>
             ) : null}
 
-            <div className="mt-6 border border-white/10 bg-suit-black/40 p-4">
-              <h3 className="text-xl font-black text-white">Aktueller Stich</h3>
-              <div className="mt-3 grid grid-cols-[repeat(auto-fit,minmax(6.75rem,1fr))] gap-3">
+            <div
+              className="relative mt-6 h-[30rem] overflow-hidden border border-suit-purple/60 bg-suit-black bg-cover shadow-glow sm:aspect-[16/10] sm:h-auto"
+              style={{
+                backgroundImage: `url("${wizardBoardImageUrl}")`,
+                backgroundPosition: "center 32%"
+              }}
+            >
+              <div className="absolute inset-0 bg-black/20" aria-hidden="true" />
+
+              {tablePlayers.map((player, index) => {
+                const position = tableSeatPositions[index] ?? tableSeatPositions[0];
+                const isActive = player.username === game.activeUsername;
+
+                return (
+                  <div
+                    key={player.username}
+                    className={`absolute z-20 max-w-[8.5rem] -translate-x-1/2 -translate-y-1/2 border px-2 py-1 text-center text-[11px] font-black shadow-lg sm:max-w-[11rem] sm:px-3 sm:py-2 sm:text-sm ${
+                      isActive
+                        ? "border-suit-orange bg-suit-orange text-suit-black"
+                        : "border-white/25 bg-suit-black/90 text-white"
+                    }`}
+                    style={{ left: `${position.left}%`, top: `${position.top}%` }}
+                  >
+                    <span className="block truncate">{player.username}</span>
+                    <span className={`block text-[9px] sm:text-[10px] ${isActive ? "text-suit-black/70" : "text-white/55"}`}>
+                      {isActive ? "am Zug" : `${player.handCount} Karten`}
+                    </span>
+                  </div>
+                );
+              })}
+
+              <div className="absolute inset-x-[14%] top-1/2 z-10 flex -translate-y-1/2 flex-wrap items-center justify-center gap-1.5 sm:inset-x-[18%] sm:gap-2">
                 {game.currentTrick.length ? (
-                  game.currentTrick.map((played) => (
-                    <div key={played.playId} className="border border-white/10 bg-black/20 p-2">
+                  game.currentTrick.map((played, index) => (
+                    <div
+                      key={played.playId}
+                      className="wizard-card-to-board w-14 shrink-0 sm:w-20 lg:w-24"
+                      style={{ animationDelay: `${index * 70}ms` }}
+                      title={`${played.playerUsername}: ${played.card.label}`}
+                    >
                       <WizardCardFrame card={played.card} chosenSuit={played.chosenSuit} variant="compact" />
-                      <p className="mt-2 truncate text-center text-xs font-bold text-white/72">{played.playerUsername}</p>
                     </div>
                   ))
                 ) : (
-                  <p className="text-sm text-white/60">Noch keine Karte im Stich.</p>
+                  <p className="border border-white/20 bg-suit-black/75 px-3 py-2 text-xs font-bold text-white/72">
+                    Noch keine Karte im Stich
+                  </p>
                 )}
               </div>
             </div>
@@ -1198,8 +1282,8 @@ export function WizardGameClient({
 
             {displayedHand.length ? (
               <div className="pointer-events-none fixed bottom-0 left-0 right-0 z-40 flex justify-center px-4">
-                <div className="pointer-events-auto min-h-80 w-fit max-w-full overflow-x-auto overflow-y-visible pb-12 pt-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                  <div className="flex min-h-64 w-max items-end gap-2">
+                <div className="pointer-events-auto flex min-h-80 w-fit max-w-full items-end overflow-x-auto overflow-y-visible pb-0 pt-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  <div className="flex w-max items-end gap-2">
                     {displayedHand.map((card) => {
                       const isValid = displayedValidCardIds.includes(card.id);
                       const isActive = game.debugMode?.enabled
@@ -1227,7 +1311,7 @@ export function WizardGameClient({
             ) : null}
 
             {game.trumpCard ? (
-              <div className="fixed right-3 top-20 z-40 flex flex-col items-end gap-2 sm:right-5 sm:top-24">
+              <div className="fixed right-0 top-0 z-40 flex flex-col items-end gap-2">
                 {trumpCardVisible ? (
                   <>
                     <button

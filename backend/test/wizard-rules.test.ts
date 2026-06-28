@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 import test from "node:test";
 import {
   chooseWizardTrump,
@@ -25,7 +25,7 @@ import {
   wizardCardDesignKeys,
   wizardSpecialCardDesignKeys
 } from "../src/games/wizard/cards.js";
-import { getWizardCardImagePath } from "../src/games/wizard/cardImages.js";
+import { getWizardBoardImagePath, getWizardCardImagePath } from "../src/games/wizard/cardImages.js";
 import { calculateRoundScore, determineTrickWinner, getEffectiveCard, validateCardPlay } from "../src/games/wizard/rules.js";
 import type { OptionalWizardCardKind, PlayedWizardCard, WizardCard, WizardGame, WizardPlayer } from "../src/games/wizard/types.js";
 
@@ -250,6 +250,30 @@ test("special cards receive images before number cards when assets are limited",
     assert.ok(await getWizardCardImagePath(imageRoot, "witch"));
     assert.ok(await getWizardCardImagePath(imageRoot, "joseph-joestar-wizard-jester"));
     assert.equal(await getWizardCardImagePath(imageRoot, "red-1"), null);
+  } finally {
+    await rm(imageRoot, { recursive: true, force: true });
+  }
+});
+
+test("wizard board image is resolved separately from card images", async () => {
+  const imageRoot = await mkdtemp(join(tmpdir(), "wizard-board-image-"));
+
+  try {
+    await writeFile(join(imageRoot, "my best space wallpaper yet.jpg"), "board");
+    await Promise.all(
+      wizardCardDesignKeys.map((_, index) =>
+        writeFile(join(imageRoot, `card-${String(index).padStart(2, "0")}.jpg`), "card")
+      )
+    );
+
+    const boardImagePath = await getWizardBoardImagePath(imageRoot);
+    const cardImagePaths = await Promise.all(
+      wizardCardDesignKeys.map((designKey) => getWizardCardImagePath(imageRoot, designKey))
+    );
+
+    assert.equal(basename(boardImagePath ?? ""), "my best space wallpaper yet.jpg");
+    assert.equal(cardImagePaths.every(Boolean), true);
+    assert.equal(cardImagePaths.includes(boardImagePath), false);
   } finally {
     await rm(imageRoot, { recursive: true, force: true });
   }

@@ -15,6 +15,7 @@ Backend:
 
 - `GET /private/games`: geschützte Spieleübersicht
 - `WS /ws/wizard`: geschützter Wizard-WebSocket
+- `GET /private/wizard/board/image`: geschütztes Spielbrett-Hintergrundbild
 
 Die WebSocket-Verbindung authentifiziert sich über das bestehende `httpOnly` Session-Cookie. Ohne gültige Session wird die Verbindung geschlossen.
 
@@ -54,6 +55,9 @@ Aktueller Regelstand:
 - Die feste Handanzeige rendert ausschließlich die Karten. Sie besitzt keinen sichtbaren Hintergrund, keinen Titel, keinen Zähler und keine sichtbare Scrollleiste. Kleine Hände werden mittig ausgerichtet und größer dargestellt; bei vielen Karten bleibt die Reihe horizontal scrollbar. Die unsichtbare Bedienfläche ist auf die tatsächliche Breite der Kartenreihe begrenzt, sodass Bedienelemente links und rechts daneben anklickbar bleiben.
 - Die aktuelle Trumpfkarte klebt unabhängig vom Scrollen oben rechts am Bildschirm. Sie kann ausgeblendet werden; im eingeklappten Zustand bleibt nur ein kleiner `Trumpf`-Button sichtbar.
 - Der Punktestand kann ausgeblendet werden. Im eingeklappten Zustand ersetzt ein kleiner `Punkte`-Button die vollständige Punktestand-Section.
+- Das Spielbrett nutzt das private Bild `my best space wallpaper yet.jpg`. Namen werden für 2 bis 6 Personen wie Sitzplätze am Rand angeordnet; die aktive Person wird orange hervorgehoben.
+- Neu gespielte Karten bewegen sich mit einer kurzen Animation von unten in die Brettmitte. Bei reduzierter Bewegung im Betriebssystem wird die Animation deaktiviert.
+- Die Trumpfanzeige sitzt bei `top: 0` und `right: 0`. Die feste Handkartenreihe endet direkt am unteren Bildschirmrand.
 - Nur serverseitig gültige Züge werden angenommen.
 - Punkte:
 
@@ -126,6 +130,8 @@ private-data/BIlder für Wizard
 ```
 
 Dieser Ordner wird nicht nach GitHub gepusht. Das Backend liefert die Bilder nach Login über `GET /private/wizard/cards/:designKey/image` aus. Der Ordner wird nicht in `frontend/public/` kopiert und bleibt dadurch vom öffentlichen Frontend getrennt.
+
+Das Spielbrettbild liegt im selben privaten Ordner, wird aber ausdrücklich aus dem Kartenbild-Pool ausgeschlossen und nur über `GET /private/wizard/board/image` ausgeliefert.
 
 Jede Karte enthält einen eindeutigen `designKey` und einen relativen `imagePath`, damit Designs später einzeln ausgetauscht werden können. Das Backend berechnet für alle 69 möglichen Karten eine globale, deterministische Zuordnung: Eine private Bilddatei wird höchstens einer Karte zugewiesen. Der Gestaltwandler nutzt den Schlüssel `joseph-joestar-wizard-jester` und ist auf `Joseph Joestar` gemappt.
 
